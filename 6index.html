@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Compras</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <style>
+        /* Customizações para suporte ao dark mode */
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .dark .glass-effect {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-4">
+    <div class="max-w-md mx-auto space-y-6">
+        <div class="text-center">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">
+                🛒 Calculadora de Compras
+            </h1>
+            <p class="text-gray-600 dark:text-gray-300">
+                Gerencie seus gastos de forma simples
+            </p>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 space-y-4">
+            <div class="flex justify-center">
+                <div class="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+                    <button id="btn-add" class="operation-btn px-3 py-2 rounded-md text-sm font-medium transition-colors active" data-operation="add">
+                        <i data-lucide="plus" class="w-4 h-4 mr-1"></i>Somar
+                    </button>
+                    <button id="btn-subtract" class="operation-btn px-3 py-2 rounded-md text-sm font-medium transition-colors" data-operation="subtract">
+                        <i data-lucide="minus" class="w-4 h-4 mr-1"></i>Subtrair
+                    </button>
+                    <button id="btn-multiply" class="operation-btn px-3 py-2 rounded-md text-sm font-medium transition-colors" data-operation="multiply">
+                        <i data-lucide="x" class="w-4 h-4 mr-1"></i>×
+                    </button>
+                    <button id="btn-list-view" class="operation-btn px-3 py-2 rounded-md text-sm font-medium transition-colors" data-operation="list">
+                        <i data-lucide="list" class="w-4 h-4 mr-1"></i>Listas
+                    </button>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Valor do produto (R$)
+                    </label>
+                    <input
+                        type="number"
+                        id="value1"
+                        placeholder="0,00"
+                        step="0.01"
+                        class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Nome do produto
+                    </label>
+                    <input
+                        type="text"
+                        id="product-name"
+                        placeholder="Ex: Arroz, Feijão, Carne..."
+                        class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                        Quantidade
+                    </label>
+                    <input
+                        type="number"
+                        id="product-quantity"
+                        placeholder="1"
+                        min="1"
+                        value="1"
+                        class="w-full px-4 py-3 text-base border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                </div>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">Valor:</div>
+                <div id="current-result" class="text-2xl font-bold text-gray-800 dark:text-white">
+                    R$ 0,00
+                </div>
+            </div>
+
+            <div class="flex space-x-3">
+                <button
+                    id="add-product-btn"
+                    class="flex-1 bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+                    disabled
+                >
+                    <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                    Adicionar Produto
+                </button>
+                <button
+                    id="print-current-list-btn"
+                    class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center"
+                >
+                    <i data-lucide="printer" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <button
+                id="save-current-list-btn"
+                class="w-full bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center mt-3"
+            >
+                <i data-lucide="save" class="w-4 h-4 mr-2"></i>
+                Salvar Lista Atual
+            </button>
+
+            <button
+                id="clear-btn"
+                class="w-full bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg font-medium transition-colors flex items-center justify-center"
+            >
+                <i data-lucide="trash-2" class="w-4 h-4 mr-2"></i>
+                Limpar Campos
+            </button>
+        </div>
+
+        <div id="current-products-section" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hidden">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <h2 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
+                    <i data-lucide="clipboard-list" class="w-5 h-5 mr-2"></i>
+                    Produtos na Lista Atual
+                </h2>
+            </div>
+            <div id="current-products-list" class="p-4 space-y-3 max-h-48 overflow-y-auto">
+                </div>
+            <div class="p-4 border-t border-gray-200 dark:border-gray-700 text-right">
+                <span class="font-semibold text-gray-800 dark:text-white">Total da Lista Atual:</span>
+                <span id="current-list-total" class="font-bold text-green-600 dark:text-green-400">R$ 0,00</span>
+            </div>
+        </div>
+
+        <div id="saved-lists-section" class="bg-white dark:bg-gray-800 rounded-xl shadow-lg hidden">
+            <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-semibold text-gray-800 dark:text-white flex items-center">
+                        <i data-lucide="folder-check" class="w-5 h-5 mr-2"></i>
+                        Listas de Compras Salvas
+                    </h2>
+                    <button
+                        id="clear-all-lists-btn"
+                        class="text-red-500 hover:text-red-700 flex items-center text-sm font-medium"
+                    >
+                        <i data-lucide="trash-2" class="w-4 h-4 mr-1"></i>
+                        Limpar Todas
+                    </button>
+                </div>
+            </div>
+            <div id="saved-lists-display" class="p-4 space-y-3 max-h-96 overflow-y-auto">
+                </div>
+        </div>
+    </div>
+
+    <div id="edit-product-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-sm w-full mx-4">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white mb-4">Editar Produto</h3>
+
+            <div class="space-y-3 mb-4">
+                <input
+                    type="text"
+                    id="edit-product-name"
+                    placeholder="Nome do produto"
+                    class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                <input
+                    type="number"
+                    id="edit-value"
+                    placeholder="Valor"
+                    step="0.01"
+                    class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                <input
+                    type="number"
+                    id="edit-product-quantity"
+                    placeholder="Quantidade"
+                    min="1"
+                    class="w-full px-3 py-2 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+            </div>
+
+            <div class="flex justify-end space-x-3">
+                <button
+                    id="cancel-edit-btn"
+                    class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded"
+                >
+                    Cancelar
+                </button>
+                <button
+                    id="save-edit-btn"
+                    class="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded"
+                >
+                    Salvar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="list-details-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-lg w-full mx-4 max-h-[90vh] flex flex-col">
+            <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3 mb-4">
+                <h3 id="list-details-title" class="text-lg font-semibold text-gray-800 dark:text-white">Detalhes da Lista</h3>
+                <button class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200" onclick="closeListDetailsModal()">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+
+            <div class="flex-grow overflow-y-auto pr-2">
+                <div id="list-details-content" class="space-y-2">
+                    </div>
+            </div>
+
+            <div class="border-t border-gray-200 dark:border-gray-700 pt-3 mt-4 text-right">
+                <span class="font-semibold text-gray-800 dark:text-white">Total da Lista:</span>
+                <span id="list-details-total" class="font-bold text-green-600 dark:text-green-400">R$ 0,00</span>
+            </div>
+
+            <div class="flex justify-end space-x-3 mt-4">
+                <button id="print-saved-list-btn" class="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded flex items-center">
+                    <i data-lucide="printer" class="w-4 h-4 mr-2"></i>
+                    Imprimir Lista
+                </button>
+                <button id="copy-saved-list-btn" class="px-4 py-2 bg-green-500 text-white hover:bg-green-600 rounded flex items-center">
+                    <i data-lucide="copy" class="w-4 h-4 mr-2"></i>
+                    Copiar Lista
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Configuração do dark mode
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Inicializar ícones Lucide
+        lucide.createIcons();
+
+        // Sistema de armazenamento - simula localStorage no Canvas
+        const Storage = {
+            data: {},
+            getItem(key) {
+                // Em um ambiente normal, usar: return localStorage.getItem(key);
+                return this.data[key] || null;
+            },
+            setItem(key, value) {
+                // Em um ambiente normal, usar: localStorage.setItem(key, value);
+                this.data[key] = value;
+            },
+            removeItem(key) {
+                // Em um ambiente normal, usar: localStorage.removeItem(key);
+                delete this.data[key];
+            }
+        };
+
+        // Variáveis globais
+        let currentOperation = 'add';
+        let currentProducts = []; // Produtos na lista atual, antes de ser salva
+        let shoppingLists = []; // Array de todas as listas de compras salvas
+        let editingProductIndex = -1; // Índice do produto sendo editado na currentProducts
+        let currentValue = 0; // Valor do produto atual no input
+
+        // Elementos DOM
+        const value1Input = document.getElementById('value1');
+        const productNameInput = document.getElementById('product-name');
+        const productQuantityInput = document.getElementById('product-quantity');
+        const currentResultDiv = document.getElementById('current-result');
+        const addProductBtn = document.getElementById('add-product-btn'); // Renomeado de saveBtn
+        const printCurrentListBtn = document.getElementById('print-current-list-btn'); // Renomeado de printBtn
+        const clearBtn = document.getElementById('clear-btn');
+        const operationBtns = document.querySelectorAll('.operation-btn');
+        const savedListsSection = document.getElementById('saved-lists-section'); // Renomeado de historySection
+        const savedListsDisplay = document.getElementById('saved-lists-display'); // Renomeado de historyList
+        const currentProductsSection = document.getElementById('current-products-section');
+        const currentProductsList = document.getElementById('current-products-list');
+        const currentListTotalDisplay = document.getElementById('current-list-total');
+        const clearAllListsBtn = document.getElementById('clear-all-lists-btn'); // Renomeado de clearHistoryBtn
+        const editProductModal = document.getElementById('edit-product-modal'); // Renomeado de editModal
+        const saveCurrentListBtn = document.getElementById('save-current-list-btn'); // NOVO: Botão Salvar Lista
+        const listDetailsModal = document.getElementById('list-details-modal'); // NOVO: Modal de detalhes da lista
+        const listDetailsTitle = document.getElementById('list-details-title');
+        const listDetailsContent = document.getElementById('list-details-content');
+        const listDetailsTotal = document.getElementById('list-details-total');
+        const printSavedListBtn = document.getElementById('print-saved-list-btn');
+        const copySavedListBtn = document.getElementById('copy-saved-list-btn');
+
+        // Variável para armazenar a lista selecionada no modal de detalhes
+        let selectedListForDetails = null;
+
+        // Carrega dados salvos na inicialização
+        function loadSavedData() {
+            const saved = Storage.getItem('shopping-lists'); // Altera para 'shopping-lists'
+            if (saved) {
+                shoppingLists = JSON.parse(saved);
+                updateSavedListsDisplay();
+            }
+        }
+
+        // Salva dados no storage
+        function saveData() {
+            Storage.setItem('shopping-lists', JSON.stringify(shoppingLists)); // Altera para 'shopping-lists'
+        }
+
+        // Formata valores monetários
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('pt-BR', {
+                style: 'currency',
+                currency: 'BRL'
+            }).format(value);
+        }
+
+        // Manipuladores de eventos para seleção de operação (novo: botão "Listas")
+        operationBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Remove classe active de todos os botões
+                operationBtns.forEach(b => {
+                    b.classList.remove('active', 'bg-blue-500', 'text-white');
+                    b.classList.add('text-gray-600', 'dark:text-gray-300');
+                });
+
+                // Adiciona classe active ao botão clicado
+                btn.classList.add('active', 'bg-blue-500', 'text-white');
+                btn.classList.remove('text-gray-600', 'dark:text-gray-300');
+
+                currentOperation = btn.dataset.operation;
+
+                // Esconde/mostra seções com base na operação
+                if (currentOperation === 'list') {
+                    savedListsSection.classList.remove('hidden');
+                    currentProductsSection.classList.add('hidden');
+                } else {
+                    savedListsSection.classList.add('hidden');
+                    currentProductsSection.classList.remove('hidden');
+                }
+
+                updateCurrentValue();
+            });
+        });
+
+        // Atualiza valor atual exibido (produto unitário * quantidade)
+        function updateCurrentValue() {
+            const val = parseFloat(value1Input.value) || 0;
+            const productName = productNameInput.value.trim();
+            const quantity = parseInt(productQuantityInput.value) || 0;
+
+            currentValue = val * quantity;
+            currentResultDiv.textContent = formatCurrency(currentValue);
+
+            // Habilita botão de adicionar produto se há valor, nome e quantidade
+            addProductBtn.disabled = !val || !productName || !quantity;
+            if (!addProductBtn.disabled) {
+                addProductBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                addProductBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+
+            // Habilita botão de salvar lista se houver produtos na lista atual
+            saveCurrentListBtn.disabled = currentProducts.length === 0;
+            if (!saveCurrentListBtn.disabled) {
+                saveCurrentListBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                saveCurrentListBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // Event listeners para atualização automática
+        value1Input.addEventListener('input', updateCurrentValue);
+        productNameInput.addEventListener('input', updateCurrentValue);
+        productQuantityInput.addEventListener('input', updateCurrentValue);
+
+        // Adiciona produto à lista atual
+        addProductBtn.addEventListener('click', () => {
+            const val = parseFloat(value1Input.value) || 0;
+            const productName = productNameInput.value.trim();
+            const quantity = parseInt(productQuantityInput.value) || 0;
+
+            if (val && productName && quantity) {
+                const product = {
+                    id: Date.now(),
+                    name: productName,
+                    value: val,
+                    quantity: quantity,
+                    timestamp: new Date().toLocaleString('pt-BR')
+                };
+
+                currentProducts.push(product);
+                updateCurrentProductsDisplay();
+                updateCurrentListTotal();
+                clearFields();
+
+                // Feedback visual
+                addProductBtn.textContent = 'Adicionado!';
+                setTimeout(() => {
+                    addProductBtn.innerHTML = '<i data-lucide="plus" class="w-4 h-4 mr-2"></i>Adicionar Produto';
+                    lucide.createIcons();
+                }, 1000);
+            }
+        });
+
+        // Salva a lista de produtos atual como uma nova lista
+        saveCurrentListBtn.addEventListener('click', () => {
+            if (currentProducts.length === 0) {
+                showAlert('A lista atual está vazia. Adicione produtos antes de salvar.');
+                return;
+            }
+
+            const listName = prompt('Digite um nome para esta lista de compras:', `Lista ${shoppingLists.length + 1}`);
+            if (!listName) {
+                return; // Usuário cancelou
+            }
+
+            const newList = {
+                id: Date.now(),
+                name: listName,
+                timestamp: new Date().toLocaleString('pt-BR'),
+                products: [...currentProducts], // Copia os produtos da lista atual
+                total: currentProducts.reduce((sum, p) => sum + (p.value * p.quantity), 0)
+            };
+
+            shoppingLists.push(newList);
+            saveData();
+            updateSavedListsDisplay();
+
+            currentProducts = []; // Limpa a lista atual após salvar
+            updateCurrentProductsDisplay();
+            updateCurrentListTotal();
+
+            showAlert('Lista salva com sucesso!');
+        });
+
+        // Limpa campos de entrada
+        function clearFields() {
+            value1Input.value = '';
+            productNameInput.value = '';
+            productQuantityInput.value = '1';
+            currentValue = 0;
+            currentResultDiv.textContent = 'R$ 0,00';
+            updateCurrentValue(); // Re-avalia o estado dos botões
+        }
+        clearBtn.addEventListener('click', clearFields);
+
+        // Atualiza a exibição dos produtos na lista atual (abaixo dos inputs)
+        function updateCurrentProductsDisplay() {
+            if (currentProducts.length === 0) {
+                currentProductsSection.classList.add('hidden');
+                return;
+            }
+            currentProductsSection.classList.remove('hidden');
+            currentProductsList.innerHTML = '';
+
+            currentProducts.forEach((product, index) => {
+                const item = document.createElement('div');
+                item.className = 'bg-gray-50 dark:bg-gray-700 rounded-lg p-3 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors text-sm';
+                item.innerHTML = `
+                    <div class="flex-1">
+                        <span class="font-bold text-blue-600 dark:text-blue-400">${product.name} (x${product.quantity || 1})</span>
+                        <span class="text-gray-600 dark:text-gray-300 ml-2">${formatCurrency(product.value)}</span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button
+                            class="edit-current-product-btn p-1 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900 rounded-lg transition-colors"
+                            data-index="${index}"
+                            title="Editar produto"
+                        >
+                            <i data-lucide="edit-2" class="w-4 h-4"></i>
+                        </button>
+                        <button
+                            class="delete-current-product-btn p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors"
+                            data-index="${index}"
+                            title="Excluir produto"
+                        >
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                currentProductsList.appendChild(item);
+            });
+            lucide.createIcons();
+
+            // Adiciona event listeners para botões de edição/exclusão de produtos da lista atual
+            document.querySelectorAll('.edit-current-product-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.currentTarget.dataset.index);
+                    openEditProductModal(index);
+                });
+            });
+
+            document.querySelectorAll('.delete-current-product-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const index = parseInt(e.currentTarget.dataset.index);
+                    deleteCurrentProduct(index);
+                });
+            });
+            updateCurrentValue(); // Atualiza o estado do botão "Salvar Lista Atual"
+        }
+
+        // Atualiza o total da lista de produtos atual
+        function updateCurrentListTotal() {
+            const total = currentProducts.reduce((sum, product) => sum + (product.value * (product.quantity || 1)), 0);
+            currentListTotalDisplay.textContent = formatCurrency(total);
+        }
+
+        // Abre modal de edição de produto na lista atual
+        function openEditProductModal(index) {
+            editingProductIndex = index;
+            const product = currentProducts[index];
+
+            document.getElementById('edit-product-name').value = product.name;
+            document.getElementById('edit-value').value = product.value;
+            document.getElementById('edit-product-quantity').value = product.quantity || 1;
+
+            editProductModal.classList.remove('hidden');
+        }
+
+        // Fecha modal de edição de produto
+        function closeEditProductModal() {
+            editProductModal.classList.add('hidden');
+            editingProductIndex = -1;
+        }
+
+        // Event listeners do modal de edição de produto
+        document.getElementById('cancel-edit-btn').addEventListener('click', closeEditProductModal);
+        document.getElementById('save-edit-btn').addEventListener('click', () => {
+            if (editingProductIndex >= 0) {
+                const name = document.getElementById('edit-product-name').value.trim();
+                const value = parseFloat(document.getElementById('edit-value').value) || 0;
+                const quantity = parseInt(document.getElementById('edit-product-quantity').value) || 0;
+
+                if (name && value && quantity) {
+                    currentProducts[editingProductIndex] = {
+                        ...currentProducts[editingProductIndex],
+                        name: name,
+                        value: value,
+                        quantity: quantity,
+                        timestamp: new Date().toLocaleString('pt-BR')
+                    };
+
+                    updateCurrentProductsDisplay();
+                    updateCurrentListTotal();
+                    closeEditProductModal();
+                } else {
+                    showAlert('Por favor, preencha todos os campos do produto.');
+                }
+            }
+        });
+
+        // Exclui produto da lista atual
+        function deleteCurrentProduct(index) {
+            currentProducts.splice(index, 1);
+            updateCurrentProductsDisplay();
+            updateCurrentListTotal();
+        }
+
+        // Atualiza exibição das listas salvas
+        function updateSavedListsDisplay() {
+            if (shoppingLists.length === 0) {
+                savedListsSection.classList.add('hidden');
+                return;
+            }
+
+            savedListsSection.classList.remove('hidden');
+            savedListsDisplay.innerHTML = '';
+
+            shoppingLists.forEach((list, index) => {
+                const item = document.createElement('div');
+                item.className = 'bg-gray-50 dark:bg-gray-700 rounded-lg p-4 flex items-center justify-between hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors cursor-pointer';
+                item.setAttribute('data-index', index);
+                item.addEventListener('click', () => openListDetailsModal(index));
+
+                item.innerHTML = `
+                    <div class="flex-1">
+                        <div class="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-300">
+                            <span class="font-bold text-blue-600 dark:text-blue-400">${list.name}</span>
+                            <span>-</span>
+                            <span class="font-bold text-green-600 dark:text-green-400">${formatCurrency(list.total)}</span>
+                        </div>
+                        <div class="text-xs text-gray-400 mt-1">Salva em: ${list.timestamp}</div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button
+                            class="delete-saved-list-btn p-2 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded-lg transition-colors"
+                            data-index="${index}"
+                            title="Excluir lista"
+                            onclick="event.stopPropagation(); deleteSavedList(${index});"
+                        >
+                            <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                savedListsDisplay.appendChild(item);
+            });
+            lucide.createIcons();
+            saveData(); // Garante que a ordem e IDs estão sincronizados se algo foi excluído
+        }
+
+        // Exclui lista salva
+        function deleteSavedList(index) {
+            if (confirm(`Tem certeza que deseja excluir a lista "${shoppingLists[index].name}"?`)) {
+                shoppingLists.splice(index, 1);
+                saveData();
+                updateSavedListsDisplay();
+            }
+        }
+
+        // Limpa todas as listas salvas
+        clearAllListsBtn.addEventListener('click', () => {
+            if (confirm('Tem certeza que deseja apagar TODAS as listas salvas? Esta ação não pode ser desfeita.')) {
+                shoppingLists = [];
+                saveData();
+                updateSavedListsDisplay();
+                showAlert('Todas as listas foram apagadas.');
+            }
+        });
+
+        // FUNÇÕES PARA O MODAL DE DETALHES DA LISTA SALVA
+        function openListDetailsModal(index) {
+            selectedListForDetails = shoppingLists[index];
+            if (!selectedListForDetails) return;
+
+            listDetailsTitle.textContent = `Detalhes da Lista: ${selectedListForDetails.name}`;
+            listDetailsContent.innerHTML = '';
+
+            if (selectedListForDetails.products && selectedListForDetails.products.length > 0) {
+                selectedListForDetails.products.forEach(product => {
+                    const productItem = document.createElement('div');
+                    productItem.className = 'flex justify-between py-2 border-b border-dotted border-gray-300 dark:border-gray-600';
+                    productItem.innerHTML = `
+                        <span class="font-medium text-gray-800 dark:text-gray-200">${product.name} (x${product.quantity || 1})</span>
+                        <span class="font-medium text-green-700 dark:text-green-400">${formatCurrency(product.value)}</span>
+                    `;
+                    listDetailsContent.appendChild(productItem);
+                });
+            } else {
+                listDetailsContent.innerHTML = '<p class="text-gray-600 dark:text-gray-400">Nenhum produto nesta lista.</p>';
+            }
+
+            listDetailsTotal.textContent = formatCurrency(selectedListForDetails.total);
+            listDetailsModal.classList.remove('hidden');
+            lucide.createIcons(); // Recarrega ícones dentro do modal
+        }
+
+        function closeListDetailsModal() {
+            listDetailsModal.classList.add('hidden');
+            selectedListForDetails = null;
+        }
+
+        // Imprimir lista salva do modal de detalhes
+        printSavedListBtn.addEventListener('click', () => {
+            if (selectedListForDetails) {
+                printList(selectedListForDetails);
+            }
+        });
+
+        // Copiar lista salva do modal de detalhes
+        copySavedListBtn.addEventListener('click', () => {
+            if (selectedListForDetails) {
+                copyListToClipboard(selectedListForDetails);
+                closeListDetailsModal();
+            }
+        });
+
+
+        // FUNÇÕES DE IMPRESSÃO/CÓPIA (AGORA REUTILIZÁVEIS PARA LISTA ATUAL E LISTAS SALVAS)
+        function printList(listToPrint) {
+            const now = new Date().toLocaleString('pt-BR');
+            const totalGeral = listToPrint.products.reduce((sum, product) => sum + (product.value * (product.quantity || 1)), 0);
+
+            let content = '<!DOCTYPE html>' +
+                '<html lang="pt-BR">' +
+                '<head>' +
+                '<meta charset="UTF-8">' +
+                '<title>Lista de Compras</title>' +
+                '<style>' +
+                'body { font-family: Arial, sans-serif; margin: 20px; color: #333; }' +
+                '.header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }' +
+                '.date { text-align: right; margin-bottom: 20px; font-size: 14px; color: #666; }' +
+                '.item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px dotted #ccc; }' +
+                '.item:last-child { border-bottom: none; }' +
+                '.product-name { font-weight: bold; }' +
+                '.price { color: #2d5016; font-weight: bold; }' +
+                '.total { margin-top: 20px; padding-top: 15px; border-top: 2px solid #333; text-align: right; }' +
+                '.total-value { font-size: 20px; font-weight: bold; color: #2d5016; }' +
+                '@media print { body { margin: 10px; } .no-print { display: none; } }' +
+                '</style>' +
+                '</head>' +
+                '<body>' +
+                '<div class="header"><h1>🛒 Lista de Compras: ' + listToPrint.name + '</h1></div>' +
+                '<div class="date">Data: ' + now + '</div>' +
+                '<div class="items">';
+
+            listToPrint.products.forEach((product, index) => {
+                content += '<div class="item">' +
+                    '<span class="product-name">' + (product.name || 'Produto ' + (index + 1)) + ' (x' + (product.quantity || 1) + ')</span>' +
+                    '<span class="price">' + formatCurrency(product.value) + '</span>' +
+                    '</div>';
+            });
+
+            content += '</div>' +
+                '<div class="total">' +
+                '<div>Total Geral: <span class="total-value">' + formatCurrency(totalGeral) + '</span></div>' +
+                '</div>' +
+                '</body>' +
+                '</html>';
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.open();
+            printWindow.document.write(content);
+            printWindow.document.close();
+            printWindow.print();
+        }
+
+        // Event listener para o botão de impressão da lista atual
+        printCurrentListBtn.addEventListener('click', () => {
+            if (currentProducts.length === 0) {
+                showAlert('A lista atual está vazia. Adicione produtos antes de imprimir.');
+                return;
+            }
+            // Cria uma lista temporária para impressão da lista atual
+            const currentTempList = {
+                name: "Lista Atual",
+                products: currentProducts,
+                total: currentProducts.reduce((sum, p) => sum + (p.value * p.quantity), 0)
+            };
+            printList(currentTempList);
+        });
+
+        function copyListToClipboard(listToCopy) {
+            const now = new Date().toLocaleString('pt-BR');
+            const totalGeral = listToCopy.products.reduce((sum, product) => sum + (product.value * (product.quantity || 1)), 0);
+
+            let content = `🛒 LISTA DE COMPRAS: ${listToCopy.name}\n`;
+            content += `Data: ${now}\n\n`;
+
+            listToCopy.products.forEach(product => {
+                content += `• ${product.name} (x${product.quantity || 1}) - ${formatCurrency(product.value)}\n`;
+            });
+
+            content += `\nTOTAL: ${formatCurrency(totalGeral)}`;
+
+            navigator.clipboard.writeText(content).then(() => {
+                showAlert('Lista copiada para a área de transferência!');
+            }).catch(() => {
+                showAlert('Erro ao copiar. Tente novamente.');
+            });
+        }
+
+        // Inicialização
+        loadSavedData();
+        updateCurrentValue();
+        updateCurrentProductsDisplay(); // Garante que a lista atual é exibida se houver produtos ao carregar a página
+    </script>
+</body>
+</html>

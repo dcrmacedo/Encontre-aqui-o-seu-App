@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./imagens/agr (1).png">
+    <title>Encontre aqui seu App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1a1a1a;
+            --card-bg-color: #2c2c2c;
+            --text-color: #e0e0e0;
+            --light-text-color: #a0a0a0;
+            --border-color: #444;
+            --button-bg-color: #4a4a4a;
+            --button-text-color: #fff;
+            --official-tag-bg: #1c5c36; /* Darker green for "Oficial" */
+            --official-tag-text: #fff;
+            --new-tag-bg: #8b4513; /* SaddleBrown for "Novo" */
+            --new-tag-text: #fff;
+            --search-bg-color: #3a3a3a;
+            --search-border-color: #555;
+            --scroll-thumb-color: #666;
+            --scroll-track-color: #333;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--card-bg-color);
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+            padding: 25px;
+        }
+
+        .search-bar-container {
+            margin-bottom: 25px;
+            display: flex;
+            align-items: center;
+            background-color: var(--search-bg-color);
+            border-radius: 8px;
+            padding: 10px 15px;
+            border: 1px solid var(--search-border-color);
+        }
+
+        .search-bar-container input {
+            flex-grow: 1;
+            background: none;
+            border: none;
+            color: var(--text-color);
+            font-size: 1.1em;
+            outline: none;
+            padding: 5px 10px;
+        }
+
+        .search-bar-container input::placeholder {
+            color: var(--light-text-color);
+        }
+
+        .search-bar-container svg {
+            color: var(--light-text-color);
+            margin-right: 10px;
+        }
+
+        .category-buttons {
+            display: flex;
+            overflow-x: auto;
+            white-space: nowrap;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+            -webkit-overflow-scrolling: touch; /* For smoother scrolling on iOS */
+            scrollbar-width: thin; /* Firefox */
+            scrollbar-color: var(--scroll-thumb-color) var(--scroll-track-color); /* Firefox */
+        }
+
+        .category-buttons::-webkit-scrollbar {
+            height: 6px;
+        }
+
+        .category-buttons::-webkit-scrollbar-track {
+            background: var(--scroll-track-color);
+            border-radius: 10px;
+        }
+
+        .category-buttons::-webkit-scrollbar-thumb {
+            background-color: var(--scroll-thumb-color);
+            border-radius: 10px;
+            border: 2px solid var(--scroll-track-color);
+        }
+
+        .category-button {
+            display: inline-flex;
+            align-items: center;
+            padding: 8px 18px;
+            background-color: var(--button-bg-color);
+            border-radius: 20px;
+            color: var(--button-text-color);
+            text-decoration: none;
+            font-size: 0.95em;
+            margin-right: 10px;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            cursor: pointer;
+            border: 1px solid var(--border-color);
+            flex-shrink: 0; /* Prevent buttons from shrinking */
+        }
+
+        .category-button:hover {
+            background-color: #5a5a5a;
+            transform: translateY(-2px);
+        }
+
+        .bot-list {
+            display: grid;
+            gap: 18px;
+        }
+
+        /* Style for the clickable bot card link */
+        .bot-card-link {
+            text-decoration: none; /* Remove underline from the link */
+            color: inherit; /* Inherit text color from parent */
+            display: block; /* Make the whole area clickable */
+            border-radius: 10px; /* Match the card border-radius */
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        .bot-card-link:hover {
+            transform: translateY(-2px); /* Lift effect on hover */
+            background-color: #3a3a3a; /* Slightly lighter background on hover */
+        }
+
+
+        .bot-card {
+            background-color: #333; /* Default background, will be overridden by .bot-card-link:hover */
+            border-radius: 10px;
+            padding: 18px;
+            display: flex;
+            align-items: flex-start;
+            border: 1px solid var(--border-color);
+            position: relative; /* For positioning tags */
+            /* Remove transform and background-color from here as it's now on .bot-card-link */
+        }
+
+
+        .bot-card-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background-color: #4a4a4a;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-right: 15px;
+            flex-shrink: 0;
+            overflow: hidden; /* Ensure images fit */
+        }
+
+        .bot-card-icon img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .bot-card-content {
+            flex-grow: 1;
+        }
+
+        .bot-card-title {
+            font-size: 1.2em;
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+        }
+
+        .bot-card-description {
+            font-size: 0.9em;
+            color: var(--light-text-color);
+            line-height: 1.5;
+        }
+
+        .bot-tag {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 500;
+            margin-left: 10px;
+            text-transform: uppercase;
+        }
+
+        .tag-oficial {
+            background-color: var(--official-tag-bg);
+            color: var(--official-tag-text);
+        }
+
+        .tag-novo {
+            background-color: var(--new-tag-bg);
+            color: var(--new-tag-text);
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            .search-bar-container {
+                padding: 8px 12px;
+            }
+            .search-bar-container input {
+                font-size: 1em;
+            }
+            .category-button {
+                padding: 7px 15px;
+                font-size: 0.9em;
+            }
+            .bot-card-link {
+                display: block; /* Ensure it wraps correctly in smaller screens */
+            }
+            .bot-card {
+                flex-direction: column;
+                align-items: center;
+                text-align: center;
+            }
+            .bot-card-icon {
+                margin: 0 0 10px 0;
+            }
+            .bot-card-title {
+                justify-content: center;
+            }
+            .bot-tag {
+                margin-left: 5px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            .container {
+                border-radius: 8px;
+                padding: 15px;
+            }
+            .bot-card-title {
+                font-size: 1.1em;
+            }
+            .bot-card-description {
+                font-size: 0.85em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="search-bar-container">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-search">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            </svg>
+            <input type="text" id="searchInput" placeholder="Pesquise pelo seu aplicativo ">
+        </div>
+
+    
+
+        <div class="bot-list" id="botList">
+            <a href="6index.html" class="bot-card-link" data-name="Calculadora de Compras">
+                <div class="bot-card">
+                    <div class="bot-card-icon">
+                        <img src="https://static.vecteezy.com/ti/vetor-gratis/p1/13258779-conceito-de-compras-online-carrinho-como-carrinho-de-compras-no-celular-gratis-vetor.jpg" alt="Assistant Icon">
+                    </div>
+                    <div class="bot-card-content">
+                        <div class="bot-card-title">Calculadora de Compras 🛒<span class=""></span></div>
+                        <p class="bot-card-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Et rem quasi ad dolorum fugit enim tenetur laudantium amet! Recusandae aspernatur iure qui nobis fugit eaque ex at sint consequatur eius? "...</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="2index.html" class="bot-card-link" data-name="Gerador de QR">
+                <div class="bot-card">
+                    <div class="bot-card-icon">
+                        <img src="https://uploads.sempreupdate.com.br/2019/10/como-instalar-o-qr-code-generator-no-ubuntu-fedora-debian-centos-e-opensuse-gerador-de-qr-code-para-linux-2019.png" alt="App-Creator Icon">
+                    </div>
+                    <div class="bot-card-content">
+                        <div class="bot-card-title">Gerador de QR  <span class=""></span></div>
+                        <p class="bot-card-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Blanditiis quos tempora quia assumenda voluptates, ratione deleniti distinctio obcaecati possimus quam eum reiciendis modi recusandae odi Veja as...</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="3index.html" class="bot-card-link" data-name="E-mail e Senha Temporários">
+                <div class="bot-card">
+                    <div class="bot-card-icon">
+                        <img src="https://surfshark.com/wp-content/uploads/2024/08/Temporary_email_address_hero-1024x501.png" alt="GPT-4.1 Icon">
+                    </div>
+                    <div class="bot-card-content">
+                        <div class="bot-card-title">E-mail e Senha Temporários ✉ ⏱<span class=""></span></div>
+                        <p class="bot-card-description">Lorem ipsum dolor sit amet consectetur adipisicing elit. Adipisci consequuntur, tenetur quos quia laudantium reiciendis veritatis fugiat sunt consectetur! Aliquid adipisci modi doloremque itaque fuga aliquam tempor...</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="4index.html" class="bot-card-link" data-name="Conversor de Planilhas">
+                <div class="bot-card">
+                    <div class="bot-card-icon">
+                        <img src="https://static.vecteezy.com/ti/vetor-gratis/p1/2550630-mao-segurando-um-tablet-com-planilha-para-coisas-no-planejamento-e-contabilidade-ilustracao-vetor.jpg" alt="GPT-4o Icon">
+                    </div>
+                    <div class="bot-card-content">
+                        <div class="bot-card-title">Conversor de Planilhas <span class=""></span></div>
+                        <p class="bot-card-description">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Explicabo doloremque nesciunt sed dolor, ab qui iure nostrum adipisci modi ipsum distinctio facere, omnis quisquam officia? Rerum qui minima inventore esse....</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="https://dcrmacedo.github.io/Institutoalberteinstein.com.br./" class="bot-card-link" data-name="Grok-4">
+                <div class="bot-card">
+                    <div class="bot-card-icon">
+                        <img src="https://dcrmacedo.github.io/Institutoalberteinstein.com.br./docs%20-%20Copia/imagem.albert.webp" alt="Grok-4 Icon">
+                    </div>
+                    <div class="bot-card-content">
+                        <div class="bot-card-title">Site Albert Einstein<span class="bot-tag tag-oficial">Oficial</span><span class=""></span></div>
+                        <p class="bot-card-description">Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore doloribus reiciendis, sint enim ipsum vel dolor sit voluptatibus quasi cupiditate, repudiandae officia suscipit adipisci quae incidunt minus temporibus ...</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="https://dcrmacedo.github.io/CadastroFut/" class="bot-card-link" data-name="o3-pro">
+                <div class="bot-card">
+                    <div class="bot-card-icon">
+                        <img src="https://radioagudo.com.br/agudo2/userfiles/images/adesivo-jogador-futebol-futsal-esportes-decoracao.jpg" alt="o3-pro Icon">
+                    </div>
+                    <div class="bot-card-content">
+                        <div class="bot-card-title">Sistema de Cadastro de Futsal ⚽<span class=""></span></div>
+                        <p class="bot-card-description">Lorem, ipsum dolor sit amet consectetur adipisicing elit. Sint cupiditate laborum amet sunt iusto? Nulla debitis repellendus nesciunt, atque beatae aut. Fugiat pariatur earum expedita iusto cupiditate laborum omnis deleniti....</p>
+                    </div>
+                </div>
+            </a>
+
+            <a href="5index.html" class="bot-card-link" data-name="o4-mini">
+                <div class="bot-card">
+                    <div class="bot-card-icon">
+                        <img src="https://us.123rf.com/450wm/liubou/liubou1603/liubou160300031/53155041-ilustra%C3%A7%C3%A3o-de-espa%C3%A7o-em-um-fundo-branco.jpg?ver=6" alt="o4-mini Icon">
+                    </div>
+                    <div class="bot-card-content">
+                        <div class="bot-card-title">Cosmos 🪐🌑<span class=""></span></div>
+                        <p class="bot-card-description">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Est doloremque cum quod voluptate facilis totam, delectus a enim non, voluptatum nesciunt obcaecati. Deserunt quis reprehenderit atque nam ipsam tempora ad!...</p>
+                    </div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const botList = document.getElementById('botList');
+        const botCardLinks = botList.getElementsByClassName('bot-card-link');
+
+        searchInput.addEventListener('keyup', function(event) {
+            const searchTerm = event.target.value.toLowerCase();
+
+            for (let i = 0; i < botCardLinks.length; i++) {
+                const botCardLink = botCardLinks[i];
+                // Get the bot name from the data-name attribute
+                const botName = botCardLink.getAttribute('data-name').toLowerCase();
+                // Get the bot description from the .bot-card-description element
+                const botDescription = botCardLink.querySelector('.bot-card-description').textContent.toLowerCase();
+
+                // Check if the search term is in the bot name or description
+                if (botName.includes(searchTerm) || botDescription.includes(searchTerm)) {
+                    botCardLink.style.display = 'block'; // Show the link (which contains the card)
+                } else {
+                    botCardLink.style.display = 'none'; // Hide the link
+                }
+            }
+        });
+
+        // Make category buttons functional (for demonstration, they just log to console)
+        const categoryButtons = document.querySelectorAll('.category-button');
+        categoryButtons.forEach(button => {
+            button.addEventListener('click', function(event) {
+                event.preventDefault(); // Prevent default link behavior
+                const categoryName = this.textContent;
+                console.log(`Botões de categoria clicados: ${categoryName}`);
+                // In a real application, you would filter the bot list based on the category
+                alert(`Você clicou na categoria: ${categoryName}`);
+            });
+        });
+    </script>
+</body>
+</html>

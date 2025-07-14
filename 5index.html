@@ -1,0 +1,1689 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explorador Cósmico</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.5/flowbite.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Raleway:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+    <style>
+        :root {
+            --space-dark: #0a0a1a;
+            --space-blue: #0f2446;
+            --space-purple: #3a1156;
+            --space-accent: #7b52ab;
+            --space-highlight: #bb61d8;
+            --space-star: #e3e6ff;
+            --text-color: #e3e6ff;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: var(--space-dark);
+                --bg-secondary: var(--space-blue);
+                --text-primary: var(--text-color);
+            }
+        }
+
+        @media (prefers-color-scheme: light) {
+            :root {
+                --bg-primary: #f0f4ff;
+                --bg-secondary: #e2e8f8;
+                --text-primary: #0a0a1a;
+            }
+        }
+        
+        body.dark-mode {
+            --bg-primary: var(--space-dark);
+            --bg-secondary: var(--space-blue);
+            --text-primary: var(--text-color);
+        }
+        
+        body:not(.dark-mode) {
+            --bg-primary: #f0f4ff;
+            --bg-secondary: #e2e8f8;
+            --text-primary: #0a0a1a;
+        }
+
+        body {
+            font-family: 'Raleway', sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            transition: background-color 0.5s ease;
+        }
+
+        .orbitron {
+            font-family: 'Orbitron', sans-serif;
+        }
+
+        #stars-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            position: relative;
+            z-index: 10;
+            background: linear-gradient(135deg, rgba(10, 10, 26, 0.7) 0%, rgba(58, 17, 86, 0.8) 100%);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            border: 1px solid rgba(123, 82, 171, 0.3);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        
+        body:not(.dark-mode) .hero-content {
+            background: linear-gradient(135deg, rgba(240, 244, 255, 0.8) 0%, rgba(226, 232, 248, 0.9) 100%);
+            border: 1px solid rgba(123, 82, 171, 0.2);
+        }
+
+        .cosmic-card {
+            background: linear-gradient(135deg, rgba(15, 36, 70, 0.7) 0%, rgba(58, 17, 86, 0.7) 100%);
+            backdrop-filter: blur(5px);
+            border-radius: 16px;
+            border: 1px solid rgba(123, 82, 171, 0.2);
+            transition: all 0.4s ease;
+            overflow: hidden;
+        }
+        
+        body:not(.dark-mode) .cosmic-card {
+            background: linear-gradient(135deg, rgba(240, 244, 255, 0.9) 0%, rgba(226, 232, 248, 0.9) 100%);
+            color: #0a0a1a;
+            border: 1px solid rgba(93, 92, 222, 0.2);
+        }
+
+        .cosmic-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(123, 82, 171, 0.3);
+            border: 1px solid rgba(187, 97, 216, 0.5);
+        }
+
+        .cosmic-card:hover .card-icon {
+            color: var(--space-highlight);
+            transform: scale(1.2) rotate(5deg);
+        }
+
+        .card-icon {
+            transition: all 0.4s ease;
+            color: var(--space-accent);
+        }
+
+        .cosmic-button {
+            background: linear-gradient(135deg, var(--space-purple) 0%, var(--space-accent) 100%);
+            border: none;
+            color: white;
+            font-family: 'Orbitron', sans-serif;
+            padding: 12px 24px;
+            border-radius: 30px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            transform-style: preserve-3d;
+            z-index: 1;
+        }
+
+        .cosmic-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, transparent 0%, rgba(227, 230, 255, 0.2) 50%, transparent 100%);
+            transform: translateX(-100%);
+            transition: all 0.6s ease;
+            z-index: -1;
+        }
+
+        .cosmic-button:hover {
+            box-shadow: 0 5px 20px rgba(123, 82, 171, 0.5);
+            transform: translateY(-3px);
+        }
+
+        .cosmic-button:hover::before {
+            transform: translateX(100%);
+        }
+
+        .star {
+            position: absolute;
+            background-color: var(--space-star);
+            border-radius: 50%;
+            opacity: 0.8;
+            animation: twinkle var(--duration, 4s) infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
+        .planet {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--color-1), var(--color-2));
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+            animation: rotate 20s infinite linear;
+        }
+
+        .planet::before {
+            content: '';
+            position: absolute;
+            width: 110%;
+            height: 110%;
+            top: -5%;
+            left: -5%;
+            background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 70%);
+        }
+
+        .planet::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 100 100"><circle cx="50" cy="20" r="4" fill="rgba(255,255,255,0.2)"/><circle cx="30" cy="60" r="6" fill="rgba(255,255,255,0.1)"/><circle cx="70" cy="40" r="8" fill="rgba(255,255,255,0.15)"/><circle cx="20" cy="30" r="3" fill="rgba(255,255,255,0.12)"/><circle cx="80" cy="70" r="5" fill="rgba(255,255,255,0.08)"/></svg>');
+            background-size: 100% 100%;
+            animation: rotate 15s infinite linear reverse;
+        }
+
+        @keyframes rotate {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .nav-item {
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item::before {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            width: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--space-highlight), transparent);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+        }
+
+        .nav-item:hover::before {
+            width: 100%;
+        }
+
+        .nav-item:hover {
+            color: var(--space-highlight);
+            transform: translateY(-2px);
+        }
+
+        .nav-item.active::before {
+            width: 80%;
+            background: linear-gradient(90deg, transparent, var(--space-highlight) 20%, var(--space-highlight) 80%, transparent);
+        }
+
+        .social-icon {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .social-icon:hover {
+            color: var(--space-highlight);
+            transform: translateY(-3px) scale(1.1);
+        }
+
+        .social-icon::before {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, var(--space-highlight) 0%, transparent 70%);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .social-icon:hover::before {
+            top: 0;
+            opacity: 0.2;
+        }
+
+        .cosmic-input {
+            background: rgba(10, 10, 26, 0.7);
+            border: 1px solid var(--space-accent);
+            color: var(--text-color);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        body:not(.dark-mode) .cosmic-input {
+            background: rgba(240, 244, 255, 0.7);
+            color: #0a0a1a;
+        }
+
+        .cosmic-input:focus {
+            border-color: var(--space-highlight);
+            box-shadow: 0 0 15px rgba(123, 82, 171, 0.5);
+            outline: none;
+            transform: translateY(-2px);
+        }
+
+        .cosmic-textarea {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .cosmic-input::placeholder {
+            color: rgba(227, 230, 255, 0.5);
+        }
+
+        .section-heading {
+            position: relative;
+            display: inline-block;
+        }
+
+        .section-heading::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 60%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--space-accent), transparent);
+        }
+
+        .cosmic-gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+        }
+
+        .galaxy-img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 12px;
+            transition: all 0.5s ease;
+            transform-style: preserve-3d;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        }
+
+        .galaxy-card {
+            position: relative;
+            overflow: hidden;
+            border-radius: 12px;
+        }
+
+        .galaxy-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to bottom, transparent 70%, rgba(10, 10, 26, 0.8) 100%);
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .galaxy-card:hover::before {
+            opacity: 1;
+        }
+
+        .galaxy-card:hover .galaxy-img {
+            transform: scale(1.05);
+        }
+
+        .galaxy-title {
+            position: absolute;
+            bottom: -40px;
+            left: 0;
+            width: 100%;
+            padding: 15px;
+            background: rgba(10, 10, 26, 0.7);
+            color: var(--text-color);
+            z-index: 2;
+            transition: all 0.5s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .galaxy-card:hover .galaxy-title {
+            bottom: 0;
+        }
+
+        #particles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.8s ease forwards;
+            opacity: 0;
+        }
+
+        .orbit-path {
+            border: 1px dashed rgba(123, 82, 171, 0.3);
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            animation: pulse 4s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.3; }
+            100% { opacity: 0.8; }
+        }
+
+        .satellite {
+            width: 10px;
+            height: 10px;
+            background: var(--space-highlight);
+            border-radius: 50%;
+            position: absolute;
+            box-shadow: 0 0 10px var(--space-highlight);
+            animation: orbit 10s linear infinite;
+        }
+
+        @keyframes orbit {
+            from { transform: rotate(0deg) translateX(var(--orbit-radius)) rotate(0deg); }
+            to { transform: rotate(360deg) translateX(var(--orbit-radius)) rotate(-360deg); }
+        }
+
+        .cosmic-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .cosmic-scroll::-webkit-scrollbar-track {
+            background: rgba(10, 10, 26, 0.3);
+            border-radius: 4px;
+        }
+
+        .cosmic-scroll::-webkit-scrollbar-thumb {
+            background: var(--space-accent);
+            border-radius: 4px;
+        }
+
+        .cosmic-scroll::-webkit-scrollbar-thumb:hover {
+            background: var(--space-highlight);
+        }
+
+        @media (max-width: 768px) {
+            .cosmic-gallery {
+                grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            }
+            
+            .hero-content {
+                margin: 0 15px;
+            }
+        }
+
+        /* Dark mode toggle */
+        .theme-switch {
+            position: relative;
+            width: 60px;
+            height: 30px;
+            background: linear-gradient(45deg, var(--space-dark), var(--space-blue));
+            border-radius: 30px;
+            cursor: pointer;
+            border: 2px solid var(--space-accent);
+        }
+
+        .theme-switch::before {
+            content: '';
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            top: 1px;
+            left: 2px;
+            background: linear-gradient(135deg, #ffd700, #ffa500);
+            transition: transform 0.3s ease;
+            box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        }
+
+        .dark-mode .theme-switch::before {
+            transform: translateX(30px);
+            background: linear-gradient(135deg, #e3e6ff, #7b52ab);
+        }
+
+        .loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--space-dark);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .loader-orbit {
+            width: 100px;
+            height: 100px;
+            position: relative;
+            animation: rotate 2s linear infinite;
+        }
+
+        .loader-planet {
+            width: 30px;
+            height: 30px;
+            background: linear-gradient(135deg, var(--space-accent), var(--space-highlight));
+            border-radius: 50%;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .loader-moon {
+            width: 10px;
+            height: 10px;
+            background: var(--space-star);
+            border-radius: 50%;
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            animation: orbit 2s linear infinite;
+        }
+
+        .loader-text {
+            margin-top: 20px;
+            font-family: 'Orbitron', sans-serif;
+            color: var(--space-highlight);
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body class="cosmic-scroll">
+    <div class="loader" id="loader">
+        <div class="loader-content">
+            <div class="loader-orbit">
+                <div class="loader-planet"></div>
+                <div class="loader-moon"></div>
+            </div>
+            <div class="loader-text">CARREGANDO O UNIVERSO...</div>
+        </div>
+    </div>
+
+    <div id="stars-container"></div>
+    <div id="particles-container"></div>
+
+    <header class="sticky top-0 z-50 backdrop-filter backdrop-blur-lg bg-opacity-70 bg-gray-900 shadow-lg">
+        <nav class="container mx-auto px-6 py-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+                <div class="relative w-10 h-10">
+                    <div class="planet absolute inset-0" style="--color-1: #3a1156; --color-2: #0f2446;"></div>
+                </div>
+                <span class="text-2xl font-bold orbitron text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-blue-600">COSMOS</span>
+            </div>
+            
+            <div class="md:flex hidden space-x-8">
+                <a href="#inicio" class="nav-item active orbitron">INÍCIO</a>
+                <a href="#exploracao" class="nav-item orbitron">EXPLORAÇÃO</a>
+                <a href="#descobertas" class="nav-item orbitron">DESCOBERTAS</a>
+                <a href="#galeria" class="nav-item orbitron">GALERIA</a>
+                <a href="#contato" class="nav-item orbitron">CONTATO</a>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <div class="theme-switch" id="themeSwitch"></div>
+                <button class="md:hidden block focus:outline-none" id="menuButton">
+                    <i class="fas fa-bars text-2xl"></i>
+                </button>
+            </div>
+        </nav>
+        
+        <div class="md:hidden hidden transition-all duration-300 ease-in-out" id="mobileMenu">
+            <div class="flex flex-col space-y-4 px-6 py-4 bg-gray-900 bg-opacity-90 backdrop-filter backdrop-blur-lg">
+                <a href="#inicio" class="nav-item orbitron py-2">INÍCIO</a>
+                <a href="#exploracao" class="nav-item orbitron py-2">EXPLORAÇÃO</a>
+                <a href="#descobertas" class="nav-item orbitron py-2">DESCOBERTAS</a>
+                <a href="#galeria" class="nav-item orbitron py-2">GALERIA</a>
+                <a href="#contato" class="nav-item orbitron py-2">CONTATO</a>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <section id="inicio" class="min-h-screen flex items-center justify-center py-20 relative overflow-hidden">
+            <div class="absolute w-full h-full z-0">
+                <div class="absolute top-1/4 right-1/4 w-40 h-40 opacity-50 animate-fade-in" style="animation-delay: 0.5s;">
+                    <div class="orbit-path" style="width: 200px; height: 200px;"></div>
+                    <div class="satellite" style="--orbit-radius: 100px;"></div>
+                </div>
+                <div class="absolute bottom-1/3 left-1/3 w-60 h-60 opacity-50 animate-fade-in" style="animation-delay: 0.8s;">
+                    <div class="orbit-path" style="width: 300px; height: 300px;"></div>
+                    <div class="satellite" style="--orbit-radius: 150px;"></div>
+                </div>
+            </div>
+            
+            <div class="container mx-auto px-6 relative z-10">
+                <div class="grid md:grid-cols-2 gap-12 items-center">
+                    <div class="animate-fade-in" style="animation-delay: 0.3s;">
+                        <h1 class="text-5xl md:text-6xl font-black mb-6 orbitron text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-blue-500 to-purple-500">
+                            EXPLORADOR CÓSMICO
+                        </h1>
+                        <p class="text-xl mb-8 leading-relaxed">
+                            Embarque em uma jornada épica através do vasto universo. Descubra mundos alienígenas, 
+                            galáxias distantes e os mistérios do cosmos em uma experiência visual deslumbrante.
+                        </p>
+                        <div class="flex flex-wrap gap-4">
+                            <button class="cosmic-button">
+                                <i class="fas fa-rocket mr-2"></i> INICIAR JORNADA
+                            </button>
+                            <button class="cosmic-button" style="background: linear-gradient(135deg, #0f2446 0%, #3a1156 100%)">
+                                <i class="fas fa-meteor mr-2"></i> EXPLORAR UNIVERSO
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="relative animate-fade-in" style="animation-delay: 0.6s;">
+                        <div class="hero-content p-6 md:p-10">
+                            <div class="aspect-w-16 aspect-h-9 relative overflow-hidden rounded-lg">
+                                <div class="w-full h-full relative" id="heroCanvas"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="exploracao" class="py-20 relative">
+            <div class="container mx-auto px-6 relative z-10">
+                <h2 class="text-4xl font-bold mb-16 orbitron text-center section-heading mx-auto">EXPLORAÇÃO CÓSMICA</h2>
+                
+                <div class="grid md:grid-cols-3 gap-8">
+                    <div class="cosmic-card p-6 animate-fade-in" style="animation-delay: 0.2s;">
+                        <div class="mb-6 text-center">
+                            <i class="fas fa-galaxy card-icon text-6xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 orbitron text-center">Galáxias Distantes</h3>
+                        <p class="text-center">
+                            Explore milhões de galáxias que pontuam o cosmos, cada uma com suas estrelas, planetas e mistérios únicos.
+                        </p>
+                    </div>
+                    
+                    <div class="cosmic-card p-6 animate-fade-in" style="animation-delay: 0.4s;">
+                        <div class="mb-6 text-center">
+                            <i class="fas fa-planet-ringed card-icon text-6xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 orbitron text-center">Mundos Exóticos</h3>
+                        <p class="text-center">
+                            Descubra planetas alienigenas com paisagens surreais, oceanos alienígenas e fenômenos surpreendentes.
+                        </p>
+                    </div>
+                    
+                    <div class="cosmic-card p-6 animate-fade-in" style="animation-delay: 0.6s;">
+                        <div class="mb-6 text-center">
+                            <i class="fas fa-meteor card-icon text-6xl"></i>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-4 orbitron text-center">Fenômenos Cósmicos</h3>
+                        <p class="text-center">
+                            Testemunhe supernovas, buracos negros, colisões estelares e outros eventos astronômicos espetaculares.
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="mt-16 text-center animate-fade-in" style="animation-delay: 0.8s;">
+                    <button class="cosmic-button">
+                        <i class="fas fa-user-astronaut mr-2"></i> MAIS AVENTURAS
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="descobertas" class="py-20 relative">
+            <div class="container mx-auto px-6 relative z-10">
+                <h2 class="text-4xl font-bold mb-16 orbitron text-center section-heading mx-auto">DESCOBERTAS RECENTES</h2>
+                
+                <div class="grid md:grid-cols-2 gap-16 items-center">
+                    <div class="space-y-8 animate-fade-in" style="animation-delay: 0.3s;">
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="w-16 h-16 relative">
+                                    <div class="planet absolute inset-0" style="--color-1: #3a1156; --color-2: #7b52ab;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold mb-2 orbitron">Kepler-452b: O Planeta Gêmeo</h3>
+                                <p>
+                                    O exoplaneta mais semelhante à Terra já descoberto, com condições potencialmente habitáveis e localizado a 1.400 anos-luz de distância.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="w-16 h-16 relative">
+                                    <div class="planet absolute inset-0" style="--color-1: #0f2446; --color-2: #3a1156;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold mb-2 orbitron">Nebulosa Aurora</h3>
+                                <p>
+                                    Uma nova nebulosa descoberta com padrões de cores semelhantes às auroras terrestres, formada pela interação entre poeira cósmica e radiação estelar.
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-start space-x-4">
+                            <div class="flex-shrink-0 mt-1">
+                                <div class="w-16 h-16 relative">
+                                    <div class="planet absolute inset-0" style="--color-1: #bb61d8; --color-2: #7b52ab;"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-bold mb-2 orbitron">Buraco Negro Errante</h3>
+                                <p>
+                                    Um raro buraco negro solitário detectado viajando pelo espaço interestelar, o primeiro de seu tipo observado fora de um sistema estelar.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="relative animate-fade-in" style="animation-delay: 0.6s;">
+                        <div class="hero-content p-6 md:p-10 h-full">
+                            <div class="relative h-full min-h-[300px]" id="discoveryCanvas"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="galeria" class="py-20 relative">
+            <div class="container mx-auto px-6 relative z-10">
+                <h2 class="text-4xl font-bold mb-16 orbitron text-center section-heading mx-auto">GALERIA CÓSMICA</h2>
+                
+                <div class="cosmic-gallery animate-fade-in" style="animation-delay: 0.4s;">
+                    <div class="galaxy-card">
+                        <div class="w-full h-full" id="galaxy1"></div>
+                        <div class="galaxy-title">
+                            <h3 class="text-lg font-bold orbitron">Galáxia Andromeda</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="galaxy-card">
+                        <div class="w-full h-full" id="galaxy2"></div>
+                        <div class="galaxy-title">
+                            <h3 class="text-lg font-bold orbitron">Nebulosa Águia</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="galaxy-card">
+                        <div class="w-full h-full" id="galaxy3"></div>
+                        <div class="galaxy-title">
+                            <h3 class="text-lg font-bold orbitron">Pilares da Criação</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="galaxy-card">
+                        <div class="w-full h-full" id="galaxy4"></div>
+                        <div class="galaxy-title">
+                            <h3 class="text-lg font-bold orbitron">Supernova Cassiopeia</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="galaxy-card">
+                        <div class="w-full h-full" id="galaxy5"></div>
+                        <div class="galaxy-title">
+                            <h3 class="text-lg font-bold orbitron">Via Láctea</h3>
+                        </div>
+                    </div>
+                    
+                    <div class="galaxy-card">
+                        <div class="w-full h-full" id="galaxy6"></div>
+                        <div class="galaxy-title">
+                            <h3 class="text-lg font-bold orbitron">Aurora Espacial</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contato" class="py-20 relative">
+            <div class="container mx-auto px-6 relative z-10">
+                <h2 class="text-4xl font-bold mb-16 orbitron text-center section-heading mx-auto">ENVIE SUA MENSAGEM AO COSMOS</h2>
+                
+                <div class="grid md:grid-cols-2 gap-12 animate-fade-in" style="animation-delay: 0.3s;">
+                    <div class="cosmic-card p-8">
+                        <form id="contactForm">
+                            <div class="mb-6">
+                                <label for="name" class="block mb-2 orbitron">SEU NOME</label>
+                                <input type="text" id="name" class="cosmic-input w-full" placeholder="Nome Completo" required>
+                            </div>
+                            
+                            <div class="mb-6">
+                                <label for="email" class="block mb-2 orbitron">EMAIL</label>
+                                <input type="email" id="email" class="cosmic-input w-full" placeholder="seu@email.com" required>
+                            </div>
+                            
+                            <div class="mb-8">
+                                <label for="message" class="block mb-2 orbitron">SUA MENSAGEM</label>
+                                <textarea id="message" class="cosmic-input cosmic-textarea w-full" placeholder="Compartilhe seus pensamentos sobre o cosmos..." required></textarea>
+                            </div>
+                            
+                            <button type="submit" class="cosmic-button w-full">
+                                <i class="fas fa-paper-plane mr-2"></i> TRANSMITIR MENSAGEM
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="flex flex-col justify-between">
+                        <div class="mb-8">
+                            <h3 class="text-2xl font-bold mb-4 orbitron">CONECTE-SE</h3>
+                            <p class="mb-6">
+                                Junte-se à nossa comunidade de exploradores espaciais e receba as últimas descobertas e atualizações do universo.
+                            </p>
+                            
+                            <div class="flex space-x-6 mb-10">
+                                <a href="#" class="social-icon text-3xl">
+                                    <i class="fab fa-instagram"></i>
+                                </a>
+                                <a href="#" class="social-icon text-3xl">
+                                    <i class="fab fa-twitter"></i>
+                                </a>
+                                <a href="#" class="social-icon text-3xl">
+                                    <i class="fab fa-facebook"></i>
+                                </a>
+                                <a href="#" class="social-icon text-3xl">
+                                    <i class="fab fa-youtube"></i>
+                                </a>
+                            </div>
+                        </div>
+                        
+                        <div class="cosmic-card p-6">
+                            <h3 class="text-xl font-bold mb-3 orbitron">BOLETIM CÓSMICO</h3>
+                            <p class="mb-4">
+                                Inscreva-se para receber atualizações mensais sobre novidades do espaço.
+                            </p>
+                            
+                            <div class="flex">
+                                <input type="email" class="cosmic-input flex-grow" placeholder="seu@email.com">
+                                <button class="cosmic-button ml-2 whitespace-nowrap">
+                                    <i class="fas fa-star mr-1"></i> ASSINAR
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="py-8 backdrop-filter backdrop-blur-lg bg-opacity-70 bg-gray-900 relative z-10">
+        <div class="container mx-auto px-6">
+            <div class="grid md:grid-cols-4 gap-8 mb-8">
+                <div>
+                    <h4 class="text-lg font-bold mb-4 orbitron">COSMOS</h4>
+                    <p class="text-sm">
+                        Explorando o universo, uma galáxia de cada vez. Sua portal para as maravilhas cósmicas.
+                    </p>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-bold mb-4 orbitron">LINKS</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#inicio" class="hover:text-purple-400 transition">Início</a></li>
+                        <li><a href="#exploracao" class="hover:text-purple-400 transition">Exploração</a></li>
+                        <li><a href="#descobertas" class="hover:text-purple-400 transition">Descobertas</a></li>
+                        <li><a href="#galeria" class="hover:text-purple-400 transition">Galeria</a></li>
+                        <li><a href="#contato" class="hover:text-purple-400 transition">Contato</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-bold mb-4 orbitron">MISSÕES</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-purple-400 transition">Estação Orbital</a></li>
+                        <li><a href="#" class="hover:text-purple-400 transition">Expedição Lunar</a></li>
+                        <li><a href="#" class="hover:text-purple-400 transition">Voo para Marte</a></li>
+                        <li><a href="#" class="hover:text-purple-400 transition">Exploração de Europa</a></li>
+                        <li><a href="#" class="hover:text-purple-400 transition">Viagem Interestelar</a></li>
+                    </ul>
+                </div>
+                
+                <div>
+                    <h4 class="text-lg font-bold mb-4 orbitron">LEGAL</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="#" class="hover:text-purple-400 transition">Termos de Uso</a></li>
+                        <li><a href="#" class="hover:text-purple-400 transition">Política de Privacidade</a></li>
+                        <li><a href="#" class="hover:text-purple-400 transition">Cookies</a></li>
+                        <li><a href="#" class="hover:text-purple-400 transition">Licenças</a></li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="pt-8 border-t border-gray-700 text-center text-sm">
+                <p>&copy; 2023 COSMOS. Todos os direitos reservados. Explorando o universo desde 2023.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/flowbite/1.6.5/flowbite.min.js"></script>
+    <script>
+        // Criar estrelas
+        function createStars() {
+            const starsContainer = document.getElementById('stars-container');
+            starsContainer.innerHTML = '';
+            
+            const starCount = window.innerWidth < 768 ? 150 : 300;
+            
+            for (let i = 0; i < starCount; i++) {
+                const star = document.createElement('div');
+                star.classList.add('star');
+                
+                // Tamanho aleatório
+                const size = Math.random() * 3 + 1;
+                star.style.width = `${size}px`;
+                star.style.height = `${size}px`;
+                
+                // Posição aleatória
+                star.style.left = `${Math.random() * 100}%`;
+                star.style.top = `${Math.random() * 100}%`;
+                
+                // Duração da animação aleatória
+                star.style.setProperty('--duration', `${Math.random() * 4 + 2}s`);
+                
+                // Atraso aleatório
+                star.style.animationDelay = `${Math.random() * 5}s`;
+                
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // Toggle menu mobile
+        document.getElementById('menuButton').addEventListener('click', function() {
+            const mobileMenu = document.getElementById('mobileMenu');
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Itens de navegação ativos no scroll
+        function setActiveNavItem() {
+            const sections = document.querySelectorAll('section');
+            const navItems = document.querySelectorAll('.nav-item');
+            
+            let currentSection = '';
+            
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.clientHeight;
+                
+                if (window.scrollY >= sectionTop - 200) {
+                    currentSection = section.getAttribute('id');
+                }
+            });
+            
+            navItems.forEach(item => {
+                item.classList.remove('active');
+                if (item.getAttribute('href') === `#${currentSection}`) {
+                    item.classList.add('active');
+                }
+            });
+        }
+
+        // Form submission
+        document.getElementById('contactForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Simple validation
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const message = document.getElementById('message').value;
+            
+            if (name && email && message) {
+                alert('Mensagem enviada com sucesso! Em breve entraremos em contato.');
+                this.reset();
+            }
+        });
+
+        // Animação de fade-in nos elementos
+        function handleScrollAnimation() {
+            const fadeElements = document.querySelectorAll('.animate-fade-in');
+            
+            fadeElements.forEach(element => {
+                const elementPosition = element.getBoundingClientRect().top;
+                const windowHeight = window.innerHeight;
+                
+                if (elementPosition < windowHeight - 50) {
+                    element.style.opacity = '1';
+                    element.style.transform = 'translateY(0)';
+                }
+            });
+        }
+
+        // Three.js para as visualizações 3D
+        function setupHeroCanvas() {
+            const container = document.getElementById('heroCanvas');
+            if (!container) return;
+            
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+            
+            // Criar planeta
+            const geometry = new THREE.SphereGeometry(2, 64, 64);
+            
+            // Material do planeta com degradê
+            const uniforms = {
+                color1: { value: new THREE.Color("#7b52ab") },
+                color2: { value: new THREE.Color("#0f2446") }
+            };
+            
+            const planetMaterial = new THREE.ShaderMaterial({
+                uniforms: uniforms,
+                vertexShader: `
+                    varying vec2 vUv;
+                    
+                    void main() {
+                        vUv = uv;
+                        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                    }
+                `,
+                fragmentShader: `
+                    uniform vec3 color1;
+                    uniform vec3 color2;
+                    varying vec2 vUv;
+                    
+                    void main() {
+                        gl_FragColor = vec4(mix(color1, color2, vUv.y), 1.0);
+                    }
+                `
+            });
+            
+            const planet = new THREE.Mesh(geometry, planetMaterial);
+            scene.add(planet);
+            
+            // Criar anéis
+            const ringGeometry = new THREE.RingGeometry(2.5, 3.5, 64);
+            const ringMaterial = new THREE.MeshBasicMaterial({ 
+                color: 0xbb61d8, 
+                side: THREE.DoubleSide,
+                transparent: true,
+                opacity: 0.5
+            });
+            const ring = new THREE.Mesh(ringGeometry, ringMaterial);
+            ring.rotation.x = Math.PI / 2;
+            planet.add(ring);
+            
+            // Adicionar pontos para representar estrelas
+            const starGeometry = new THREE.BufferGeometry();
+            const starMaterial = new THREE.PointsMaterial({
+                color: 0xffffff,
+                size: 0.05,
+                transparent: true
+            });
+            
+            const starVertices = [];
+            for (let i = 0; i < 1000; i++) {
+                const x = (Math.random() - 0.5) * 20;
+                const y = (Math.random() - 0.5) * 20;
+                const z = (Math.random() - 0.5) * 20;
+                starVertices.push(x, y, z);
+            }
+            
+            starGeometry.setAttribute('position', new THREE.Float32BufferAttribute(starVertices, 3));
+            const stars = new THREE.Points(starGeometry, starMaterial);
+            scene.add(stars);
+            
+            camera.position.z = 5;
+            
+            // Animação
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                planet.rotation.y += 0.005;
+                ring.rotation.z += 0.002;
+                stars.rotation.y += 0.0005;
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // Redimensionar
+            window.addEventListener('resize', function() {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        function setupDiscoveryCanvas() {
+            const container = document.getElementById('discoveryCanvas');
+            if (!container) return;
+            
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+            
+            // Sistema solar
+            const sunGeometry = new THREE.SphereGeometry(1, 32, 32);
+            const sunMaterial = new THREE.MeshStandardMaterial({ 
+                color: 0xffcc00,
+                emissive: 0xffcc00,
+                emissiveIntensity: 1
+            });
+            const sun = new THREE.Mesh(sunGeometry, sunMaterial);
+            scene.add(sun);
+            
+            // Luz para o sol
+            const sunLight = new THREE.PointLight(0xffcc00, 1.5, 100);
+            sun.add(sunLight);
+            
+            // Criar planetas
+            const planets = [];
+            const planetData = [
+                { radius: 0.2, distance: 2, color: 0x3a1156, speed: 0.02 },
+                { radius: 0.3, distance: 3, color: 0x0f2446, speed: 0.015 },
+                { radius: 0.25, distance: 4, color: 0x7b52ab, speed: 0.01 },
+                { radius: 0.35, distance: 5, color: 0xbb61d8, speed: 0.008 }
+            ];
+            
+            planetData.forEach(data => {
+                const planetGeometry = new THREE.SphereGeometry(data.radius, 32, 32);
+                const planetMaterial = new THREE.MeshStandardMaterial({ 
+                    color: data.color,
+                    roughness: 0.7,
+                    metalness: 0.3
+                });
+                const planet = new THREE.Mesh(planetGeometry, planetMaterial);
+                
+                // Criar órbita
+                const orbitGeometry = new THREE.RingGeometry(data.distance - 0.02, data.distance + 0.02, 64);
+                const orbitMaterial = new THREE.MeshBasicMaterial({ 
+                    color: 0x3a1156, 
+                    side: THREE.DoubleSide,
+                    transparent: true,
+                    opacity: 0.2
+                });
+                const orbit = new THREE.Mesh(orbitGeometry, orbitMaterial);
+                orbit.rotation.x = Math.PI / 2;
+                scene.add(orbit);
+                
+                // Posicionar planeta na órbita
+                planet.position.x = data.distance;
+                
+                // Adicionar planeta
+                scene.add(planet);
+                planets.push({ mesh: planet, distance: data.distance, speed: data.speed, angle: Math.random() * Math.PI * 2 });
+            });
+            
+            camera.position.z = 8;
+            
+            // Animação
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                sun.rotation.y += 0.01;
+                
+                // Animar planetas em órbita
+                planets.forEach(planet => {
+                    planet.angle += planet.speed;
+                    planet.mesh.position.x = Math.cos(planet.angle) * planet.distance;
+                    planet.mesh.position.z = Math.sin(planet.angle) * planet.distance;
+                    planet.mesh.rotation.y += 0.02;
+                });
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // Redimensionar
+            window.addEventListener('resize', function() {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        // Gerar galáxias procedurais para a galeria
+        function generateGalaxy(containerId, type) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+            
+            const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(container.clientWidth, container.clientHeight);
+            renderer.setClearColor(0x000000, 0);
+            container.appendChild(renderer.domElement);
+            
+            // Tipos de galáxias
+            let particleGeometry, particleMaterial, particles;
+            
+            switch(type) {
+                case 'spiral': // Galáxia espiral
+                    const particleCount = 5000;
+                    particleGeometry = new THREE.BufferGeometry();
+                    const positions = new Float32Array(particleCount * 3);
+                    const colors = new Float32Array(particleCount * 3);
+                    
+                    const spiralArms = 3;
+                    const armWidth = 0.3;
+                    const galaxyRadius = 5;
+                    
+                    for (let i = 0; i < particleCount; i++) {
+                        const i3 = i * 3;
+                        
+                        // Distância do centro
+                        const radius = Math.random() * galaxyRadius;
+                        
+                        // Ângulo em radianos
+                        const branchAngle = (i % spiralArms) * Math.PI * 2 / spiralArms;
+                        const spinAngle = radius * 2;
+                        const angle = branchAngle + spinAngle;
+                        
+                        // Posição com variação aleatória para criar espessura
+                        positions[i3] = Math.cos(angle) * radius + (Math.random() - 0.5) * armWidth * radius;
+                        positions[i3 + 1] = (Math.random() - 0.5) * 0.2; // Altura Z (espessura da galáxia)
+                        positions[i3 + 2] = Math.sin(angle) * radius + (Math.random() - 0.5) * armWidth * radius;
+                        
+                        // Cor baseada na distância do centro
+                        const normalizedRadius = radius / galaxyRadius;
+                        if (normalizedRadius < 0.3) {
+                            // Núcleo amarelado
+                            colors[i3] = 1.0;
+                            colors[i3 + 1] = 0.8;
+                            colors[i3 + 2] = 0.5;
+                        } else {
+                            // Braços azulados/roxos
+                            colors[i3] = 0.5 - normalizedRadius * 0.3;
+                            colors[i3 + 1] = 0.2;
+                            colors[i3 + 2] = 0.8;
+                        }
+                    }
+                    
+                    particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                    particleGeometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+                    
+                    particleMaterial = new THREE.PointsMaterial({
+                        size: 0.04,
+                        vertexColors: true,
+                        transparent: true,
+                        depthWrite: false
+                    });
+                    
+                    particles = new THREE.Points(particleGeometry, particleMaterial);
+                    scene.add(particles);
+                    break;
+                    
+                case 'nebula': // Nebulosa
+                    const nebulaGeometry = new THREE.BufferGeometry();
+                    const nebulaParticleCount = 3000;
+                    const nebulaPositions = new Float32Array(nebulaParticleCount * 3);
+                    const nebulaColors = new Float32Array(nebulaParticleCount * 3);
+                    
+                    for (let i = 0; i < nebulaParticleCount; i++) {
+                        const i3 = i * 3;
+                        
+                        // Distribuição de nuvem
+                        const theta = Math.random() * Math.PI * 2;
+                        const phi = Math.random() * Math.PI - Math.PI / 2;
+                        const radius = Math.random() * 3 + 1;
+                        
+                        nebulaPositions[i3] = radius * Math.sin(theta) * Math.cos(phi);
+                        nebulaPositions[i3 + 1] = radius * Math.sin(phi);
+                        nebulaPositions[i3 + 2] = radius * Math.cos(theta) * Math.cos(phi);
+                        
+                        // Cor baseada em região
+                        const region = Math.floor(Math.random() * 3);
+                        switch(region) {
+                            case 0: // Avermelhada
+                                nebulaColors[i3] = 0.9;
+                                nebulaColors[i3 + 1] = 0.2;
+                                nebulaColors[i3 + 2] = 0.3;
+                                break;
+                            case 1: // Azulada
+                                nebulaColors[i3] = 0.2;
+                                nebulaColors[i3 + 1] = 0.4;
+                                nebulaColors[i3 + 2] = 0.9;
+                                break;
+                            case 2: // Roxo
+                                nebulaColors[i3] = 0.7;
+                                nebulaColors[i3 + 1] = 0.2;
+                                nebulaColors[i3 + 2] = 0.9;
+                                break;
+                        }
+                    }
+                    
+                    nebulaGeometry.setAttribute('position', new THREE.BufferAttribute(nebulaPositions, 3));
+                    nebulaGeometry.setAttribute('color', new THREE.BufferAttribute(nebulaColors, 3));
+                    
+                    const nebulaMaterial = new THREE.PointsMaterial({
+                        size: 0.1,
+                        vertexColors: true,
+                        transparent: true,
+                        opacity: 0.6,
+                        depthWrite: false
+                    });
+                    
+                    particles = new THREE.Points(nebulaGeometry, nebulaMaterial);
+                    scene.add(particles);
+                    break;
+                    
+                case 'stars': // Campo estelar
+                    const starFieldGeometry = new THREE.BufferGeometry();
+                    const starFieldParticleCount = 2000;
+                    const starFieldPositions = new Float32Array(starFieldParticleCount * 3);
+                    const starFieldColors = new Float32Array(starFieldParticleCount * 3);
+                    const starFieldSizes = new Float32Array(starFieldParticleCount);
+                    
+                    for (let i = 0; i < starFieldParticleCount; i++) {
+                        const i3 = i * 3;
+                        
+                        // Distribuição uniforme em cubo
+                        starFieldPositions[i3] = (Math.random() - 0.5) * 20;
+                        starFieldPositions[i3 + 1] = (Math.random() - 0.5) * 20;
+                        starFieldPositions[i3 + 2] = (Math.random() - 0.5) * 20 - 5; // Um pouco mais distante
+                        
+                        // Tamanho variável para as estrelas
+                        starFieldSizes[i] = Math.random() * 0.05 + 0.01;
+                        
+                        // Cores aleatórias para as estrelas
+                        const starType = Math.random();
+                        if (starType < 0.1) { // Estrelas avermelhadas
+                            starFieldColors[i3] = 1.0;
+                            starFieldColors[i3 + 1] = 0.5;
+                            starFieldColors[i3 + 2] = 0.5;
+                        } else if (starType < 0.3) { // Estrelas amareladas
+                            starFieldColors[i3] = 1.0;
+                            starFieldColors[i3 + 1] = 1.0;
+                            starFieldColors[i3 + 2] = 0.8;
+                        } else { // Estrelas azuladas/brancas
+                            starFieldColors[i3] = 0.8;
+                            starFieldColors[i3 + 1] = 0.9;
+                            starFieldColors[i3 + 2] = 1.0;
+                        }
+                    }
+                    
+                    starFieldGeometry.setAttribute('position', new THREE.BufferAttribute(starFieldPositions, 3));
+                    starFieldGeometry.setAttribute('color', new THREE.BufferAttribute(starFieldColors, 3));
+                    
+                    const starFieldMaterial = new THREE.PointsMaterial({
+                        size: 0.1,
+                        vertexColors: true,
+                        transparent: true,
+                    });
+                    
+                    particles = new THREE.Points(starFieldGeometry, starFieldMaterial);
+                    scene.add(particles);
+                    break;
+                    
+                case 'supernova': // Supernova
+                    // Centro da supernova
+                    const coreGeometry = new THREE.SphereGeometry(0.5, 32, 32);
+                    const coreMaterial = new THREE.MeshBasicMaterial({
+                        color: 0xffffcc,
+                        transparent: true,
+                        opacity: 0.8
+                    });
+                    const core = new THREE.Mesh(coreGeometry, coreMaterial);
+                    scene.add(core);
+                    
+                    // Ondas de choque
+                    const shockwaveGeometry = new THREE.BufferGeometry();
+                    const shockwaveParticleCount = 5000;
+                    const shockwavePositions = new Float32Array(shockwaveParticleCount * 3);
+                    const shockwaveColors = new Float32Array(shockwaveParticleCount * 3);
+                    
+                    for (let i = 0; i < shockwaveParticleCount; i++) {
+                        const i3 = i * 3;
+                        
+                        // Distribuição esférica
+                        const phi = Math.acos(2 * Math.random() - 1);
+                        const theta = Math.random() * Math.PI * 2;
+                        
+                        // Diferentes camadas de onda de choque
+                        const layer = Math.floor(Math.random() * 3);
+                        const radius = 1 + layer * 0.8 + Math.random() * 0.4;
+                        
+                        shockwavePositions[i3] = radius * Math.sin(phi) * Math.cos(theta);
+                        shockwavePositions[i3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                        shockwavePositions[i3 + 2] = radius * Math.cos(phi);
+                        
+                        // Cor baseada na camada
+                        switch(layer) {
+                            case 0: // Camada interna (amarela/branca)
+                                shockwaveColors[i3] = 1.0;
+                                shockwaveColors[i3 + 1] = 1.0;
+                                shockwaveColors[i3 + 2] = 0.8;
+                                break;
+                            case 1: // Camada média (laranja)
+                                shockwaveColors[i3] = 1.0;
+                                shockwaveColors[i3 + 1] = 0.6;
+                                shockwaveColors[i3 + 2] = 0.2;
+                                break;
+                            case 2: // Camada externa (vermelho/roxo)
+                                shockwaveColors[i3] = 0.8;
+                                shockwaveColors[i3 + 1] = 0.2;
+                                shockwaveColors[i3 + 2] = 0.6;
+                                break;
+                        }
+                    }
+                    
+                    shockwaveGeometry.setAttribute('position', new THREE.BufferAttribute(shockwavePositions, 3));
+                    shockwaveGeometry.setAttribute('color', new THREE.BufferAttribute(shockwaveColors, 3));
+                    
+                    const shockwaveMaterial = new THREE.PointsMaterial({
+                        size: 0.05,
+                        vertexColors: true,
+                        transparent: true,
+                        opacity: 0.7,
+                    });
+                    
+                    particles = new THREE.Points(shockwaveGeometry, shockwaveMaterial);
+                    scene.add(particles);
+                    break;
+                    
+                case 'milkyway': // Via Láctea (galáxia espiral vista de lado)
+                    const milkywayParticleCount = 10000;
+                    const milkywayGeometry = new THREE.BufferGeometry();
+                    const milkywayPositions = new Float32Array(milkywayParticleCount * 3);
+                    const milkywayColors = new Float32Array(milkywayParticleCount * 3);
+                    
+                    const diskRadius = 5;
+                    const diskHeight = 0.5;
+                    const bulgeRadius = 1.5;
+                    
+                    for (let i = 0; i < milkywayParticleCount; i++) {
+                        const i3 = i * 3;
+                        
+                        // Determinar se a partícula está no bojo central ou no disco
+                        const isBulge = Math.random() < 0.2;
+                        
+                        if (isBulge) {
+                            // Distribuição esférica para o bojo
+                            const r = Math.pow(Math.random(), 1/3) * bulgeRadius;
+                            const theta = Math.random() * Math.PI * 2;
+                            const phi = Math.acos(2 * Math.random() - 1);
+                            
+                            milkywayPositions[i3] = r * Math.sin(phi) * Math.cos(theta);
+                            milkywayPositions[i3 + 1] = r * Math.sin(phi) * Math.sin(theta) * 0.7; // Achatamento
+                            milkywayPositions[i3 + 2] = r * Math.cos(phi) * 0.7; // Achatamento
+                            
+                            // Cor amarelada para o bojo
+                            milkywayColors[i3] = 1.0;
+                            milkywayColors[i3 + 1] = 0.9;
+                            milkywayColors[i3 + 2] = 0.7;
+                        } else {
+                            // Distribuição para o disco
+                            const r = Math.sqrt(Math.random()) * diskRadius;
+                            const theta = Math.random() * Math.PI * 2;
+                            
+                            milkywayPositions[i3] = r * Math.cos(theta);
+                            milkywayPositions[i3 + 1] = r * Math.sin(theta);
+                            milkywayPositions[i3 + 2] = (Math.random() - 0.5) * diskHeight;
+                            
+                            // Cores azuladas/avermelhadas para o disco
+                            const diskRegion = Math.random();
+                            if (diskRegion < 0.6) { // Braços azulados
+                                milkywayColors[i3] = 0.7;
+                                milkywayColors[i3 + 1] = 0.8;
+                                milkywayColors[i3 + 2] = 1.0;
+                            } else { // Regiões avermelhadas (formação estelar)
+                                milkywayColors[i3] = 1.0;
+                                milkywayColors[i3 + 1] = 0.5;
+                                milkywayColors[i3 + 2] = 0.5;
+                            }
+                        }
+                    }
+                    
+                    milkywayGeometry.setAttribute('position', new THREE.BufferAttribute(milkywayPositions, 3));
+                    milkywayGeometry.setAttribute('color', new THREE.BufferAttribute(milkywayColors, 3));
+                    
+                    const milkywayMaterial = new THREE.PointsMaterial({
+                        size: 0.03,
+                        vertexColors: true,
+                        transparent: true,
+                        opacity: 0.8,
+                    });
+                    
+                    particles = new THREE.Points(milkywayGeometry, milkywayMaterial);
+                    scene.add(particles);
+                    // Rotacionar para visualização de perfil
+                    particles.rotation.x = Math.PI / 2;
+                    break;
+                    
+                case 'aurora': // Aurora espacial
+                    const auroraParticleCount = 5000;
+                    const auroraGeometry = new THREE.BufferGeometry();
+                    const auroraPositions = new Float32Array(auroraParticleCount * 3);
+                    const auroraColors = new Float32Array(auroraParticleCount * 3);
+                    
+                    for (let i = 0; i < auroraParticleCount; i++) {
+                        const i3 = i * 3;
+                        
+                        // Distribuição em forma de cortina ondulada
+                        const x = (Math.random() - 0.5) * 10;
+                        const wavelength = 2;
+                        const amplitude = 1;
+                        const z = Math.sin(x * wavelength) * amplitude;
+                        
+                        // Altura variável para criar cortinas de aurora
+                        const minHeight = -3 + Math.abs(Math.sin(x * 0.5) * 2);
+                        const maxHeight = 3 - Math.abs(Math.cos(x * 0.5) * 2);
+                        const y = minHeight + Math.random() * (maxHeight - minHeight);
+                        
+                        auroraPositions[i3] = x;
+                        auroraPositions[i3 + 1] = y;
+                        auroraPositions[i3 + 2] = z;
+                        
+                        // Cores de aurora (verdes, azuis, roxas)
+                        const height = (y - minHeight) / (maxHeight - minHeight); // Normalizado 0-1
+                        
+                        if (height < 0.3) { // Base verde
+                            auroraColors[i3] = 0.1;
+                            auroraColors[i3 + 1] = 1.0;
+                            auroraColors[i3 + 2] = 0.4;
+                        } else if (height < 0.6) { // Meio azul-esverdeado
+                            auroraColors[i3] = 0.1;
+                            auroraColors[i3 + 1] = 0.8;
+                            auroraColors[i3 + 2] = 0.8;
+                        } else { // Topo roxo/rosa
+                            auroraColors[i3] = 0.8;
+                            auroraColors[i3 + 1] = 0.2;
+                            auroraColors[i3 + 2] = 1.0;
+                        }
+                    }
+                    
+                    auroraGeometry.setAttribute('position', new THREE.BufferAttribute(auroraPositions, 3));
+                    auroraGeometry.setAttribute('color', new THREE.BufferAttribute(auroraColors, 3));
+                    
+                    const auroraMaterial = new THREE.PointsMaterial({
+                        size: 0.05,
+                        vertexColors: true,
+                        transparent: true,
+                        opacity: 0.7,
+                        blending: THREE.AdditiveBlending,
+                    });
+                    
+                    particles = new THREE.Points(auroraGeometry, auroraMaterial);
+                    scene.add(particles);
+                    break;
+            }
+            
+            camera.position.z = 5;
+            
+            // Animação
+            function animate() {
+                requestAnimationFrame(animate);
+                
+                if (particles) {
+                    particles.rotation.y += 0.002;
+                    
+                    if (type === 'supernova') {
+                        particles.rotation.x += 0.001;
+                        particles.rotation.z += 0.001;
+                    }
+                    
+                    if (type === 'aurora') {
+                        // Movimentação suave tipo onda para a aurora
+                        const positions = particles.geometry.attributes.position.array;
+                        const time = Date.now() * 0.0005;
+                        
+                        for (let i = 0; i < positions.length; i += 3) {
+                            const x = positions[i];
+                            positions[i+2] = Math.sin(x * 0.5 + time) * 1.5;
+                        }
+                        
+                        particles.geometry.attributes.position.needsUpdate = true;
+                    }
+                }
+                
+                renderer.render(scene, camera);
+            }
+            
+            animate();
+            
+            // Redimensionar
+            window.addEventListener('resize', function() {
+                camera.aspect = container.clientWidth / container.clientHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(container.clientWidth, container.clientHeight);
+            });
+        }
+
+        // Toggle de tema claro/escuro
+        function setupThemeToggle() {
+            const themeSwitch = document.getElementById('themeSwitch');
+            
+            // Em um ambiente de sandbox, não podemos usar localStorage
+            // Vamos usar apenas a preferência do sistema como padrão inicial
+            const prefersDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            
+            // Aplicar tema inicial baseado na preferência do sistema
+            if (prefersDarkMode) {
+                document.body.classList.add('dark-mode');
+            } else {
+                document.body.classList.remove('dark-mode');
+            }
+            
+            // Atualizar a interface do interruptor para refletir o estado atual
+            updateThemeSwitchUI();
+            
+            // Toggle de tema ao clicar
+            themeSwitch.addEventListener('click', function() {
+                document.body.classList.toggle('dark-mode');
+                
+                // Atualizar a interface do interruptor
+                updateThemeSwitchUI();
+            });
+            
+            // Atualizar interruptor para refletir o estado atual
+            function updateThemeSwitchUI() {
+                if (document.body.classList.contains('dark-mode')) {
+                    themeSwitch.setAttribute('aria-checked', 'true');
+                    themeSwitch.setAttribute('title', 'Mudar para modo claro');
+                } else {
+                    themeSwitch.setAttribute('aria-checked', 'false');
+                    themeSwitch.setAttribute('title', 'Mudar para modo escuro');
+                }
+            }
+        }
+
+        // Inicialização
+        window.addEventListener('DOMContentLoaded', function() {
+            // Mostrar loader por 2 segundos
+            setTimeout(function() {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(function() {
+                    document.getElementById('loader').style.display = 'none';
+                }, 500);
+            }, 2000);
+            
+            createStars();
+            setupHeroCanvas();
+            setupDiscoveryCanvas();
+            
+            // Gerar galáxias para a galeria
+            generateGalaxy('galaxy1', 'spiral');
+            generateGalaxy('galaxy2', 'nebula');
+            generateGalaxy('galaxy3', 'stars');
+            generateGalaxy('galaxy4', 'supernova');
+            generateGalaxy('galaxy5', 'milkyway');
+            generateGalaxy('galaxy6', 'aurora');
+            
+            setupThemeToggle();
+            handleScrollAnimation();
+            
+            // Iniciar animações para elementos visíveis
+            const fadeElements = document.querySelectorAll('.animate-fade-in');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.opacity = '1';
+                        entry.target.style.transform = 'translateY(0)';
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            fadeElements.forEach(element => {
+                observer.observe(element);
+            });
+        });
+        
+        // Eventos de scroll
+        window.addEventListener('scroll', function() {
+            setActiveNavItem();
+            handleScrollAnimation();
+        });
+        
+        // Evento de redimensionamento
+        window.addEventListener('resize', function() {
+            createStars();
+        });
+    </script>
+</body>
+</html>

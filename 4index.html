@@ -1,0 +1,1775 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Conversor de Planilhas</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        secondary: '#7B61FF',
+                        accent: '#00D8FF',
+                        success: '#00E1A0',
+                        warning: '#FFC700',
+                        danger: '#FF5C8D',
+                        dark: {
+                            900: '#0A0A0A',
+                            800: '#181818',
+                            700: '#282828',
+                            600: '#383838',
+                            500: '#484848'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .chart-container {
+            position: relative;
+            height: 220px;
+            width: 100%;
+        }
+        
+        .dashboard-card {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .dashboard-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .gradient-border {
+            position: relative;
+            z-index: 0;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+        
+        .gradient-border::before {
+            content: '';
+            position: absolute;
+            z-index: -2;
+            left: -50%;
+            top: -50%;
+            width: 200%;
+            height: 200%;
+            background-color: transparent;
+            background-repeat: no-repeat;
+            background-size: 50% 50%, 50% 50%;
+            background-position: 0 0, 100% 0, 100% 100%, 0 100%;
+            background-image: linear-gradient(#5D5CDE, #5D5CDE), linear-gradient(#00D8FF, #00D8FF), 
+                            linear-gradient(#00E1A0, #00E1A0), linear-gradient(#7B61FF, #7B61FF);
+            animation: rotate 4s linear infinite;
+        }
+        
+        .gradient-border::after {
+            content: '';
+            position: absolute;
+            z-index: -1;
+            left: 4px;
+            top: 4px;
+            width: calc(100% - 8px);
+            height: calc(100% - 8px);
+            background: #181818;
+            border-radius: 8px;
+        }
+        
+        @keyframes rotate {
+            100% {
+                transform: rotate(1turn);
+            }
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+            background-color: #282828;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background-color: #5D5CDE;
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background-color: #282828;
+            border-radius: 4px;
+        }
+        
+        /* Dark mode styles */
+        .dark .dashboard-card {
+            background: rgba(20, 20, 30, 0.5);
+        }
+        
+        .progress-ring-container {
+            position: relative;
+            width: 120px;
+            height: 120px;
+        }
+        
+        .progress-ring-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+        
+        /* Loading animation for file processing */
+        .loading-pulse {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .loading-pulse::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, transparent, rgba(93, 92, 222, 0.3), transparent);
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                transform: translateX(-100%);
+            }
+            100% {
+                transform: translateX(100%);
+            }
+        }
+
+        /* Modal specific styles */
+        .modal {
+            transition: opacity 0.3s ease-in-out;
+        }
+
+        .modal-content {
+            max-height: 90vh; /* Adjust as needed */
+            overflow-y: auto; /* Enable scrolling for modal content */
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-100 dark:bg-dark-800 dark:text-white font-sans antialiased">
+    <script>
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <header class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2 flex items-center">
+                <svg class="w-8 h-8 mr-3 text-primary" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zM3 16a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"></path>
+                </svg>
+                Conversor de Planilhas para Dashboards 
+            </h1>
+            <p class="text-gray-600 dark:text-gray-300">
+                Transforme seus dados em apresentações profissionais com visualizações elegantes automaticamente
+            </p>
+        </header>
+
+        <main>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-1">
+                    <div class="dashboard-card p-6 h-full">
+                        <h2 class="text-xl font-semibold mb-4 flex items-center">
+                            <svg class="w-5 h-5 mr-2 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+                            </svg>
+                            Upload de Arquivo
+                        </h2>
+                        
+                        <div class="space-y-4">
+                            <div class="border-2 border-dashed border-gray-400 dark:border-gray-600 rounded-lg p-6 text-center cursor-pointer hover:border-primary dark:hover:border-primary transition-colors" id="dropArea">
+                                <svg class="w-12 h-12 mx-auto text-gray-400 dark:text-gray-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                </svg>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                                    Arraste e solte seu arquivo Excel (.xlsx) ou CSV
+                                </p>
+                                <p class="text-xs text-gray-500 dark:text-gray-500">ou</p>
+                                <label class="mt-2 inline-flex items-center px-4 py-2 bg-primary hover:bg-opacity-90 text-white text-sm font-medium rounded-md cursor-pointer transition-colors">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13"></path>
+                                    </svg>
+                                    Selecionar Arquivo
+                                    <input id="fileInput" type="file" accept=".xlsx,.csv" class="hidden" />
+                                </label>
+                            </div>
+                            
+                            <div id="fileInfo" class="hidden bg-gray-100 dark:bg-dark-700 rounded-lg p-4">
+                                <div class="flex items-start">
+                                    <svg class="w-6 h-6 text-primary mt-1 mr-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                                    </svg>
+                                    <div class="flex-grow">
+                                        <p id="fileName" class="font-medium"></p>
+                                        <p id="fileSize" class="text-sm text-gray-500 dark:text-gray-400"></p>
+                                    </div>
+                                    <button id="removeFile" class="text-gray-500 hover:text-danger" title="Remover arquivo">
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <h3 class="text-md font-medium mb-3">Opções de Exportação</h3>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Tema de Cores
+                                    </label>
+                                    <div class="flex space-x-2">
+                                        <button class="w-8 h-8 rounded-full bg-primary border-2 border-white" data-color="blue" title="Azul"></button>
+                                        <button class="w-8 h-8 rounded-full bg-purple-600 border-2 border-transparent" data-color="purple" title="Roxo"></button>
+                                        <button class="w-8 h-8 rounded-full bg-green-500 border-2 border-transparent" data-color="green" title="Verde"></button>
+                                        <button class="w-8 h-8 rounded-full bg-amber-500 border-2 border-transparent" data-color="amber" title="Âmbar"></button>
+                                        <button class="w-8 h-8 rounded-full bg-rose-500 border-2 border-transparent" data-color="rose" title="Rosa"></button>
+                                    </div>
+                                </div>
+                                
+                                <div>
+                                    <label for="templateSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Template
+                                    </label>
+                                    <select id="templateSelect" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 dark:bg-dark-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                                        <option value="modern" selected>Moderno (Escuro)</option>
+                                        <option value="corporate">Corporativo</option>
+                                        <option value="minimal">Minimalista</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label for="languageSelect" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+                                        Idioma
+                                    </label>
+                                    <select id="languageSelect" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-primary focus:border-primary block w-full p-2.5 dark:bg-dark-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white">
+                                        <option value="pt-BR" selected>Português (Brasil)</option>
+                                        <option value="en-US">Inglês (EUA)</option>
+                                        <option value="es">Espanhol</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6">
+                            <button id="generateBtn" class="w-full bg-primary hover:bg-opacity-90 text-white font-medium py-2.5 px-4 rounded-lg flex items-center justify-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                </svg>
+                                Gerar Apresentação
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="lg:col-span-2">
+                    <div class="dashboard-card p-6 h-full">
+                        <div class="flex justify-between items-center mb-4">
+                            <h2 class="text-xl font-semibold flex items-center">
+                                <svg class="w-5 h-5 mr-2 text-success" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                                </svg>
+                                Pré-visualização do Dashboard
+                            </h2>
+                            <button id="downloadBtn" class="bg-primary hover:bg-opacity-90 text-white text-sm font-medium px-4 py-2 rounded-lg flex items-center disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                                </svg>
+                                Exportar para Power BI
+                            </button>
+                        </div>
+                        
+                        <div id="previewEmpty" class="flex flex-col items-center justify-center h-64 text-center p-6">
+                            <svg class="w-16 h-16 text-gray-400 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"></path>
+                            </svg>
+                            <p class="text-lg text-gray-500 dark:text-gray-400">Faça upload de um arquivo para visualizar o dashboard</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-500 mt-2">
+                                Suporte para arquivos Excel (.xlsx) e CSV
+                            </p>
+                        </div>
+                        
+                        <div id="previewLoading" class="hidden flex-col items-center justify-center h-64 text-center p-6">
+                            <div class="w-16 h-16 border-t-4 border-primary border-solid rounded-full animate-spin mb-4"></div>
+                            <p class="text-lg text-gray-600 dark:text-gray-300">Analisando dados...</p>
+                            <p class="text-sm text-gray-400 dark:text-gray-500 mt-2" id="loadingMessage">
+                                Identificando métricas e gerando visualizações...
+                            </p>
+                        </div>
+                        
+                        <div id="previewContent" class="hidden">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                <div class="dashboard-card p-4">
+                                    <p class="text-xs text-gray-400 uppercase">Total</p>
+                                    <p class="text-2xl font-bold text-white" id="metricTotal">-</p>
+                                    <div class="flex items-center text-xs mt-1">
+                                        <span class="text-success flex items-center" id="metricTotalChange">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                            </svg>
+                                            0%
+                                        </span>
+                                        <span class="text-gray-400 ml-1">vs período anterior</span>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card p-4">
+                                    <p class="text-xs text-gray-400 uppercase">Média</p>
+                                    <p class="text-2xl font-bold text-white" id="metricAvg">-</p>
+                                    <div class="flex items-center text-xs mt-1" id="metricAvgChange">
+                                        <span class="text-success flex items-center">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                            </svg>
+                                            0%
+                                        </span>
+                                        <span class="text-gray-400 ml-1">vs período anterior</span>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card p-4">
+                                    <p class="text-xs text-gray-400 uppercase">Máximo</p>
+                                    <p class="text-2xl font-bold text-white" id="metricMax">-</p>
+                                    <div class="flex items-center text-xs mt-1" id="metricMaxChange">
+                                        <span class="text-success flex items-center">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                            </svg>
+                                            0%
+                                        </span>
+                                        <span class="text-gray-400 ml-1">vs período anterior</span>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card p-4">
+                                    <p class="text-xs text-gray-400 uppercase">Contagem</p>
+                                    <p class="text-2xl font-bold text-white" id="metricCount">-</p>
+                                    <div class="flex items-center text-xs mt-1" id="metricCountChange">
+                                        <span class="text-success flex items-center">
+                                            <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                                            </svg>
+                                            0%
+                                        </span>
+                                        <span class="text-gray-400 ml-1">vs período anterior</span>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div class="dashboard-card p-4">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="font-medium text-sm">Distribuição</h3>
+                                        <select class="bg-transparent text-xs text-gray-400 border-none focus:ring-0 p-0">
+                                            <option>Últimos 12 meses</option>
+                                        </select>
+                                    </div>
+                                    <div class="chart-container">
+                                        <canvas id="donutChart"></canvas>
+                                    </div>
+                                </div>
+                                <div class="dashboard-card p-4">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="font-medium text-sm">Tendência</h3>
+                                        <select class="bg-transparent text-xs text-gray-400 border-none focus:ring-0 p-0">
+                                            <option>Últimos 12 meses</option>
+                                        </select>
+                                    </div>
+                                    <div class="chart-container">
+                                        <canvas id="lineChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 gap-6 mb-6">
+                                <div class="dashboard-card p-4">
+                                    <div class="flex justify-between items-center mb-4">
+                                        <h3 class="font-medium text-sm">Comparativo por Categoria</h3>
+                                        <select class="bg-transparent text-xs text-gray-400 border-none focus:ring-0 p-0">
+                                            <option>Todas as categorias</option>
+                                        </select>
+                                    </div>
+                                    <div class="chart-container">
+                                        <canvas id="barChart"></canvas>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div class="dashboard-card p-4 flex flex-col items-center justify-center">
+                                    <h3 class="font-medium text-sm mb-3 self-start">Progresso</h3>
+                                    <div class="progress-ring-container">
+                                        <canvas id="progressRing" width="120" height="120"></canvas>
+                                        <div class="progress-ring-text" id="progressText">0%</div>
+                                    </div>
+                                    <p class="text-xs text-gray-400 mt-3">Meta mensal</p>
+                                </div>
+                                <div class="dashboard-card p-4 col-span-1 md:col-span-2">
+                                    <h3 class="font-medium text-sm mb-3">Últimos Eventos</h3>
+                                    <div class="space-y-3" id="timelineEvents">
+                                        <div class="flex">
+                                            <div class="flex-shrink-0 w-3 h-3 rounded-full bg-primary mt-1.5"></div>
+                                            <div class="ml-3">
+                                                <p class="text-sm">Exemplo de evento</p>
+                                                <p class="text-xs text-gray-400">Hoje, 10:30</p>
+                                            </div>
+                                        </div>
+                                        <div class="flex">
+                                            <div class="flex-shrink-0 w-3 h-3 rounded-full bg-gray-500 mt-1.5"></div>
+                                            <div class="ml-3">
+                                                <p class="text-sm">Exemplo de evento anterior</p>
+                                                <p class="text-xs text-gray-400">Ontem, 15:45</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        
+        <div id="statusMessage" class="fixed bottom-4 right-4 max-w-xs bg-dark-700 text-white p-3 rounded-lg shadow-xl border-l-4 border-primary hidden"></div>
+    </div>
+
+    <div id="dashboardModal" class="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden opacity-0 transition-opacity duration-300 ease-in-out">
+        <div class="bg-dark-800 rounded-lg shadow-2xl p-6 w-full max-w-4xl relative transform transition-all duration-300 ease-in-out scale-95 opacity-0 modal-content">
+            <button id="closeModalBtn" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+            </button>
+            <h2 class="text-2xl font-bold text-white mb-6 flex items-center">
+                <svg class="w-6 h-6 mr-3 text-primary" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2zM3 16a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1v-2z"></path>
+                </svg>
+                Visualização do Dashboard
+            </h2>
+            <div id="modalDashboardContent" class="space-y-6">
+                </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentFile = null;
+        let workbook = null;
+        let workbookData = null;
+        let selectedTheme = "blue";
+        let selectedTemplate = "modern";
+        let selectedLanguage = "pt-BR";
+        let charts = {};
+        
+        // DOM elements
+        const fileInput = document.getElementById('fileInput');
+        const dropArea = document.getElementById('dropArea');
+        const fileInfo = document.getElementById('fileInfo');
+        const fileName = document.getElementById('fileName');
+        const fileSize = document.getElementById('fileSize');
+        const removeFile = document.getElementById('removeFile');
+        const generateBtn = document.getElementById('generateBtn');
+        const previewEmpty = document.getElementById('previewEmpty');
+        const previewLoading = document.getElementById('previewLoading');
+        const previewContent = document.getElementById('previewContent');
+        const statusMessage = document.getElementById('statusMessage');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const templateSelect = document.getElementById('templateSelect');
+        const languageSelect = document.getElementById('languageSelect');
+        const dashboardModal = document.getElementById('dashboardModal');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const modalDashboardContent = document.getElementById('modalDashboardContent');
+        
+        // Event listeners
+        fileInput.addEventListener('change', handleFileSelect);
+        removeFile.addEventListener('click', clearFile);
+        generateBtn.addEventListener('click', showDashboardModal); // Modified to show modal
+        downloadBtn.addEventListener('click', generatePowerBIExport); // Separate function for Power BI export
+        closeModalBtn.addEventListener('click', hideDashboardModal);
+        templateSelect.addEventListener('change', (e) => {
+            selectedTemplate = e.target.value;
+            // In a full implementation, this would trigger re-rendering with new styles
+            if (workbookData) {
+                updateDashboardPreview(workbookData); // Re-render to apply potential template changes
+            }
+        });
+        languageSelect.addEventListener('change', (e) => {
+            selectedLanguage = e.target.value;
+            // In a full implementation, this would trigger UI text changes
+        });
+
+        // Color theme selection
+        document.querySelectorAll('[data-color]').forEach(button => {
+            button.addEventListener('click', () => {
+                // Remove border from all buttons
+                document.querySelectorAll('[data-color]').forEach(btn => {
+                    btn.classList.remove('border-white');
+                    btn.classList.add('border-transparent');
+                });
+                
+                // Add border to selected button
+                button.classList.remove('border-transparent');
+                button.classList.add('border-white');
+                
+                // Set selected theme
+                selectedTheme = button.dataset.color;
+                
+                // Update charts with new colors
+                if (workbookData) {
+                    updateChartsTheme();
+                }
+            });
+        });
+        
+        // Drag and drop handling
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, highlight, false);
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, unhighlight, false);
+        });
+        
+        function highlight() {
+            dropArea.classList.add('border-primary');
+        }
+        
+        function unhighlight() {
+            dropArea.classList.remove('border-primary');
+        }
+        
+        dropArea.addEventListener('drop', handleDrop, false);
+        
+        function handleDrop(e) {
+            const dt = e.dataTransfer;
+            const files = dt.files;
+            
+            if (files.length) {
+                handleFiles(files);
+            }
+        }
+        
+        function handleFiles(files) {
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+        
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        }
+        
+        function handleFile(file) {
+            const validTypes = [
+                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', // .xlsx
+                'application/vnd.ms-excel', // .xls
+                'text/csv', // .csv
+                'application/csv',
+                'text/comma-separated-values'
+            ];
+            
+            if (!validTypes.includes(file.type)) {
+                showStatus('Formato de arquivo inválido. Por favor, use arquivos .xlsx ou .csv', 'error');
+                return;
+            }
+            
+            currentFile = file;
+            
+            // Update file info
+            fileName.textContent = file.name;
+            fileSize.textContent = formatFileSize(file.size);
+            fileInfo.classList.remove('hidden');
+            
+            // Enable generate button
+            generateBtn.disabled = false;
+            
+            // Process file
+            processFile(file);
+        }
+        
+        function clearFile() {
+            currentFile = null;
+            workbook = null;
+            workbookData = null;
+            
+            // Update UI
+            fileInput.value = '';
+            fileInfo.classList.add('hidden');
+            generateBtn.disabled = true;
+            downloadBtn.disabled = true;
+            previewContent.classList.add('hidden');
+            previewEmpty.classList.remove('hidden');
+            
+            // Clear charts
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {};
+
+            // Clear modal content
+            modalDashboardContent.innerHTML = '';
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        function processFile(file) {
+            // Show loading state
+            previewEmpty.classList.add('hidden');
+            previewLoading.classList.remove('hidden');
+            previewContent.classList.add('hidden');
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    
+                    // Parse workbook
+                    workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Process workbook data
+                    workbookData = processWorkbookData(workbook);
+                    
+                    // Update dashboard preview
+                    updateDashboardPreview(workbookData);
+                    
+                    // Hide loading and show the populated preview content
+                    previewLoading.classList.add('hidden');
+                    previewContent.classList.remove('hidden');
+                    
+                    // Enable download button
+                    downloadBtn.disabled = false;
+                    
+                    showStatus('Dados analisados com sucesso!', 'success');
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    showStatus('Erro ao processar o arquivo. Verifique se o formato está correto.', 'error');
+                    
+                    previewLoading.classList.add('hidden');
+                    previewEmpty.classList.remove('hidden');
+                }
+            };
+            
+            reader.onerror = function() {
+                showStatus('Erro ao ler o arquivo.', 'error');
+                previewLoading.classList.add('hidden');
+                previewEmpty.classList.remove('hidden');
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function processWorkbookData(workbook) {
+            // Get first sheet
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Convert to JSON
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            if (jsonData.length < 2) {
+                throw new Error('Dados insuficientes na planilha');
+            }
+            
+            // Extract headers
+            const headers = jsonData[0];
+            const rows = jsonData.slice(1);
+            
+            // Detect numeric columns
+            const numericColumns = [];
+            const dateColumns = [];
+            const categoryColumns = [];
+            
+            headers.forEach((header, index) => {
+                let isNumeric = true;
+                let isDate = true;
+                let uniqueValues = new Set();
+                
+                for (let i = 0; i < Math.min(rows.length, 10); i++) {
+                    const value = rows[i][index];
+                    
+                    if (value === undefined || value === null || value === '') continue;
+                    
+                    uniqueValues.add(value);
+                    
+                    if (typeof value !== 'number' && isNaN(Number(value))) { // Check if not a number and cannot be parsed to number
+                        isNumeric = false;
+                    }
+                    
+                    // Check for date: try parsing as Date object
+                    if (!(value instanceof Date) && (typeof value === 'string' && isNaN(new Date(value).getTime()))) {
+                        isDate = false;
+                    } else if (typeof value === 'number' && isNaN(XLSX.SSF.parse_date_code(value).y)) { // Excel serial date check
+                        isDate = false;
+                    }
+                }
+                
+                if (isNumeric) {
+                    numericColumns.push(index);
+                } else if (isDate) {
+                    dateColumns.push(index);
+                } else if (uniqueValues.size < Math.min(rows.length / 2, 20)) { // Consider as category if not too many unique values
+                    categoryColumns.push(index);
+                }
+            });
+            
+            // Select best columns for visualizations
+            const mainNumericColumn = numericColumns.length > 0 ? numericColumns[0] : null;
+            const mainDateColumn = dateColumns.length > 0 ? dateColumns[0] : null;
+            const mainCategoryColumn = categoryColumns.length > 0 ? categoryColumns[0] : null;
+            
+            // Calculate metrics for numeric columns
+            const metrics = {};
+            
+            numericColumns.forEach(colIndex => {
+                const colName = headers[colIndex];
+                const values = rows.map(row => Number(row[colIndex])).filter(val => !isNaN(val)); // Ensure values are numbers
+                
+                if (values.length > 0) {
+                    const sum = values.reduce((acc, val) => acc + val, 0);
+                    const avg = sum / values.length;
+                    const max = Math.max(...values);
+                    const min = Math.min(...values);
+                    
+                    metrics[colName] = {
+                        sum,
+                        avg,
+                        max,
+                        min,
+                        count: values.length
+                    };
+                }
+            });
+            
+            // Prepare category data
+            let categoryData = [];
+            if (mainCategoryColumn !== null && mainNumericColumn !== null) {
+                const categoryValues = {};
+                
+                rows.forEach(row => {
+                    const category = String(row[mainCategoryColumn]); // Ensure category is string
+                    const value = Number(row[mainNumericColumn]);
+                    
+                    if (category && !isNaN(value)) {
+                        if (!categoryValues[category]) {
+                            categoryValues[category] = 0;
+                        }
+                        categoryValues[category] += value;
+                    }
+                });
+                
+                categoryData = Object.entries(categoryValues).map(([label, value]) => ({ label, value }));
+                categoryData.sort((a, b) => b.value - a.value);
+                categoryData = categoryData.slice(0, 8); // limit to top 8 categories
+            }
+            
+            // Prepare time series data
+            let timeSeriesData = [];
+            if (mainDateColumn !== null && mainNumericColumn !== null) {
+                const timeValues = {};
+                
+                rows.forEach(row => {
+                    const dateValue = row[mainDateColumn];
+                    const value = Number(row[mainNumericColumn]);
+                    
+                    if (dateValue !== undefined && dateValue !== null && !isNaN(value)) {
+                        let dateObj;
+                        if (dateValue instanceof Date) {
+                            dateObj = dateValue;
+                        } else if (typeof dateValue === 'string') {
+                            dateObj = new Date(dateValue);
+                        } else if (typeof dateValue === 'number') { // Excel date serial number
+                            dateObj = XLSX.SSF.parse_date_code(dateValue);
+                            dateObj = new Date(dateObj.y, dateObj.m - 1, dateObj.d);
+                        }
+                        
+                        if (dateObj && !isNaN(dateObj.getTime())) {
+                            const dateStr = dateObj.toISOString().split('T')[0]; // YYYY-MM-DD
+                            if (!timeValues[dateStr]) {
+                                timeValues[dateStr] = 0;
+                            }
+                            timeValues[dateStr] += value;
+                        }
+                    }
+                });
+                
+                timeSeriesData = Object.entries(timeValues).map(([date, value]) => ({ date, value }));
+                timeSeriesData.sort((a, b) => new Date(a.date) - new Date(b.date));
+            }
+            
+            // Events for timeline
+            let events = [];
+            if (dateColumns.length > 0) {
+                const eventColIndex = dateColumns[0];
+                const descColIndex = headers.findIndex(h => 
+                    h.toLowerCase().includes('desc') || h.toLowerCase().includes('event') || h.toLowerCase().includes('name')
+                );
+                
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                
+                rows.slice(0, 10).forEach(row => {
+                    let date = row[eventColIndex];
+                    let desc = row[descColIndex !== -1 ? descColIndex : (mainCategoryColumn !== null ? mainCategoryColumn : 0)];
+                    
+                    if (date) {
+                        let dateObj;
+                        if (typeof date === 'string') {
+                            dateObj = new Date(date);
+                        } else if (date instanceof Date) {
+                            dateObj = date;
+                        } else if (typeof date === 'number') {
+                            // Excel date serial number
+                            const dateParts = XLSX.SSF.parse_date_code(date);
+                            dateObj = new Date(dateParts.y, dateParts.m - 1, dateParts.d);
+                        }
+                        
+                        if (!isNaN(dateObj.getTime())) {
+                            let relativeTime;
+                            const diff = Math.round((dateObj - today) / (1000 * 60 * 60 * 24));
+                            
+                            if (diff === 0) {
+                                relativeTime = 'Hoje';
+                            } else if (diff === -1) {
+                                relativeTime = 'Ontem';
+                            } else if (diff === 1) {
+                                relativeTime = 'Amanhã';
+                            } else if (diff < -1) {
+                                relativeTime = `Há ${Math.abs(diff)} dias`;
+                            } else {
+                                relativeTime = `Em ${diff} dias`;
+                            }
+                            
+                            const hours = dateObj.getHours();
+                            const minutes = dateObj.getMinutes();
+                            const timeStr = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+                            
+                            events.push({
+                                date: dateObj,
+                                description: String(desc || 'Evento'),
+                                relativeTime,
+                                time: timeStr
+                            });
+                        }
+                    }
+                });
+                
+                events.sort((a, b) => b.date - a.date);
+            }
+            
+            return {
+                headers,
+                metrics,
+                categoryData,
+                timeSeriesData,
+                events,
+                mainNumericColumn: mainNumericColumn !== null ? headers[mainNumericColumn] : null,
+                mainCategoryColumn: mainCategoryColumn !== null ? headers[mainCategoryColumn] : null,
+                mainDateColumn: mainDateColumn !== null ? headers[mainDateColumn] : null
+            };
+        }
+        
+        function updateDashboardPreview(data) {
+            // Update metrics
+            if (data.mainNumericColumn && data.metrics[data.mainNumericColumn]) {
+                const metrics = data.metrics[data.mainNumericColumn];
+                
+                document.getElementById('metricTotal').textContent = formatNumber(metrics.sum);
+                document.getElementById('metricAvg').textContent = formatNumber(metrics.avg);
+                document.getElementById('metricMax').textContent = formatNumber(metrics.max);
+                document.getElementById('metricCount').textContent = formatNumber(metrics.count);
+                
+                // Fake trend data - in a real app, you'd compare with previous period
+                document.getElementById('metricTotalChange').innerHTML = `
+                    <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                    </svg>
+                    +12%
+                `;
+                
+                document.getElementById('metricAvgChange').innerHTML = `
+                    <span class="text-warning flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"></path>
+                        </svg>
+                        0%
+                    </span>
+                `;
+                
+                document.getElementById('metricMaxChange').innerHTML = `
+                    <span class="text-success flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path>
+                        </svg>
+                        +8%
+                    </span>
+                `;
+                
+                document.getElementById('metricCountChange').innerHTML = `
+                    <span class="text-danger flex items-center">
+                        <svg class="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path>
+                        </svg>
+                        -4%
+                    </span>
+                `;
+            }
+            
+            // Update timeline events
+            const timelineEvents = document.getElementById('timelineEvents');
+            timelineEvents.innerHTML = '';
+            
+            if (data.events && data.events.length > 0) {
+                data.events.slice(0, 5).forEach((event, index) => {
+                    const eventEl = document.createElement('div');
+                    eventEl.className = 'flex';
+                    eventEl.innerHTML = `
+                        <div class="flex-shrink-0 w-3 h-3 rounded-full ${index === 0 ? 'bg-primary' : 'bg-gray-500'} mt-1.5"></div>
+                        <div class="ml-3">
+                            <p class="text-sm">${event.description}</p>
+                            <p class="text-xs text-gray-400">${event.relativeTime}, ${event.time}</p>
+                        </div>
+                    `;
+                    timelineEvents.appendChild(eventEl);
+                });
+            } else {
+                // Default placeholder events
+                timelineEvents.innerHTML = `
+                    <div class="flex">
+                        <div class="flex-shrink-0 w-3 h-3 rounded-full bg-primary mt-1.5"></div>
+                        <div class="ml-3">
+                            <p class="text-sm">Dados processados</p>
+                            <p class="text-xs text-gray-400">Hoje, ${new Date().getHours()}:${String(new Date().getMinutes()).padStart(2, '0')}</p>
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <div class="flex-shrink-0 w-3 h-3 rounded-full bg-gray-500 mt-1.5"></div>
+                        <div class="ml-3">
+                            <p class="text-sm">Arquivo carregado</p>
+                            <p class="text-xs text-gray-400">Hoje, ${new Date().getHours()}:${String(new Date().getMinutes() - 1).padStart(2, '0')}</p>
+                        </div>
+                    </div>
+                `;
+            }
+            
+            // Create/update charts
+            createCharts(data);
+        }
+
+        function showDashboardModal() {
+            if (!workbookData) {
+                showStatus('Por favor, faça upload e processe um arquivo primeiro.', 'error');
+                return;
+            }
+
+            // Move the content of previewContent to modalDashboardContent
+            modalDashboardContent.innerHTML = previewContent.innerHTML;
+            
+            // Re-initialize charts in the modal (Chart.js requires a visible canvas)
+            // Need to ensure canvases are appended to the modal first
+            const originalChartsContainer = document.getElementById('previewContent');
+            const modalChartsContainer = document.getElementById('modalDashboardContent');
+            
+            // Clear existing charts to prevent issues with re-initialization
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {}; // Reset charts object
+
+            // Re-append cloned chart canvases to the modal content and create charts
+            // This is a common pattern for moving Chart.js canvases between DOM elements
+            const donutCanvasOriginal = originalChartsContainer.querySelector('#donutChart');
+            const lineCanvasOriginal = originalChartsContainer.querySelector('#lineChart');
+            const barCanvasOriginal = originalChartsContainer.querySelector('#barChart');
+            const progressCanvasOriginal = originalChartsContainer.querySelector('#progressRing');
+
+            const donutParent = modalChartsContainer.querySelector('#donutChart').closest('.chart-container');
+            const lineParent = modalChartsContainer.querySelector('#lineChart').closest('.chart-container');
+            const barParent = modalChartsContainer.querySelector('#barChart').closest('.chart-container');
+            const progressParent = modalChartsContainer.querySelector('#progressRing').closest('.progress-ring-container');
+
+            // Replace existing (empty) canvases in the modal with new ones
+            if (donutCanvasOriginal) {
+                const newDonutCanvas = document.createElement('canvas');
+                newDonutCanvas.id = 'donutChart';
+                donutParent.innerHTML = ''; // Clear existing
+                donutParent.appendChild(newDonutCanvas);
+            }
+            if (lineCanvasOriginal) {
+                const newLineCanvas = document.createElement('canvas');
+                newLineCanvas.id = 'lineChart';
+                lineParent.innerHTML = ''; // Clear existing
+                lineParent.appendChild(newLineCanvas);
+            }
+            if (barCanvasOriginal) {
+                const newBarCanvas = document.createElement('canvas');
+                newBarCanvas.id = 'barChart';
+                barParent.innerHTML = ''; // Clear existing
+                barParent.appendChild(newBarCanvas);
+            }
+            if (progressCanvasOriginal) {
+                const newProgressCanvas = document.createElement('canvas');
+                newProgressCanvas.id = 'progressRing';
+                newProgressCanvas.width = 120; // Ensure dimensions are set
+                newProgressCanvas.height = 120; // Ensure dimensions are set
+                progressParent.querySelector('canvas').remove(); // Remove old canvas
+                progressParent.prepend(newProgressCanvas); // Add new canvas
+            }
+
+            createCharts(workbookData); // Re-create charts with current workbookData
+
+            // Update progress text in modal
+            if (document.getElementById('progressText')) {
+                document.getElementById('progressText').textContent = `${72}%`; // Re-set placeholder progress
+            }
+
+
+            dashboardModal.classList.remove('hidden');
+            setTimeout(() => {
+                dashboardModal.classList.add('opacity-100');
+                dashboardModal.querySelector('.modal-content').classList.remove('scale-95', 'opacity-0');
+                dashboardModal.querySelector('.modal-content').classList.add('scale-100', 'opacity-100');
+            }, 10); // Small delay for transition to work
+        }
+
+        function hideDashboardModal() {
+            dashboardModal.classList.remove('opacity-100');
+            dashboardModal.querySelector('.modal-content').classList.remove('scale-100', 'opacity-100');
+            dashboardModal.querySelector('.modal-content').classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                dashboardModal.classList.add('hidden');
+                // Clear charts in modal when hidden to free up memory
+                Object.values(charts).forEach(chart => chart.destroy());
+                charts = {};
+                
+                // Clear the modal's content to prevent duplicate IDs
+                modalDashboardContent.innerHTML = '';
+
+                // Re-render the charts in the main preview area
+                if (workbookData) {
+                    updateDashboardPreview(workbookData);
+                }
+            }, 300); // Match transition duration
+        }
+        
+        function createCharts(data) {
+            // Get chart contexts from the active view (main or modal)
+            const activeContainer = dashboardModal.classList.contains('hidden') ? document : modalDashboardContent;
+            const donutCtx = activeContainer.querySelector('#donutChart')?.getContext('2d');
+            const lineCtx = activeContainer.querySelector('#lineChart')?.getContext('2d');
+            const barCtx = activeContainer.querySelector('#barChart')?.getContext('2d');
+            const progressCtx = activeContainer.querySelector('#progressRing')?.getContext('2d');
+            
+            // Get colors based on selected theme
+            const colors = getThemeColors();
+            
+            // Destroy existing charts if they exist
+            Object.values(charts).forEach(chart => chart.destroy());
+            charts = {}; // Reset charts object
+
+            // Chart Options - apply common theme
+            Chart.defaults.color = '#CBD5E1';
+            Chart.defaults.font.family = "'Inter', 'Helvetica', 'Arial', sans-serif";
+            
+            // Common options for all charts
+            const commonOptions = {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            padding: 15,
+                            usePointStyle: true,
+                            pointStyle: 'circle'
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(24, 24, 24, 0.9)',
+                        titleColor: '#FFFFFF',
+                        bodyColor: '#CBD5E1',
+                        padding: 10,
+                        cornerRadius: 6,
+                        displayColors: false
+                    }
+                }
+            };
+            
+            // Create Donut Chart
+            if (donutCtx) {
+                if (data.categoryData && data.categoryData.length > 0) {
+                    charts.donut = new Chart(donutCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: data.categoryData.map(d => d.label),
+                            datasets: [{
+                                data: data.categoryData.map(d => d.value),
+                                backgroundColor: colors.categoryColors,
+                                borderWidth: 0,
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            cutout: '70%',
+                            plugins: {
+                                ...commonOptions.plugins,
+                                legend: {
+                                    ...commonOptions.plugins.legend,
+                                    position: 'right'
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    // Demo data
+                    charts.donut = new Chart(donutCtx, {
+                        type: 'doughnut',
+                        data: {
+                            labels: ['Categoria A', 'Categoria B', 'Categoria C', 'Categoria D'],
+                            datasets: [{
+                                data: [42, 23, 18, 17],
+                                backgroundColor: colors.categoryColors,
+                                borderWidth: 0,
+                                borderRadius: 4
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            cutout: '70%',
+                            plugins: {
+                                ...commonOptions.plugins,
+                                legend: {
+                                    ...commonOptions.plugins.legend,
+                                    position: 'right'
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Create Line Chart
+            if (lineCtx) {
+                if (data.timeSeriesData && data.timeSeriesData.length > 0) {
+                    const timeLabels = data.timeSeriesData.map(d => {
+                        const date = new Date(d.date);
+                        return `${date.getDate()}/${date.getMonth() + 1}`;
+                    });
+                    
+                    charts.line = new Chart(lineCtx, {
+                        type: 'line',
+                        data: {
+                            labels: timeLabels,
+                            datasets: [{
+                                label: data.mainNumericColumn || 'Valores',
+                                data: data.timeSeriesData.map(d => d.value),
+                                borderColor: colors.primary,
+                                backgroundColor: 'rgba(93, 92, 222, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointRadius: 3,
+                                pointHoverRadius: 6
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            scales: {
+                                x: {
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.05)'
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.05)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    // Demo data
+                    const demoLabels = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set'];
+                    charts.line = new Chart(lineCtx, {
+                        type: 'line',
+                        data: {
+                            labels: demoLabels,
+                            datasets: [{
+                                label: 'Tendência',
+                                data: [65, 59, 80, 81, 56, 55, 72, 60, 70],
+                                borderColor: colors.primary,
+                                backgroundColor: 'rgba(93, 92, 222, 0.1)',
+                                fill: true,
+                                tension: 0.4,
+                                borderWidth: 3,
+                                pointRadius: 3,
+                                pointHoverRadius: 6
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            scales: {
+                                x: {
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.05)'
+                                    }
+                                },
+                                y: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.05)'
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Create Bar Chart
+            if (barCtx) {
+                if (data.categoryData && data.categoryData.length > 0) {
+                    charts.bar = new Chart(barCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: data.categoryData.map(d => d.label),
+                            datasets: [{
+                                label: data.mainNumericColumn || 'Valores',
+                                data: data.categoryData.map(d => d.value),
+                                backgroundColor: colors.barColors,
+                                borderRadius: 4,
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            indexAxis: 'y',
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.05)'
+                                    }
+                                },
+                                y: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                } else {
+                    // Demo data
+                    charts.bar = new Chart(barCtx, {
+                        type: 'bar',
+                        data: {
+                            labels: ['Categoria A', 'Categoria B', 'Categoria C', 'Categoria D', 'Categoria E'],
+                            datasets: [{
+                                label: 'Valores',
+                                data: [65, 59, 80, 81, 56],
+                                backgroundColor: colors.barColors,
+                                borderRadius: 4,
+                                borderWidth: 0
+                            }]
+                        },
+                        options: {
+                            ...commonOptions,
+                            indexAxis: 'y',
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    grid: {
+                                        color: 'rgba(255, 255, 255, 0.05)'
+                                    }
+                                },
+                                y: {
+                                    grid: {
+                                        display: false
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            // Create Progress Ring
+            if (progressCtx) {
+                const progressValue = 72;
+                const progressTextEl = activeContainer.querySelector('#progressText');
+                if(progressTextEl) progressTextEl.textContent = `${progressValue}%`;
+                
+                charts.progress = new Chart(progressCtx, {
+                    type: 'doughnut',
+                    data: {
+                        datasets: [{
+                            data: [progressValue, 100 - progressValue],
+                            backgroundColor: [
+                                colors.success,
+                                'rgba(255, 255, 255, 0.1)'
+                            ],
+                            borderWidth: 0,
+                            weight: 0.2
+                        }]
+                    },
+                    options: {
+                        cutout: '80%',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        rotation: -90,
+                        circumference: 360,
+                        plugins: {
+                            tooltip: {
+                                enabled: false
+                            },
+                            legend: {
+                                display: false
+                            }
+                        }
+                    }
+                });
+            }
+        }
+        
+        function updateChartsTheme() {
+            // Get new colors
+            const colors = getThemeColors();
+            
+            // Update existing charts with new colors
+            if (charts.donut) {
+                charts.donut.data.datasets[0].backgroundColor = colors.categoryColors;
+                charts.donut.update();
+            }
+            
+            if (charts.line) {
+                charts.line.data.datasets[0].borderColor = colors.primary;
+                charts.line.data.datasets[0].backgroundColor = addAlpha(colors.primary, 0.1);
+                charts.line.update();
+            }
+            
+            if (charts.bar) {
+                charts.bar.data.datasets[0].backgroundColor = colors.barColors;
+                charts.bar.update();
+            }
+            
+            if (charts.progress) {
+                charts.progress.data.datasets[0].backgroundColor[0] = colors.success;
+                charts.progress.update();
+            }
+        }
+        
+        function getThemeColors() {
+            let primaryColor, accentColor, successColor, warningColor, dangerColor;
+            
+            // Set color scheme based on selected theme
+            switch (selectedTheme) {
+                case 'purple':
+                    primaryColor = '#7B61FF';
+                    accentColor = '#9D50FF';
+                    successColor = '#00D3A1';
+                    warningColor = '#FFC107';
+                    dangerColor = '#FF5C8D';
+                    break;
+                case 'green':
+                    primaryColor = '#00D3A1';
+                    accentColor = '#00A978';
+                    successColor = '#4CAF50';
+                    warningColor = '#FFC107';
+                    dangerColor = '#FF5C8D';
+                    break;
+                case 'amber':
+                    primaryColor = '#FFC107';
+                    accentColor = '#FFB300';
+                    successColor = '#4CAF50';
+                    warningColor = '#FF9800';
+                    dangerColor = '#FF5722';
+                    break;
+                case 'rose':
+                    primaryColor = '#FF5C8D';
+                    accentColor = '#FF3D7A';
+                    successColor = '#00D3A1';
+                    warningColor = '#FFC107';
+                    dangerColor = '#FF3D3D';
+                    break;
+                default: // blue
+                    primaryColor = '#5D5CDE';
+                    accentColor = '#00D8FF';
+                    successColor = '#00E1A0';
+                    warningColor = '#FFC700';
+                    dangerColor = '#FF5C8D';
+            }
+            
+            // Generate category colors
+            const categoryColors = [
+                primaryColor,
+                accentColor,
+                successColor,
+                warningColor,
+                dangerColor,
+                '#9D50FF',
+                '#4A6EFF',
+                '#00A3FF'
+            ];
+            
+            // Generate bar colors (single color with opacity variation)
+            const barColors = [
+                primaryColor,
+                addAlpha(primaryColor, 0.8),
+                addAlpha(primaryColor, 0.6),
+                addAlpha(primaryColor, 0.4),
+                addAlpha(primaryColor, 0.2)
+            ];
+            
+            return {
+                primary: primaryColor,
+                accent: accentColor,
+                success: successColor,
+                warning: warningColor,
+                danger: dangerColor,
+                categoryColors,
+                barColors
+            };
+        }
+        
+        function addAlpha(color, opacity) {
+            // Convert hex to rgba
+            const hex = color.replace('#', '');
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            
+            return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+        }
+        
+        function formatNumber(num) {
+            if (num === undefined || num === null) return '-';
+            
+            if (num >= 1000000) {
+                return (num / 1000000).toFixed(1) + 'M';
+            } else if (num >= 1000) {
+                return (num / 1000).toFixed(1) + 'k';
+            } else if (Number.isInteger(num)) {
+                return num.toString();
+            } else {
+                return num.toFixed(1);
+            }
+        }
+        
+        function generatePowerBIExport() { // Renamed function
+            if (!workbookData) {
+                showStatus('Nenhum dado para exportar.', 'error');
+                return;
+            }
+            
+            showStatus('Preparando dados para o Power BI...', 'loading');
+            
+            try {
+                // Obter os dados do workbook
+                const firstSheetName = workbook.SheetNames[0];
+                
+                // Exportando para CSV (formato compatível com Power BI)
+                const csv = XLSX.utils.sheet_to_csv(workbook.Sheets[firstSheetName]);
+                
+                // Criar arquivo de dados enriched_data.csv com métricas adicionais e análises
+                const enrichedData = prepareEnrichedData();
+                const enrichedCsv = XLSX.utils.sheet_to_csv(enrichedData);
+                
+                // Preparar dados do dashboard (métricas principais)
+                const dashboardData = prepareDashboardData();
+                const dashboardCsv = XLSX.utils.sheet_to_csv(dashboardData);
+                
+                // Criar arquivos blob para download
+                const fileNameWithoutExt = currentFile.name.split('.').slice(0, -1).join('.');
+                
+                // Criar um arquivo ZIP com todos os dados
+                const JSZip = window.JSZip || null;
+                
+                if (JSZip) {
+                    const zip = new JSZip();
+                    
+                    // Adicionar os arquivos ao ZIP
+                    zip.file("raw_data.csv", csv);
+                    zip.file("enriched_data.csv", enrichedCsv);
+                    zip.file("dashboard_metrics.csv", dashboardCsv);
+                    
+                    // Adicionar um arquivo README.txt com instruções
+                    const readme = `
+Power BI Dashboard Dataset
+==========================
+
+Este arquivo contém conjuntos de dados preparados para importação no Power BI.
+
+Arquivos incluídos:
+------------------
+1. raw_data.csv - Dados brutos da planilha original
+2. enriched_data.csv - Dados enriquecidos com métricas e análises adicionais
+3. dashboard_metrics.csv - Métricas principais para dashboard
+
+Instruções de importação no Power BI:
+-----------------------------------
+1. Abra o Power BI Desktop
+2. Clique em "Obter dados" > "Texto/CSV"
+3. Selecione o arquivo CSV desejado
+4. Clique em "Carregar" ou "Transformar dados" para editar antes de carregar
+
+Sugestões de visualizações:
+-------------------------
+- Gráfico de rosca para distribuição por categoria
+- Gráfico de linha para tendências temporais
+- Cartões de KPI para métricas principais
+- Tabelas para detalhes de dados
+
+Opções de Exportação Utilizadas:
+------------------------------
+Tema de Cores: ${selectedTheme.charAt(0).toUpperCase() + selectedTheme.slice(1)}
+Template: ${selectedTemplate.charAt(0).toUpperCase() + selectedTemplate.slice(1)}
+Idioma: ${selectedLanguage}
+
+Data de exportação: ${new Date().toLocaleDateString()}
+`;
+                    
+                    zip.file("README.txt", readme);
+                    
+                    // Gerar o arquivo ZIP
+                    zip.generateAsync({type:"blob"})
+                        .then(function(content) {
+                            // Criar link para download
+                            const url = URL.createObjectURL(content);
+                            const a = document.createElement('a');
+                            a.href = url;
+                            a.download = `${fileNameWithoutExt}_PowerBI_Dashboard.zip`;
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                            URL.revokeObjectURL(url);
+                            
+                            showStatus('Dados exportados com sucesso para Power BI!', 'success');
+                        });
+                } else {
+                    // Fallback se JSZip não estiver disponível - exportar apenas o CSV principal
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `${fileNameWithoutExt}_PowerBI_Data.csv`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    showStatus('Dados exportados com sucesso para Power BI! (CSV)', 'success');
+                }
+            } catch (error) {
+                console.error('Erro ao exportar dados:', error);
+                showStatus('Erro ao exportar dados. ' + error.message, 'error');
+            }
+        }
+        
+        function prepareEnrichedData() {
+            // Enriquecer os dados com métricas e análises adicionais
+            const firstSheetName = workbook.SheetNames[0];
+            const worksheet = workbook.Sheets[firstSheetName];
+            
+            // Obter dados como JSON (com cabeçalhos)
+            const jsonData = XLSX.utils.sheet_to_json(worksheet);
+            
+            // Adicionar campos adicionais baseados em análises
+            if (workbookData.mainNumericColumn && workbookData.mainCategoryColumn) {
+                const numericCol = workbookData.mainNumericColumn;
+                const categoryCol = workbookData.mainCategoryColumn;
+                
+                // Calculate average for numeric column, handling non-numeric values
+                const numericValues = jsonData.map(row => Number(row[numericCol])).filter(val => !isNaN(val));
+                const avgValue = numericValues.length > 0 ? numericValues.reduce((sum, val) => sum + val, 0) / numericValues.length : 0;
+                
+                // Add enriched columns
+                jsonData.forEach(row => {
+                    const currentRowNumericValue = Number(row[numericCol]);
+                    // Desvio do valor em relação à média
+                    if (!isNaN(currentRowNumericValue)) {
+                        row['Desvio_da_Media'] = currentRowNumericValue - avgValue;
+                        row['Percentual_da_Media'] = avgValue !== 0 ? (currentRowNumericValue / avgValue) * 100 : 0;
+                    } else {
+                        row['Desvio_da_Media'] = null;
+                        row['Percentual_da_Media'] = null;
+                    }
+                    
+                    // Classificação em quartis (simplified for example)
+                    if (!isNaN(currentRowNumericValue)) {
+                        if (currentRowNumericValue <= avgValue * 0.5) {
+                            row['Quartil_Valor'] = 'Q1 (Abaixo da média)';
+                        } else if (currentRowNumericValue <= avgValue * 1.0) {
+                            row['Quartil_Valor'] = 'Q2 (Perto da média)';
+                        } else if (currentRowNumericValue <= avgValue * 1.5) {
+                            row['Quartil_Valor'] = 'Q3 (Acima da média)';
+                        } else {
+                            row['Quartil_Valor'] = 'Q4 (Muito acima da média)';
+                        }
+                    } else {
+                        row['Quartil_Valor'] = null;
+                    }
+                    
+                    // Add timestamp for temporal analysis
+                    row['Data_Exportacao'] = new Date().toISOString().split('T')[0];
+                });
+            }
+            
+            // Convert enriched JSON back to sheet
+            const newWorksheet = XLSX.utils.json_to_sheet(jsonData);
+            return newWorksheet;
+        }
+        
+        function prepareDashboardData() {
+            // Preparar dados específicos para dashboard
+            const metricsData = [];
+            
+            // Adicionar métricas principais
+            if (workbookData.mainNumericColumn && workbookData.metrics[workbookData.mainNumericColumn]) {
+                const metrics = workbookData.metrics[workbookData.mainNumericColumn];
+                
+                metricsData.push({
+                    Métrica: 'Total',
+                    Valor: metrics.sum,
+                    Categoria_KPI: 'Geral', // Changed to Categoria_KPI for clarity in Power BI
+                    Descrição: `Total de ${workbookData.mainNumericColumn}`
+                });
+                
+                metricsData.push({
+                    Métrica: 'Média',
+                    Valor: metrics.avg,
+                    Categoria_KPI: 'Geral',
+                    Descrição: `Média de ${workbookData.mainNumericColumn}`
+                });
+                
+                metricsData.push({
+                    Métrica: 'Máximo',
+                    Valor: metrics.max,
+                    Categoria_KPI: 'Geral',
+                    Descrição: `Valor máximo de ${workbookData.mainNumericColumn}`
+                });
+                
+                metricsData.push({
+                    Métrica: 'Mínimo',
+                    Valor: metrics.min,
+                    Categoria_KPI: 'Geral',
+                    Descrição: `Valor mínimo de ${workbookData.mainNumericColumn}`
+                });
+                
+                metricsData.push({
+                    Métrica: 'Contagem',
+                    Valor: metrics.count,
+                    Categoria_KPI: 'Geral',
+                    Descrição: `Número de registros com ${workbookData.mainNumericColumn}`
+                });
+            }
+            
+            // Adicionar dados de categorias (top N)
+            if (workbookData.categoryData && workbookData.categoryData.length > 0) {
+                workbookData.categoryData.forEach(cat => {
+                    metricsData.push({
+                        Métrica: `Valor por Categoria: ${cat.label}`, // More descriptive name for Power BI
+                        Valor: cat.value,
+                        Categoria_KPI: 'Distribuição',
+                        Descrição: `Valor agregado para a categoria ${cat.label} de ${workbookData.mainCategoryColumn}`
+                    });
+                });
+            }
+            
+            // Adicionar dados de série temporal
+            if (workbookData.timeSeriesData && workbookData.timeSeriesData.length > 0) {
+                workbookData.timeSeriesData.forEach(ts => {
+                    metricsData.push({
+                        Métrica: 'Valor Temporal',
+                        Valor: ts.value,
+                        Categoria_KPI: 'Tendência',
+                        Descrição: `Valor para a data ${ts.date}`,
+                        Data: ts.date // Include date as a separate column for Power BI time series
+                    });
+                });
+            }
+            
+            // Converter JSON para planilha
+            const dashboardWorksheet = XLSX.utils.json_to_sheet(metricsData);
+            return dashboardWorksheet;
+        }
+        
+        function showStatus(message, type = 'info') {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.innerHTML = message;
+            statusEl.classList.remove('hidden', 'bg-primary', 'bg-green-500', 'bg-red-500', 'loading-pulse', 'border-primary', 'border-green-500', 'border-red-500');
+            
+            switch (type) {
+                case 'success':
+                    statusEl.classList.add('bg-dark-700', 'border-green-500');
+                    break;
+                case 'error':
+                    statusEl.classList.add('bg-dark-700', 'border-red-500');
+                    break;
+                case 'loading':
+                    statusEl.classList.add('bg-dark-700', 'border-primary', 'loading-pulse');
+                    break;
+                default:
+                    statusEl.classList.add('bg-dark-700', 'border-primary');
+            }
+            
+            statusEl.classList.remove('hidden');
+            
+            setTimeout(() => {
+                statusEl.classList.add('hidden');
+            }, type === 'loading' ? 60000 : 5000);
+        }
+    </script>
+</body>
+</html>

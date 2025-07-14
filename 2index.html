@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerador de QR</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode-generator@1.4.4/qrcode.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    }
+                }
+            }
+        }
+
+        // Check for dark mode preference
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+    </script>
+</head>
+<body class="bg-white dark:bg-gray-900 min-h-screen transition-colors duration-200">
+    <div class="container mx-auto px-4 py-8 max-w-lg">
+        <h1 class="text-3xl font-bold text-center mb-8 text-gray-800 dark:text-white">Gerador de QR</h1>
+        
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6">
+            <div class="mb-4">
+                <label for="qrText" class="block text-gray-700 dark:text-gray-300 mb-2">Insira texto ou URL</label>
+                <textarea
+                    id="qrText"
+                    class="w-full px-3 py-2 text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                    rows="3"
+                    placeholder="https://example.com"
+                ></textarea>
+            </div>
+            
+            <div class="mb-4">
+                <label for="qrSize" class="block text-gray-700 dark:text-gray-300 mb-2">Tamanho do QR</label>
+                <select
+                    id="qrSize"
+                    class="w-full px-3 py-2 text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                >
+                    <option value="4">Pequeno</option>
+                    <option value="6" selected>Médio</option>
+                    <option value="8">Grande</option>
+                    <option value="10">Extra Grande</option>
+                </select>
+            </div>
+            
+            <div class="mb-4">
+                <label class="block text-gray-700 dark:text-gray-300 mb-2">Modo de geração</label>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="flex items-center">
+                        <input 
+                            type="radio" 
+                            id="modeStandard" 
+                            name="generationMode"
+                            checked
+                            class="w-4 h-4 text-primary border-gray-300 focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+                        >
+                        <label for="modeStandard" class="ml-2 block text-gray-700 dark:text-gray-300 text-sm">
+                            QR padrão
+                        </label>
+                    </div>
+                    <div class="flex items-center">
+                        <input 
+                            type="radio" 
+                            id="modeWhatsapp" 
+                            name="generationMode"
+                            class="w-4 h-4 text-primary border-gray-300 focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+                        >
+                        <label for="modeWhatsapp" class="ml-2 block text-gray-700 dark:text-gray-300 text-sm">
+                            WhatsApp QR
+                        </label>
+                    </div>
+                    <div class="flex items-center">
+                        <input 
+                            type="radio" 
+                            id="modeWhatsappLink" 
+                            name="generationMode"
+                            class="w-4 h-4 text-primary border-gray-300 focus:ring-primary dark:border-gray-600 dark:bg-gray-700"
+                        >
+                        <label for="modeWhatsappLink" class="ml-2 block text-gray-700 dark:text-gray-300 text-sm">
+                            WhatsApp Link
+                        </label>
+                    </div>
+                </div>
+                <div id="whatsappFields" class="mt-3 space-y-3 hidden">
+                    <div>
+                        <label for="whatsappPhone" class="block text-gray-700 dark:text-gray-300 mb-1 text-sm">Número de telefone (com código do país, sem + ou espaços)</label>
+                        <input
+                            type="text"
+                            id="whatsappPhone"
+                            class="w-full px-3 py-2 text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            placeholder="+55 (91) 9"
+                        />
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 mt-1">
+                            <p class="text-xs text-gray-500 dark:text-gray-400">
+                               Exemplo: +55 (91)999999999 (Brasil: 55, depois DDD, depois número)
+                            </p>
+                            <div class="text-xs text-primary dark:text-primary-300">
+                                <a href="https://pt.wikipedia.org/wiki/Discagem_direta_a_dist%C3%A2ncia" target="_blank" class="underline">Encontre o seu DDD</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="whatsappMessage" class="block text-gray-700 dark:text-gray-300 mb-1 text-sm">Mensagem (opcional)</label>
+                        <textarea
+                            id="whatsappMessage"
+                            class="w-full px-3 py-2 text-base border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary dark:bg-gray-700 dark:border-gray-600 dark:text-white"
+                            rows="2"
+                            placeholder="Olá, gostaria de saber mais sobre..."
+                        ></textarea>
+                    </div>
+                    <div id="whatsappPreview" class="text-sm text-gray-600 dark:text-gray-400 mt-1">
+                        <div class="flex justify-between items-start">
+                            <div>
+                                <span class="font-medium">Link gerado:</span><br/>
+                                <span id="whatsappLinkPreview" class="break-all">https://wa.me/5511999999999</span>
+                            </div>
+                            <button 
+                                id="testLinkBtn" 
+                                class="ml-2 bg-green-500 hover:bg-green-600 text-white text-xs font-medium py-1 px-2 rounded-lg transition"
+                                title="Test this link in a new tab"
+                            >
+                                Testar Link
+                            </button>
+                        </div>
+                        <div id="validationMessage" class="text-xs mt-1"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <button
+                id="generateBtn"
+                class="w-full bg-primary hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-lg transition"
+            >
+                Gerar código QR
+            </button>
+            
+            <div id="qrResult" class="mt-6 flex flex-col items-center">
+                <div id="qrImageContainer" class="hidden bg-white p-4 rounded-lg shadow-sm mb-4">
+                    <img id="qrImage" src="" alt="QR Code" class="max-w-full">
+                </div>
+                <button 
+                    id="downloadQrBtn" 
+                    class="bg-primary hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-lg transition mt-2 hidden"
+                >
+                    <span class="flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                        Download do QR 
+                    </span>
+                </button>
+                <p id="saveInstructions" class="text-gray-500 dark:text-gray-400 text-sm text-center hidden mt-2">
+                    Clique com o botão direito do mouse no código QR e selecione "Salvar imagem como..." para fazer o download
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const qrTextElement = document.getElementById('qrText');
+            const qrSizeElement = document.getElementById('qrSize');
+            const generateBtnElement = document.getElementById('generateBtn');
+            const qrImageContainer = document.getElementById('qrImageContainer');
+            const qrImageElement = document.getElementById('qrImage');
+            const saveInstructions = document.getElementById('saveInstructions');
+            const downloadQrBtn = document.getElementById('downloadQrBtn');
+            
+            // Mode selection elements
+            const modeStandard = document.getElementById('modeStandard');
+            const modeWhatsapp = document.getElementById('modeWhatsapp');
+            const modeWhatsappLink = document.getElementById('modeWhatsappLink');
+            
+            // WhatsApp specific elements
+            const whatsappFields = document.getElementById('whatsappFields');
+            const whatsappPhoneInput = document.getElementById('whatsappPhone');
+            const whatsappMessageInput = document.getElementById('whatsappMessage');
+            const whatsappLinkPreview = document.getElementById('whatsappLinkPreview');
+            
+            // Add direct link result container
+            const linkResultContainer = document.createElement('div');
+            linkResultContainer.id = 'linkResultContainer';
+            linkResultContainer.className = 'mt-6 w-full p-4 bg-white dark:bg-gray-700 rounded-lg border dark:border-gray-600 hidden';
+            linkResultContainer.innerHTML = `
+                <h3 class="font-semibold text-gray-800 dark:text-white mb-2">Link do seu WhatsApp </h3>
+                <div class="flex flex-col sm:flex-row gap-2">
+                    <input type="text" id="directLinkInput" readonly class="flex-grow px-3 py-2 text-base border rounded-lg focus:outline-none dark:bg-gray-800 dark:border-gray-600 dark:text-white">
+                    <button id="copyLinkBtn" class="bg-primary hover:bg-opacity-90 text-white font-medium py-2 px-4 rounded-lg transition">
+                        <span class="flex items-center justify-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path>
+                            </svg>
+                            Cópiar
+                        </span>
+                    </button>
+                </div>
+                <button id="openLinkBtn" class="mt-3 w-full bg-green-500 hover:bg-green-600 text-white font-medium py-2 px-4 rounded-lg transition flex items-center justify-center">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path>
+                    </svg>
+                    Abrir no WhatsApp
+                </button>
+            `;
+            document.querySelector('.container').appendChild(linkResultContainer);
+            
+            // Get the newly added elements
+            const directLinkInput = document.getElementById('directLinkInput');
+            const copyLinkBtn = document.getElementById('copyLinkBtn');
+            const openLinkBtn = document.getElementById('openLinkBtn');
+            
+            // Toggle mode selection visibility
+            function updateModeVisibility() {
+                // Reset all containers
+                qrTextElement.parentElement.classList.add('hidden');
+                whatsappFields.classList.add('hidden');
+                qrResult.classList.add('hidden');
+                linkResultContainer.classList.add('hidden');
+                
+                if (modeStandard.checked) {
+                    qrTextElement.parentElement.classList.remove('hidden');
+                    generateBtnElement.textContent = 'Gerar código QR';
+                } else if (modeWhatsapp.checked || modeWhatsappLink.checked) {
+                    whatsappFields.classList.remove('hidden');
+                    updateWhatsAppLinkPreview();
+                    
+                    generateBtnElement.textContent = modeWhatsapp.checked 
+                        ? 'Gerar código QR do WhatsApp' 
+                        : 'Gerar link do WhatsApp';
+                }
+            }
+            
+            // Add event listeners to mode radio buttons
+            modeStandard.addEventListener('change', updateModeVisibility);
+            modeWhatsapp.addEventListener('change', updateModeVisibility);
+            modeWhatsappLink.addEventListener('change', updateModeVisibility);
+            
+            // Initialize visibility
+            updateModeVisibility();
+            
+            // Update WhatsApp link preview when inputs change
+            whatsappPhoneInput.addEventListener('input', updateWhatsAppLinkPreview);
+            whatsappMessageInput.addEventListener('input', updateWhatsAppLinkPreview);
+            
+            // Test WhatsApp link in a new tab
+            const testLinkBtn = document.getElementById('testLinkBtn');
+            const validationMessage = document.getElementById('validationMessage');
+            
+            testLinkBtn.addEventListener('click', function() {
+                const link = whatsappLinkPreview.textContent;
+                if (validateWhatsAppLink(link)) {
+                    window.open(link, '_blank');
+                }
+            });
+            
+            function updateWhatsAppLinkPreview() {
+                const phone = whatsappPhoneInput.value.trim();
+                const message = whatsappMessageInput.value.trim();
+                
+                let link = `https://wa.me/${phone}`;
+                
+                if (message) {
+                    // Encode the message for a URL
+                    const encodedMessage = encodeURIComponent(message);
+                    link += `?text=${encodedMessage}`;
+                }
+                
+                whatsappLinkPreview.textContent = link;
+                validateWhatsAppLink(link);
+            }
+            
+            function validateWhatsAppLink(link) {
+                const phoneRegex = /^https:\/\/wa\.me\/(\d+)(\?text=.*)?$/;
+                const match = link.match(phoneRegex);
+                
+                if (!match) {
+                    validationMessage.textContent = "Formato de link do WhatsApp inválido";
+                    validationMessage.className = "text-xs mt-1 text-red-500";
+                    return false;
+                }
+                
+                const phone = match[1];
+                
+                // Basic phone number validation - should have at least 10 digits
+                // (country code + number, varies by country)
+                if (phone.length < 10) {
+                    validationMessage.textContent = "O número de telefone parece muito curto";
+                    validationMessage.className = "text-xs mt-1 text-yellow-500 dark:text-yellow-400";
+                    return false;
+                }
+                
+                // Check if it starts with valid country code pattern
+                // Most country codes are 1-3 digits
+                if (!/^(1|2\d|3[0-6]|3[8-9]|4[0-9]|5[0-9]|6[0-6]|7|8|9[0-9])/.test(phone)) {
+                    validationMessage.textContent = "O código do país pode ser inválido";
+                    validationMessage.className = "text-xs mt-1 text-yellow-500 dark:text-yellow-400";
+                    return true; // Still allow testing, just warn
+                }
+                
+                validationMessage.textContent = "O formato do link é válido";
+                validationMessage.className = "text-xs mt-1 text-green-500 dark:text-green-400";
+                return true;
+            }
+            
+            generateBtnElement.addEventListener('click', generateQR);
+            
+            // Also generate when pressing Enter in the textarea
+            qrTextElement.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    generateQR();
+                }
+            });
+            
+            // Download button functionality
+            downloadQrBtn.addEventListener('click', function() {
+                // Get the QR code image source
+                const imgSrc = qrImageElement.src;
+                if (!imgSrc) return;
+                
+                // Create a temporary link element to trigger the download
+                const link = document.createElement('a');
+                link.href = imgSrc;
+                
+                // Set the download filename based on content
+                let filename = 'qrcode.png';
+                
+                if (modeWhatsapp.checked) {
+                    const phone = whatsappPhoneInput.value.trim();
+                    filename = `whatsapp-qr-${phone}.png`;
+                } else if (modeStandard.checked) {
+                    const text = qrTextElement.value.trim();
+                    if (text) {
+                        filename = `qrcode-${text.substring(0, 20).replace(/[^a-z0-9]/gi, '-')}.png`;
+                    }
+                }
+                
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            });
+            
+            // Copy link button functionality
+            copyLinkBtn.addEventListener('click', function() {
+                if (navigator.clipboard) {
+                    navigator.clipboard.writeText(directLinkInput.value)
+                        .then(() => {
+                            const originalText = this.textContent;
+                            this.innerHTML = '<span class="flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>Copied!</span>';
+                            setTimeout(() => {
+                                this.innerHTML = '<span class="flex items-center justify-center"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"></path></svg>Copy</span>';
+                            }, 2000);
+                        })
+                        .catch(err => {
+                            console.error('Falha ao copiar: ', err);
+                        });
+                } else {
+                    // Fallback for browsers without clipboard API
+                    directLinkInput.select();
+                    document.execCommand('copy');
+                }
+            });
+            
+            // Open link button functionality
+            openLinkBtn.addEventListener('click', function() {
+                const link = directLinkInput.value;
+                if (link) {
+                    window.open(link, '_blank');
+                }
+            });
+            
+            function generateQR() {
+                // Hide all result containers first
+                qrResult.classList.add('hidden');
+                linkResultContainer.classList.add('hidden');
+                
+                if (modeWhatsappLink.checked) {
+                    // Generate WhatsApp Link Only (no QR code)
+                    generateWhatsAppLink();
+                } else if (modeWhatsapp.checked) {
+                    // Generate WhatsApp QR code
+                    generateWhatsAppQR();
+                } else {
+                    // Generate standard QR code
+                    generateStandardQR();
+                }
+            }
+            
+            function generateWhatsAppLink() {
+                const phone = whatsappPhoneInput.value.trim();
+                if (!phone) {
+                    alert('Por favor, insira um número de telefone');
+                    return;
+                }
+                
+                // Basic validation for phone number
+                if (!/^\d+$/.test(phone)) {
+                    alert('O número de telefone deve conter apenas dígitos');
+                    return;
+                }
+                
+                const message = whatsappMessageInput.value.trim();
+                let link = `https://wa.me/${phone}`;
+                
+                if (message) {
+                    link += `?text=${encodeURIComponent(message)}`;
+                }
+                
+                // Display the link in the direct link input
+                directLinkInput.value = link;
+                linkResultContainer.classList.remove('hidden');
+            }
+            
+            function generateWhatsAppQR() {
+                const phone = whatsappPhoneInput.value.trim();
+                if (!phone) {
+                    alert('Por favor, insira um número de telefone');
+                    return;
+                }
+                
+                // Basic validation for phone number
+                if (!/^\d+$/.test(phone)) {
+                    alert('O número de telefone deve conter apenas dígitos');
+                    return;
+                }
+                
+                const message = whatsappMessageInput.value.trim();
+                let contentToEncode = `https://wa.me/${phone}`;
+                
+                if (message) {
+                    contentToEncode += `?text=${encodeURIComponent(message)}`;
+                }
+                
+                // Generate QR code with the logo
+                createQRCodeWithLogo(contentToEncode, 'WA');
+            }
+            
+            function generateStandardQR() {
+                const text = qrTextElement.value.trim();
+                if (!text) {
+                    alert('Por favor insira algum texto ou URL');
+                    return;
+                }
+                
+                // Generate standard QR code with logo
+                createQRCodeWithLogo(text, 'QR');
+            }
+            
+            function createQRCodeWithLogo(contentToEncode, logoText) {
+                try {
+                    // Use a higher error correction level to ensure QR remains scannable with a logo
+                    const typeNumber = parseInt(qrSizeElement.value, 10);
+                    const errorCorrectionLevel = 'H'; // H = High (30% can be restored)
+                    const qr = qrcode(typeNumber, errorCorrectionLevel);
+                    qr.addData(contentToEncode);
+                    qr.make();
+                    
+                    // Create a canvas to work with
+                    const canvas = document.createElement('canvas');
+                    const size = qr.getModuleCount() * 4 + 8; // Each module is 4px + some padding
+                    canvas.width = size;
+                    canvas.height = size;
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Draw the QR code on the canvas
+                    const imgSrc = qr.createDataURL(4);
+                    const qrImg = new Image();
+                    qrImg.onload = function() {
+                        // Draw the QR code
+                        ctx.drawImage(qrImg, 0, 0, size, size);
+                        
+                        // Create a logo element (a simple circle with text)
+                        const logoSize = size * 0.2; // Logo size - 20% of QR code
+                        
+                        // Draw white background for the logo
+                        ctx.fillStyle = 'white';
+                        ctx.beginPath();
+                        ctx.arc(size/2, size/2, logoSize/2, 0, Math.PI * 2);
+                        ctx.fill();
+                        
+                        // Draw logo border
+                        ctx.strokeStyle = '#5D5CDE';
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.arc(size/2, size/2, logoSize/2, 0, Math.PI * 2);
+                        ctx.stroke();
+                        
+                        // Draw logo text/icon
+                        ctx.fillStyle = '#5D5CDE';
+                        ctx.font = `bold ${logoSize/2.5}px Arial`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(logoText, size/2, size/2);
+                        
+                        // Update the image source and show elements
+                        qrImageElement.src = canvas.toDataURL('image/png');
+                        qrImageContainer.classList.remove('hidden');
+                        downloadQrBtn.classList.remove('hidden');
+                        saveInstructions.classList.remove('hidden');
+                        qrResult.classList.remove('hidden');
+                        
+                        // Update download filename
+                        // This is handled in the download button click handler
+                    };
+                    qrImg.src = imgSrc;
+                } catch (e) {
+                    console.error('Erro ao gerar código QR:', e);
+                    alert('Erro ao gerar o código QR. Tente novamente..');
+                }
+            }
+        });
+    </script>
+</body>
+</html>

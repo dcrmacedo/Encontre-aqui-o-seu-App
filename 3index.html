@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-mail e Senha Temporários</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                    },
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen bg-white dark:bg-gray-900 transition-colors duration-300">
+    <div class="container mx-auto px-4 py-8 max-w-md">
+        <header class="mb-8 text-center">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-white mb-2">Credenciais Temporárias</h1>
+            <p class="text-gray-600 dark:text-gray-300">E-mail e senha com validade limitada</p>
+        </header>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6">
+            <!-- Timer Display -->
+            <div class="mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200">Validade:</h2>
+                    <span id="timer-display" class="text-lg font-mono font-bold text-primary dark:text-primary">10:00</span>
+                </div>
+                <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2.5">
+                    <div id="timer-progress" class="bg-primary h-2.5 rounded-full transition-all duration-1000" style="width: 100%"></div>
+                </div>
+                <div id="expired-alert" class="hidden mt-2 text-red-500 dark:text-red-400 text-center font-semibold animate-pulse">
+                    Credenciais expiradas!
+                </div>
+                <button id="extend-time" class="mt-3 w-full py-2 px-4 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 font-medium rounded-md transition-colors duration-300">
+                    Estender tempo (+5 min)
+                </button>
+            </div>
+
+            <!-- Email Section -->
+            <div class="mb-6">
+                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">E-mail Temporário</h2>
+                <div class="flex">
+                    <input type="text" id="temp-email" readonly class="flex-grow text-base bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-l-lg p-2.5 focus:outline-none" placeholder="Clique no botão para gerar um e-mail">
+                    <button id="copy-email" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-2.5 rounded-r-lg transition-colors duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                    </button>
+                </div>
+                <button id="generate-email" class="mt-3 w-full py-2 px-4 bg-primary hover:bg-opacity-90 text-white font-medium rounded-md transition-colors duration-300">
+                    Gerar novo e-mail
+                </button>
+            </div>
+
+            <!-- Password Section -->
+            <div>
+                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-200 mb-2">Senha Temporária</h2>
+                <div class="flex">
+                    <input type="text" id="temp-password" readonly class="flex-grow text-base bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-700 text-gray-900 dark:text-gray-100 rounded-l-lg p-2.5 focus:outline-none" placeholder="Clique no botão para gerar uma senha">
+                    <button id="copy-password" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-2.5 rounded-r-lg transition-colors duration-300">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-700 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                        </svg>
+                    </button>
+                </div>
+                <button id="generate-password" class="mt-3 w-full py-2 px-4 bg-primary hover:bg-opacity-90 text-white font-medium rounded-md transition-colors duration-300">
+                    Gerar nova senha
+                </button>
+            </div>
+        </div>
+
+        <div class="text-center text-sm text-gray-500 dark:text-gray-400">
+            Todas as credenciais são geradas apenas no seu navegador e nunca são armazenadas ou enviadas para um servidor.
+        </div>
+    </div>
+
+    <!-- Notification for copy -->
+    <div id="copy-notification" class="fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg transform translate-y-20 opacity-0 transition-all duration-300">
+        Copiado para a área de transferência!
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Elements
+        const tempEmailEl = document.getElementById('temp-email');
+        const tempPasswordEl = document.getElementById('temp-password');
+        const generateEmailBtn = document.getElementById('generate-email');
+        const generatePasswordBtn = document.getElementById('generate-password');
+        const copyEmailBtn = document.getElementById('copy-email');
+        const copyPasswordBtn = document.getElementById('copy-password');
+        const timerDisplayEl = document.getElementById('timer-display');
+        const timerProgressEl = document.getElementById('timer-progress');
+        const extendTimeBtn = document.getElementById('extend-time');
+        const expiredAlertEl = document.getElementById('expired-alert');
+        const copyNotificationEl = document.getElementById('copy-notification');
+
+        // Variables
+        let timerInterval;
+        let secondsRemaining = 600; // 10 minutes
+        let isExpired = false;
+
+        // Listas de nomes e sobrenomes comuns
+        const firstNames = [
+            "ana", "carlos", "maria", "pedro", "julia", "lucas", "beatriz", "rafael", 
+            "sofia", "felipe", "isabela", "bruno", "laura", "gustavo", "camila", 
+            "joão", "valentina", "diego", "gabriela", "matheus", "amanda", "thiago", 
+            "larissa", "leonardo", "leticia", "henrique", "mariana", "daniel", "natalia", 
+            "andre", "vitoria", "rodrigo", "fernanda", "paulo", "carolina"
+        ];
+        
+        const lastNames = [
+            "silva", "santos", "oliveira", "souza", "pereira", "costa", "rodrigues", 
+            "almeida", "nascimento", "lima", "martins", "araújo", "ferreira", "carvalho", 
+            "gomes", "ribeiro", "barbosa", "moreira", "cardoso", "dias", "correia", 
+            "mendes", "teixeira", "fernandes", "nunes", "melo", "pinto", "ramos", 
+            "cunha", "cavalcanti", "monteiro", "marques", "dantas", "viana", "rocha"
+        ];
+        
+        // Generate random real name based email
+        function generateEmail() {
+            // Seleciona um nome e sobrenome aleatório
+            const firstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+            const lastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+            
+            // Opções de formatos de e-mail
+            const emailFormats = [
+                `${firstName}.${lastName}`,           // ana.silva
+                `${firstName}${lastName}`,            // anasilva
+                `${firstName}_${lastName}`,           // ana_silva
+                `${firstName}${Math.floor(Math.random() * 100)}` // ana42
+            ];
+            
+            // Escolhe um formato aleatório
+            const emailUsername = emailFormats[Math.floor(Math.random() * emailFormats.length)];
+            
+            return `${emailUsername}@gmail.com`;
+        }
+
+        // Generate secure password
+        function generatePassword(length = 12) {
+            const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+            const lowercase = 'abcdefghijklmnopqrstuvwxyz';
+            const numbers = '0123456789';
+            const symbols = '!@#$%^&*()_+-=[]{}|;:,.<>?';
+            const allChars = uppercase + lowercase + numbers + symbols;
+            
+            let password = '';
+            
+            // Ensure at least one of each character type
+            password += uppercase.charAt(Math.floor(Math.random() * uppercase.length));
+            password += lowercase.charAt(Math.floor(Math.random() * lowercase.length));
+            password += numbers.charAt(Math.floor(Math.random() * numbers.length));
+            password += symbols.charAt(Math.floor(Math.random() * symbols.length));
+            
+            // Fill the rest randomly
+            for (let i = 4; i < length; i++) {
+                password += allChars.charAt(Math.floor(Math.random() * allChars.length));
+            }
+            
+            // Shuffle the password characters
+            return password.split('').sort(() => 0.5 - Math.random()).join('');
+        }
+
+        // Copy text to clipboard
+        async function copyToClipboard(text) {
+            try {
+                await navigator.clipboard.writeText(text);
+                showCopyNotification();
+                return true;
+            } catch (err) {
+                console.error('Failed to copy: ', err);
+                return false;
+            }
+        }
+
+        // Show copy notification
+        function showCopyNotification() {
+            copyNotificationEl.classList.remove('translate-y-20', 'opacity-0');
+            copyNotificationEl.classList.add('translate-y-0', 'opacity-100');
+            
+            setTimeout(() => {
+                copyNotificationEl.classList.remove('translate-y-0', 'opacity-100');
+                copyNotificationEl.classList.add('translate-y-20', 'opacity-0');
+            }, 2000);
+        }
+
+        // Format time as MM:SS
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`;
+        }
+
+        // Update timer display
+        function updateTimer() {
+            if (secondsRemaining <= 0) {
+                clearInterval(timerInterval);
+                timerDisplayEl.textContent = '00:00';
+                timerProgressEl.style.width = '0%';
+                expiredAlertEl.classList.remove('hidden');
+                isExpired = true;
+            } else {
+                secondsRemaining--;
+                timerDisplayEl.textContent = formatTime(secondsRemaining);
+                
+                // Calculate percentage but ensure it never exceeds 100%
+                // This handles cases where timer was extended
+                const percentRemaining = Math.min((secondsRemaining / 600) * 100, 100);
+                timerProgressEl.style.width = `${percentRemaining}%`;
+                
+                // Change color as time decreases
+                if (secondsRemaining < 60) { // less than 1 minute
+                    timerProgressEl.classList.remove('bg-primary', 'bg-yellow-500');
+                    timerProgressEl.classList.add('bg-red-500');
+                } else if (secondsRemaining < 180) { // less than 3 minutes
+                    timerProgressEl.classList.remove('bg-primary', 'bg-red-500');
+                    timerProgressEl.classList.add('bg-yellow-500');
+                }
+            }
+        }
+
+        // Reset timer
+        function resetTimer() {
+            clearInterval(timerInterval);
+            secondsRemaining = 600; // 10 minutes
+            timerDisplayEl.textContent = formatTime(secondsRemaining);
+            timerProgressEl.style.width = '100%';
+            timerProgressEl.classList.add('bg-primary');
+            timerProgressEl.classList.remove('bg-yellow-500', 'bg-red-500');
+            expiredAlertEl.classList.add('hidden');
+            isExpired = false;
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        // Extend timer
+        function extendTimer() {
+            secondsRemaining += 300; // Add 5 minutes
+            if (isExpired) {
+                resetTimer();
+            } else {
+                timerDisplayEl.textContent = formatTime(secondsRemaining);
+                
+                // Always calculate percentage based on original time (600s)
+                // and cap at 100% to prevent bar from growing beyond container
+                const percentRemaining = Math.min((secondsRemaining / 600) * 100, 100);
+                timerProgressEl.style.width = `${percentRemaining}%`;
+                
+                // Reset color if we've extended enough
+                if (secondsRemaining >= 180) {
+                    timerProgressEl.classList.add('bg-primary');
+                    timerProgressEl.classList.remove('bg-yellow-500', 'bg-red-500');
+                } else if (secondsRemaining >= 60) {
+                    timerProgressEl.classList.add('bg-yellow-500');
+                    timerProgressEl.classList.remove('bg-primary', 'bg-red-500');
+                }
+                
+                expiredAlertEl.classList.add('hidden');
+            }
+        }
+
+        // Event listeners
+        generateEmailBtn.addEventListener('click', () => {
+            tempEmailEl.value = generateEmail();
+            if (isExpired) resetTimer();
+        });
+
+        generatePasswordBtn.addEventListener('click', () => {
+            tempPasswordEl.value = generatePassword();
+            if (isExpired) resetTimer();
+        });
+
+        copyEmailBtn.addEventListener('click', () => {
+            if (tempEmailEl.value) copyToClipboard(tempEmailEl.value);
+        });
+
+        copyPasswordBtn.addEventListener('click', () => {
+            if (tempPasswordEl.value) copyToClipboard(tempPasswordEl.value);
+        });
+
+        extendTimeBtn.addEventListener('click', extendTimer);
+
+        // Initialize
+        generateEmailBtn.click();
+        generatePasswordBtn.click();
+        timerInterval = setInterval(updateTimer, 1000);
+    </script>
+</body>
+</html>
