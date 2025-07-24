@@ -1,643 +1,768 @@
-    <!DOCTYPE html>
-    <html lang="pt-BR">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="icon" href="./agr.png?v=2">
-        <title>Simulador de WhatsApp</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-        <script>
-            tailwind.config = {
-                theme: {
-                    extend: {
-                        colors: {
-                            'whatsapp-green': '#25D366',
-                            'whatsapp-dark': '#075E54',
-                            'whatsapp-light': '#DCF8C6',
-                            'whatsapp-gray': '#E5E5E5',
-                            'whatsapp-bg': '#0D1418'
-                        }
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="imagens/agr.png?v=2">
+    <title>Simulador de WhatsApp</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.12/cropper.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'whatsapp-green': '#25D366',
+                        'whatsapp-dark': '#075E54',
+                        'whatsapp-light': '#DCF8C6',
+                        'whatsapp-gray': '#E5E5E5',
+                        'whatsapp-bg': '#0D1418'
                     }
                 }
             }
-        </script>
-        <style>
-            .message-bubble {
-                max-width: 85%;
-                word-wrap: break-word;
-            }
-            .sent {
-                background: #103529;
-                border-radius: 15px 15px 5px 15px;
-            }
-            .received {
-                background: white;
-                border-radius: 15px 15px 15px 5px;
-            }
-            .dark .received {
-                background: #303030;
-            }
-            .whatsapp-pattern {
-                background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='whatsapp-bg' x='0' y='0' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Cpath d='M0 0h100v100H0z' fill='%23f0f0f0'/%3E%3Cpath d='M25 25L75 75M75 25L25 75' stroke='%23e0e0e0' stroke-width='0.5' opacity='0.3'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23whatsapp-bg)'/%3E%3C/svg%3E");
-            }
-            .dark .whatsapp-pattern {
-                background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='whatsapp-bg-dark' x='0' y='0' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Cpath d='M0 0h100v100H0z' fill='%23111111'/%3E%3Cpath d='M25 25L75 75M75 25L25 75' stroke='%23333333' stroke-width='0.5' opacity='0.3'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23whatsapp-bg-dark)'/%3E%3C/svg%3E");
-            }
-        </style>
-    </head>
-    <body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
-        <div id="editorPanel" class="fixed top-4 right-4 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4 z-50 max-h-96 overflow-y-auto">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Editor</h3>
-                <button onclick="toggleEditor()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
-                    <i class="fas fa-times"></i>
+        }
+    </script>
+    <style>
+        .message-bubble {
+            max-width: 85%;
+            word-wrap: break-word;
+        }
+        .sent {
+            background: #103529;
+            border-radius: 15px 15px 5px 15px;
+        }
+        .received {
+            background: white;
+            border-radius: 15px 15px 15px 5px;
+        }
+        .dark .received {
+            background: #303030;
+        }
+        .whatsapp-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='whatsapp-bg' x='0' y='0' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Cpath d='M0 0h100v100H0z' fill='%23f0f0f0'/%3E%3Cpath d='M25 25L75 75M75 25L25 75' stroke='%23e0e0e0' stroke-width='0.5' opacity='0.3'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23whatsapp-bg)'/%3E%3C/svg%3E");
+        }
+        .dark .whatsapp-pattern {
+            background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cdefs%3E%3Cpattern id='whatsapp-bg-dark' x='0' y='0' width='100' height='100' patternUnits='userSpaceOnUse'%3E%3Cpath d='M0 0h100v100H0z' fill='%23111111'/%3E%3Cpath d='M25 25L75 75M75 25L25 75' stroke='%23333333' stroke-width='0.5' opacity='0.3'/%3E%3C/pattern%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23whatsapp-bg-dark)'/%3E%3C/svg%3E");
+        }
+        /* Cropper Modal Styles */
+        #cropperModal {
+            display: none; /* Hidden by default */
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.8);
+            justify-content: center;
+            align-items: center;
+        }
+        #cropperModalContent {
+            background-color: #fefefe;
+            margin: auto;
+            padding: 20px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 600px;
+            position: relative;
+        }
+        #imageForCropper {
+            display: block;
+            max-width: 100%;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 transition-colors duration-300">
+    <div id="editorPanel" class="fixed top-4 right-4 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-lg z-50 flex flex-col" style="max-height: calc(100vh - 2rem - 2rem);">
+        <div class="flex justify-between items-center p-4 pb-0">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Editor</h3>
+            <button onclick="toggleEditor()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        
+        <div class="space-y-4 p-4 pt-0 flex-grow overflow-y-auto">
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome do Contato</label>
+                <input type="text" id="contactName" value="David" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status Online</label>
+                <input type="text" id="onlineStatus" value="visto por último ontem às 08:50" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Foto de Perfil</label>
+                <input type="file" id="contactPhotoUpload" accept="image/*" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                <input type="text" id="contactPhotoUrl" placeholder="Ou URL da imagem" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white mt-2">
+                <button onclick="applyContactPhotoUrl()" class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-colors text-sm mt-2">Aplicar URL</button>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Papel de Parede</label>
+                <div class="space-y-2">
+                    <input type="text" id="wallpaperUrl" placeholder="URL da imagem de fundo" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <input type="file" id="wallpaperFile" accept="image/*" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <select id="wallpaperPreset" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="default">Padrão WhatsApp</option>
+                        <option value="https://images.unsplash.com/photo-1557683316-973673baf926?w=400">Gradiente Azul</option>
+                        <option value="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400">Montanhas</option>
+                        <option value="https://images.unsplash.com/photo-1519681393784-d120c3e90d43?w=400">Aurora</option>
+                        <option value="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400">Floresta</option>
+                        <option value="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400">Oceano</option>
+                    </select>
+                    <button onclick="applyWallpaper()" class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-colors text-sm">
+                        <i class="fas fa-image mr-2"></i>Aplicar Papel de Parede
+                    </button>
+                    <button onclick="resetWallpaper()" class="w-full bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600 transition-colors text-sm">
+                        <i class="fas fa-undo mr-2"></i>Restaurar Padrão
+                    </button>
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Modo Print</label>
+                <div class="space-y-2">
+                    <button onclick="captureScreen()" class="w-full bg-purple-500 text-white p-2 rounded-md hover:bg-purple-600 transition-colors text-sm">
+                        <i class="fas fa-camera mr-2"></i>Capturar Conversa
+                    </button>
+                    <button onclick="copyScreenshot()" id="copyBtn" class="w-full bg-orange-500 text-white p-2 rounded-md hover:bg-orange-600 transition-colors text-sm disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                        <i class="fas fa-copy mr-2"></i>Copiar Imagem
+                    </button>
+                    <button onclick="downloadScreenshot()" id="downloadBtn" class="w-full bg-green-600 text-white p-2 rounded-md hover:bg-green-700 transition-colors text-sm disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                        <i class="fas fa-download mr-2"></i>Baixar Imagem
+                    </button>
+                </div>
+            </div>
+            
+            <button onclick="addMessage()" class="w-full bg-whatsapp-green text-white p-2 rounded-md hover:bg-green-600 transition-colors">
+                <i class="fas fa-plus mr-2"></i>Adicionar Mensagem
+            </button>
+        </div>
+    </div>
+
+    <button id="editorToggle" onclick="toggleEditor()" class="fixed top-4 right-4 bg-whatsapp-green text-white p-3 rounded-full shadow-lg z-40 hover:bg-green-600 transition-colors">
+        <i class="fas fa-edit"></i>
+    </button>
+
+    <div class="max-w-md mx-auto bg-white dark:bg-gray-900 shadow-xl pt-[72px] pb-[64px]">
+        <div class="bg-whatsapp-dark text-white p-4 flex items-center space-x-3 fixed top-0 left-1/2 transform -translate-x-1/2 w-full max-w-md z-10">
+            <button class="text-white">
+                <i class="fas fa-arrow-left"></i>
+            </button>
+            <img id="headerPhoto" src="https://www.quadrorama.com.br/wp-content/uploads/2018/05/quadro-com-foto-imagem-personalizada.png" alt="Contato" class="w-10 h-10 rounded-full object-cover">
+            <div class="flex-1">
+                <h3 id="headerName" class="font-semibold">David</h3>
+                <p id="headerStatus" class="text-xs text-gray-300">visto por último ontem às 08:50</p>
+            </div>
+            <div class="flex space-x-4">
+                <button><i class="fas fa-video"></i></button>
+                <button><i class="fas fa-phone"></i></button>
+                <button><i class="fas fa-ellipsis-v"></i></button>
+            </div>
+        </div>
+
+        <div class="whatsapp-pattern overflow-y-auto" style="height: calc(100vh - 72px - 64px);">
+            <div id="messagesContainer" class="p-4 space-y-3">
+                </div>
+        </div>
+
+        <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-gray-100 dark:bg-gray-800 p-3 flex items-center space-x-2 z-20">
+            <div class="flex-1 bg-white dark:bg-gray-700 rounded-full px-3 py-2 flex items-center space-x-2">
+                <button class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="far fa-smile text-xl"></i>
+                </button>
+                <input type="text" placeholder="Mensagem" class="flex-1 bg-transparent outline-none text-base dark:text-white">
+                <button class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                    <i class="fas fa-paperclip text-lg"></i>
                 </button>
             </div>
+            <button class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 p-2">
+                <i class="fas fa-camera text-xl"></i>
+            </button>
+            <button class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 p-2">
+                <i class="fas fa-microphone text-xl"></i>
+            </button>
+        </div>
+    </div>
+
+    <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+        <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-w-full mx-4">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Editar Mensagem</h3>
             
             <div class="space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Nome do Contato</label>
-                    <input type="text" id="contactName" value="David" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
+                    <select id="messageType" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="sent">Enviada</option>
+                        <option value="received">Recebida</option>
+                    </select>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status Online</label>
-                    <input type="text" id="onlineStatus" value="visto por último ontem às 08:50" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Texto</label>
+                    <textarea id="messageText" rows="3" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">URL da Foto</label>
-                    <input type="text" id="contactPhoto" value="https://pfst.cf2.poecdn.net/base/image/ef41d6b6e498db0b182cb90ac4dd3e79d242e912a7244b2fee7e58ab7906033f?w=360&h=776" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Horário</label>
+                    <input type="text" id="messageTime" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data (ex: 15 de julho de 2025)</label>
+                    <input type="text" id="messageDate" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
                 </div>
                 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Papel de Parede</label>
-                    <div class="space-y-2">
-                        <input type="text" id="wallpaperUrl" placeholder="URL da imagem de fundo" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <input type="file" id="wallpaperFile" accept="image/*" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                        <select id="wallpaperPreset" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="default">Padrão WhatsApp</option>
-                            <option value="https://images.unsplash.com/photo-1557683316-973673baf926?w=400">Gradiente Azul</option>
-                            <option value="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400">Montanhas</option>
-                            <option value="https://images.unsplash.com/photo-1519681393784-d120c3e90d43?w=400">Aurora</option>
-                            <option value="https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=400">Floresta</option>
-                            <option value="https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400">Oceano</option>
-                        </select>
-                        <button onclick="applyWallpaper()" class="w-full bg-blue-500 text-white p-2 rounded-md hover:bg-blue-600 transition-colors text-sm">
-                            <i class="fas fa-image mr-2"></i>Aplicar Papel de Parede
-                        </button>
-                        <button onclick="resetWallpaper()" class="w-full bg-gray-500 text-white p-2 rounded-md hover:bg-gray-600 transition-colors text-sm">
-                            <i class="fas fa-undo mr-2"></i>Restaurar Padrão
-                        </button>
-                    </div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
+                    <select id="messageStatus" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
+                        <option value="sent">Enviado</option>
+                        <option value="delivered">Entregue</option>
+                        <option value="read">Lido</option>
+                    </select>
                 </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Modo Print</label>
-                    <div class="space-y-2">
-                        <button onclick="captureScreen()" class="w-full bg-purple-500 text-white p-2 rounded-md hover:bg-purple-600 transition-colors text-sm">
-                            <i class="fas fa-camera mr-2"></i>Capturar Conversa
-                        </button>
-                        <button onclick="copyScreenshot()" id="copyBtn" class="w-full bg-orange-500 text-white p-2 rounded-md hover:bg-orange-600 transition-colors text-sm disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                            <i class="fas fa-copy mr-2"></i>Copiar Imagem
-                        </button>
-                        <button onclick="downloadScreenshot()" id="downloadBtn" class="w-full bg-green-600 text-white p-2 rounded-md hover:bg-green-700 transition-colors text-sm disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
-                            <i class="fas fa-download mr-2"></i>Baixar Imagem
-                        </button>
-                    </div>
-                </div>
-                
-                <button onclick="addMessage()" class="w-full bg-whatsapp-green text-white p-2 rounded-md hover:bg-green-600 transition-colors">
-                    <i class="fas fa-plus mr-2"></i>Adicionar Mensagem
-                </button>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeMessageModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                <button onclick="saveMessage()" class="px-4 py-2 bg-whatsapp-green text-white hover:bg-green-600 rounded">Salvar</button>
             </div>
         </div>
+    </div>
 
-        <button id="editorToggle" onclick="toggleEditor()" class="fixed top-4 right-4 bg-whatsapp-green text-white p-3 rounded-full shadow-lg z-40 hover:bg-green-600 transition-colors">
-            <i class="fas fa-edit"></i>
-        </button>
-
-        <div class="max-w-md mx-auto bg-white dark:bg-gray-900 shadow-xl pt-[72px] pb-[64px]">
-            <div class="bg-whatsapp-dark text-white p-4 flex items-center space-x-3 fixed top-0 left-1/2 transform -translate-x-1/2 w-full max-w-md z-10">
-                <button class="text-white">
-                    <i class="fas fa-arrow-left"></i>
-                </button>
-                <img id="headerPhoto" src="https://pfst.cf2.poecdn.net/base/image/ef41d6b6e498db0b182cb90ac4dd3e79d242e912a7244b2fee7e58ab7906033f?w=360&h=776" alt="Contato" class="w-10 h-10 rounded-full object-cover">
-                <div class="flex-1">
-                    <h3 id="headerName" class="font-semibold">David</h3>
-                    <p id="headerStatus" class="text-xs text-gray-300">visto por último ontem às 08:50</p>
-                </div>
-                <div class="flex space-x-4">
-                    <button><i class="fas fa-video"></i></button>
-                    <button><i class="fas fa-phone"></i></button>
-                    <button><i class="fas fa-ellipsis-v"></i></button>
-                </div>
+    <div id="cropperModal" class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-[1000]">
+        <div id="cropperModalContent" class="bg-white dark:bg-gray-800 rounded-lg p-6 w-11/12 max-w-2xl mx-4">
+            <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Ajustar Foto de Perfil</h3>
+            <div class="img-container mb-4 max-h-96 overflow-hidden flex justify-center items-center bg-gray-100 dark:bg-gray-700">
+                <img id="imageForCropper" src="" alt="Image to crop">
             </div>
-
-            <div class="whatsapp-pattern overflow-y-auto" style="height: calc(100vh - 72px - 64px);">
-                <div id="messagesContainer" class="p-4 space-y-3">
-                    </div>
-            </div>
-
-            <div class="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-gray-100 dark:bg-gray-800 p-3 flex items-center space-x-2 z-20">
-                <div class="flex-1 bg-white dark:bg-gray-700 rounded-full px-3 py-2 flex items-center space-x-2">
-                    <button class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        <i class="far fa-smile text-xl"></i>
-                    </button>
-                    <input type="text" placeholder="Mensagem" class="flex-1 bg-transparent outline-none text-base dark:text-white">
-                    <button class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
-                        <i class="fas fa-paperclip text-lg"></i>
-                    </button>
-                </div>
-                <button class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 p-2">
-                    <i class="fas fa-camera text-xl"></i>
-                </button>
-                <button class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 p-2">
-                    <i class="fas fa-microphone text-xl"></i>
-                </button>
+            <div class="flex justify-end space-x-3 mt-6">
+                <button onclick="closeCropperModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                <button onclick="cropAndApplyPhoto()" class="px-4 py-2 bg-whatsapp-green text-white hover:bg-green-600 rounded">Cortar e Aplicar</button>
             </div>
         </div>
+    </div>
 
-        <div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
-            <div class="bg-white dark:bg-gray-800 rounded-lg p-6 w-96 max-w-full mx-4">
-                <h3 class="text-lg font-semibold mb-4 text-gray-800 dark:text-white">Editar Mensagem</h3>
-                
-                <div class="space-y-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tipo</label>
-                        <select id="messageType" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="sent">Enviada</option>
-                            <option value="received">Recebida</option>
-                        </select>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Texto</label>
-                        <textarea id="messageText" rows="3" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white"></textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Horário</label>
-                        <input type="text" id="messageTime" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    </div>
-
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Data (ex: 15 de julho de 2025)</label>
-                        <input type="text" id="messageDate" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Status</label>
-                        <select id="messageStatus" class="w-full p-2 border rounded-md text-base dark:bg-gray-700 dark:border-gray-600 dark:text-white">
-                            <option value="sent">Enviado</option>
-                            <option value="delivered">Entregue</option>
-                            <option value="read">Lido</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="flex justify-end space-x-3 mt-6">
-                    <button onclick="closeMessageModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
-                    <button onclick="saveMessage()" class="px-4 py-2 bg-whatsapp-green text-white hover:bg-green-600 rounded">Salvar</button>
-                </div>
-            </div>
-        </div>
-
-        <script>
-            // Dark mode detection
-            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
                 document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
             }
-            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
-                if (event.matches) {
-                    document.documentElement.classList.add('dark');
-                } else {
-                    document.documentElement.classList.remove('dark');
+        });
+
+        let messages = [
+            { type: 'received', text: 'Escreva a sua mensagem aqui', time: '20:45', status: 'read', date: '28 de junho de 2025' },
+            { type: 'received', text: 'Escreva a sua mensagem aqui', time: '20:45', status: 'read', date: '28 de junho de 2025' },
+            { type: 'sent', text: 'ta bom', time: '20:46', status: 'read', date: '28 de junho de 2025' },
+            { type: 'received', text: 'Escreva a sua mensagem aqui', time: '06:50', status: 'read', date: '28 de junho de 2025' },
+            { type: 'sent', text: 'Escreva a sua mensagem aqui', time: '07:32', status: 'read', date: '29 de junho de 2025' },
+            { type: 'sent', text: 'ta bom', time: '07:32', status: 'read', date: '29 de junho de 2025' },
+            { type: 'received', text: 'Escreva a sua mensagem aqui', time: '08:50', status: 'read', date: '29 de junho de 2025' },
+            { type: 'sent', text: 'Escreva a sua mensagem aqui', time: '10:14', status: 'read', date: '30 de junho de 2025' },
+            { type: 'sent', text: 'Escreva a sua mensagem aqui', time: '10:14', status: 'read', date: '30 de junho de 2025' },
+            { type: 'sent', text: 'Escreva a sua mensagem aqui', time: '10:14', status: 'read', date: '30 de junho de 2025' },
+            { type: 'received', text: 'Ta', time: '10:15', status: 'read', date: '30 de junho de 2025' },
+            { type: 'received', text: 'Escreva a sua mensagem aqui', time: '14:30', status: 'read', date: '1 de julho de 2025' },
+            { type: 'received', text: 'Escreva a sua mensagem aqui', time: '14:30', status: 'read', date: '1 de julho de 2025' },
+            { type: 'received', text: 'Escreva a sua mensagem aqui', time: '14:30', status: 'read', date: '1 de julho de 2025' },
+            { type: 'sent', text: '...', time: '14:31', status: 'read', date: '1 de julho de 2025' },
+            { type: 'sent', text: '...', time: '14:31', status: 'read', date: '1 de julho de 2025' }
+        ];
+
+        let currentEditingIndex = null;
+        let editorVisible = false;
+        let editingDateHeader = false; // New control variable
+        let oldDate = null; // New variable to store the original date when editing a header
+        let cropper; // Cropper.js instance
+
+        function toggleEditor() {
+            const panel = document.getElementById('editorPanel');
+            const toggle = document.getElementById('editorToggle');
+            
+            editorVisible = !editorVisible;
+            
+            if (editorVisible) {
+                panel.classList.remove('hidden');
+                toggle.classList.add('hidden');
+            } else {
+                panel.classList.add('hidden');
+                toggle.classList.remove('hidden');
+            }
+        }
+
+        function updateContactInfo() {
+            const name = document.getElementById('contactName').value;
+            const status = document.getElementById('onlineStatus').value;
+            // Photo is now updated directly via cropping or URL application
+            
+            document.getElementById('headerName').textContent = name;
+            document.getElementById('headerStatus').textContent = status;
+        }
+
+        // New function to apply photo from URL
+        function applyContactPhotoUrl() {
+            const photoUrl = document.getElementById('contactPhotoUrl').value;
+            if (photoUrl) {
+                document.getElementById('headerPhoto').src = photoUrl;
+                showNotification('✅ URL da foto de perfil aplicada!');
+            } else {
+                showNotification('❌ Por favor, insira uma URL para a foto.', 'error');
+            }
+        }
+
+        function renderMessages() {
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '';
+            
+            let currentDate = null;
+            
+            messages.forEach((message, index) => {
+                // Add date separator if needed
+                if (message.date && message.date !== currentDate) {
+                    const dateDiv = document.createElement('div');
+                    dateDiv.className = 'text-center my-4';
+                    // Add onclick to the date separator
+                    dateDiv.innerHTML = `<span class="bg-white dark:bg-gray-700 px-3 py-1 rounded-full text-xs text-gray-600 dark:text-gray-300 shadow cursor-pointer" onclick="event.stopPropagation(); editDateHeader('${message.date}')">${message.date}</span>`;
+                    container.appendChild(dateDiv);
+                    currentDate = message.date;
                 }
+                
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `flex ${message.type === 'sent' ? 'justify-end' : 'justify-start'} mb-2`;
+                
+                const bubbleDiv = document.createElement('div');
+                bubbleDiv.className = `message-bubble ${message.type} p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow`;
+                bubbleDiv.onclick = () => editMessage(index);
+                
+                const textSpan = document.createElement('span');
+                textSpan.textContent = message.text;
+                textSpan.className = 'block text-gray-800 dark:text-gray-200';
+                
+                const timeDiv = document.createElement('div');
+                timeDiv.className = 'flex items-center justify-end mt-1 space-x-1';
+                
+                const timeSpan = document.createElement('span');
+                timeSpan.textContent = message.time;
+                timeSpan.className = 'text-xs text-gray-500';
+                
+                timeDiv.appendChild(timeSpan);
+                
+                if (message.type === 'sent') {
+                    const statusIcon = document.createElement('span');
+                    statusIcon.className = 'text-xs';
+                    
+                    switch (message.status) {
+                        case 'sent':
+                            statusIcon.innerHTML = '<i class="fas fa-check text-gray-400"></i>';
+                            break;
+                        case 'delivered':
+                            statusIcon.innerHTML = '<i class="fas fa-check-double text-gray-400"></i>';
+                            break;
+                        case 'read':
+                            statusIcon.innerHTML = '<i class="fas fa-check-double text-blue-500"></i>';
+                            break;
+                    }
+                    timeDiv.appendChild(statusIcon);
+                }
+                
+                bubbleDiv.appendChild(textSpan);
+                bubbleDiv.appendChild(timeDiv);
+                messageDiv.appendChild(bubbleDiv);
+                container.appendChild(messageDiv);
             });
+        }
 
-            let messages = [
-                { type: 'received', text: 'Escreva a sua mensagem aqui', time: '20:45', status: 'read', date: '28 de junho de 2025' },
-                { type: 'received', text: 'Escreva a sua mensagem aqui', time: '20:45', status: 'read', date: '28 de junho de 2025' },
-                { type: 'sent', text: 'ta bom', time: '20:46', status: 'read', date: '28 de junho de 2025' },
-                { type: 'received', text: 'Escreva a sua mensagem aqui', time: '06:50', status: 'read', date: '28 de junho de 2025' },
-                { type: 'sent', text: 'Escreva a sua mensagem aqui', time: '07:32', status: 'read', date: '29 de junho de 2025' },
-                { type: 'sent', text: 'ta bom', time: '07:32', status: 'read', date: '29 de junho de 2025' },
-                { type: 'received', text: 'Escreva a sua mensagem aqui', time: '08:50', status: 'read', date: '29 de junho de 2025' },
-                { type: 'sent', text: 'Escreva a sua mensagem aqui', time: '10:14', status: 'read', date: '30 de junho de 2025' },
-                { type: 'sent', text: 'Escreva a sua mensagem aqui', time: '10:14', status: 'read', date: '30 de junho de 2025' },
-                { type: 'sent', text: 'Escreva a sua mensagem aqui', time: '10:14', status: 'read', date: '30 de junho de 2025' },
-                { type: 'received', text: 'Ta', time: '10:15', status: 'read', date: '30 de junho de 2025' },
-                { type: 'received', text: 'Escreva a sua mensagem aqui', time: '14:30', status: 'read', date: '1 de julho de 2025' },
-                { type: 'received', text: 'Escreva a sua mensagem aqui', time: '14:30', status: 'read', date: '1 de julho de 2025' },
-                { type: 'received', text: 'Escreva a sua mensagem aqui', time: '14:30', status: 'read', date: '1 de julho de 2025' },
-                { type: 'sent', text: '...', time: '14:31', status: 'read', date: '1 de julho de 2025' },
-                { type: 'sent', text: '...', time: '14:31', status: 'read', date: '1 de julho de 2025' }
-            ];
+        function editMessage(index) {
+            currentEditingIndex = index;
+            editingDateHeader = false; // Ensure this is false when editing a message
+            oldDate = null; // Clear oldDate
 
-            let currentEditingIndex = null;
-            let editorVisible = false;
-            let editingDateHeader = false; // New control variable
-            let oldDate = null; // New variable to store the original date when editing a header
+            const message = messages[index];
+            
+            document.getElementById('messageType').value = message.type;
+            document.getElementById('messageText').value = message.text;
+            document.getElementById('messageTime').value = message.time;
+            document.getElementById('messageStatus').value = message.status;
+            document.getElementById('messageDate').value = message.date || '';
+            
+            document.getElementById('messageModal').classList.remove('hidden');
+        }
 
-            function toggleEditor() {
-                const panel = document.getElementById('editorPanel');
-                const toggle = document.getElementById('editorToggle');
-                
-                editorVisible = !editorVisible;
-                
-                if (editorVisible) {
-                    panel.classList.remove('hidden');
-                    toggle.classList.add('hidden');
-                } else {
-                    panel.classList.add('hidden');
-                    toggle.classList.remove('hidden');
-                }
-            }
+        // New function to edit date header
+        function editDateHeader(dateString) {
+            currentEditingIndex = null; // Not editing a specific message
+            editingDateHeader = true;
+            oldDate = dateString; // Store the date being edited
 
-            function updateContactInfo() {
-                const name = document.getElementById('contactName').value;
-                const status = document.getElementById('onlineStatus').value;
-                const photo = document.getElementById('contactPhoto').value;
-                
-                document.getElementById('headerName').textContent = name;
-                document.getElementById('headerStatus').textContent = status;
-                document.getElementById('headerPhoto').src = photo;
-            }
+            // Clear other fields as we are only editing the date for a group of messages
+            document.getElementById('messageType').value = 'sent'; // Default value, but won't be saved in this mode
+            document.getElementById('messageText').value = '';
+            document.getElementById('messageTime').value = '';
+            document.getElementById('messageStatus').value = 'sent'; // Default value
 
-            function renderMessages() {
-                const container = document.getElementById('messagesContainer');
-                container.innerHTML = '';
-                
-                let currentDate = null;
-                
-                messages.forEach((message, index) => {
-                    // Add date separator if needed
-                    if (message.date && message.date !== currentDate) {
-                        const dateDiv = document.createElement('div');
-                        dateDiv.className = 'text-center my-4';
-                        // Add onclick to the date separator
-                        dateDiv.innerHTML = `<span class="bg-white dark:bg-gray-700 px-3 py-1 rounded-full text-xs text-gray-600 dark:text-gray-300 shadow cursor-pointer" onclick="event.stopPropagation(); editDateHeader('${message.date}')">${message.date}</span>`;
-                        container.appendChild(dateDiv);
-                        currentDate = message.date;
-                    }
-                    
-                    const messageDiv = document.createElement('div');
-                    messageDiv.className = `flex ${message.type === 'sent' ? 'justify-end' : 'justify-start'} mb-2`;
-                    
-                    const bubbleDiv = document.createElement('div');
-                    bubbleDiv.className = `message-bubble ${message.type} p-3 shadow-sm cursor-pointer hover:shadow-md transition-shadow`;
-                    bubbleDiv.onclick = () => editMessage(index);
-                    
-                    const textSpan = document.createElement('span');
-                    textSpan.textContent = message.text;
-                    textSpan.className = 'block text-gray-800 dark:text-gray-200';
-                    
-                    const timeDiv = document.createElement('div');
-                    timeDiv.className = 'flex items-center justify-end mt-1 space-x-1';
-                    
-                    const timeSpan = document.createElement('span');
-                    timeSpan.textContent = message.time;
-                    timeSpan.className = 'text-xs text-gray-500';
-                    
-                    timeDiv.appendChild(timeSpan);
-                    
-                    if (message.type === 'sent') {
-                        const statusIcon = document.createElement('span');
-                        statusIcon.className = 'text-xs';
-                        
-                        switch (message.status) {
-                            case 'sent':
-                                statusIcon.innerHTML = '<i class="fas fa-check text-gray-400"></i>';
-                                break;
-                            case 'delivered':
-                                statusIcon.innerHTML = '<i class="fas fa-check-double text-gray-400"></i>';
-                                break;
-                            case 'read':
-                                statusIcon.innerHTML = '<i class="fas fa-check-double text-blue-500"></i>';
-                                break;
-                        }
-                        timeDiv.appendChild(statusIcon);
-                    }
-                    
-                    bubbleDiv.appendChild(textSpan);
-                    bubbleDiv.appendChild(timeDiv);
-                    messageDiv.appendChild(bubbleDiv);
-                    container.appendChild(messageDiv);
-                });
-            }
+            document.getElementById('messageDate').value = dateString;
+            
+            document.getElementById('messageModal').classList.remove('hidden');
+        }
 
-            function editMessage(index) {
-                currentEditingIndex = index;
-                editingDateHeader = false; // Ensure this is false when editing a message
-                oldDate = null; // Clear oldDate
+        function addMessage() {
+            currentEditingIndex = null;
+            editingDateHeader = false; // Ensure this is false when adding a new message
+            oldDate = null; // Clear oldDate
 
-                const message = messages[index];
-                
-                document.getElementById('messageType').value = message.type;
-                document.getElementById('messageText').value = message.text;
-                document.getElementById('messageTime').value = message.time;
-                document.getElementById('messageStatus').value = message.status;
-                document.getElementById('messageDate').value = message.date || '';
-                
-                document.getElementById('messageModal').classList.remove('hidden');
-            }
+            document.getElementById('messageType').value = 'sent';
+            document.getElementById('messageText').value = '';
+            document.getElementById('messageTime').value = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
+            document.getElementById('messageStatus').value = 'sent';
+            document.getElementById('messageDate').value = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
+            
+            document.getElementById('messageModal').classList.remove('hidden');
+        }
 
-            // New function to edit date header
-            function editDateHeader(dateString) {
-                currentEditingIndex = null; // Not editing a specific message
-                editingDateHeader = true;
-                oldDate = dateString; // Store the date being edited
+        function closeMessageModal() {
+            document.getElementById('messageModal').classList.add('hidden');
+            currentEditingIndex = null;
+            editingDateHeader = false; // Reset when modal is closed
+            oldDate = null; // Reset when modal is closed
+        }
 
-                // Clear other fields as we are only editing the date for a group of messages
-                document.getElementById('messageType').value = 'sent'; // Default value, but won't be saved in this mode
-                document.getElementById('messageText').value = '';
-                document.getElementById('messageTime').value = '';
-                document.getElementById('messageStatus').value = 'sent'; // Default value
+        function saveMessage() {
+            const type = document.getElementById('messageType').value;
+            const text = document.getElementById('messageText').value;
+            const time = document.getElementById('messageTime').value;
+            const status = document.getElementById('messageStatus').value;
+            const date = document.getElementById('messageDate').value;
 
-                document.getElementById('messageDate').value = dateString;
-                
-                document.getElementById('messageModal').classList.remove('hidden');
-            }
+            if (editingDateHeader) {
+                // Logic for editing a date header (applies to all messages with the old date)
+                const newDate = date; // Get the new date from the input
 
-            function addMessage() {
-                currentEditingIndex = null;
-                editingDateHeader = false; // Ensure this is false when adding a new message
-                oldDate = null; // Clear oldDate
-
-                document.getElementById('messageType').value = 'sent';
-                document.getElementById('messageText').value = '';
-                document.getElementById('messageTime').value = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute: '2-digit'});
-                document.getElementById('messageStatus').value = 'sent';
-                document.getElementById('messageDate').value = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' });
-                
-                document.getElementById('messageModal').classList.remove('hidden');
-            }
-
-            function closeMessageModal() {
-                document.getElementById('messageModal').classList.add('hidden');
-                currentEditingIndex = null;
-                editingDateHeader = false; // Reset when modal is closed
-                oldDate = null; // Reset when modal is closed
-            }
-
-            function saveMessage() {
-                const type = document.getElementById('messageType').value;
-                const text = document.getElementById('messageText').value;
-                const time = document.getElementById('messageTime').value;
-                const status = document.getElementById('messageStatus').value;
-                const date = document.getElementById('messageDate').value;
-
-                if (editingDateHeader) {
-                    // Logic for editing a date header (applies to all messages with the old date)
-                    const newDate = date; // Get the new date from the input
-
-                    if (!newDate.trim()) {
-                        showNotification('❌ A data não pode estar vazia.', 'error');
-                        return;
-                    }
-
-                    messages.forEach(message => {
-                        if (message.date === oldDate) {
-                            message.date = newDate;
-                        }
-                    });
-                    editingDateHeader = false; // Reset control variable
-                    oldDate = null; // Clear old date
-                    showNotification('✅ Data das mensagens atualizada!');
-
-                } else {
-                    // Original logic for editing/adding a single message
-                    if (!text.trim()) {
-                        showNotification('❌ O texto da mensagem não pode estar vazio.', 'error');
-                        return;
-                    }
-                    
-                    const messageData = { type, text, time, status, date };
-                    
-                    if (currentEditingIndex !== null) {
-                        messages[currentEditingIndex] = { ...messages[currentEditingIndex], ...messageData };
-                        showNotification('✅ Mensagem atualizada!');
-                    } else {
-                        messages.push(messageData);
-                        showNotification('✅ Mensagem adicionada!');
-                    }
-                }
-                
-                renderMessages();
-                closeMessageModal();
-            }
-
-            // Wallpaper functions
-            function applyWallpaper() {
-                const urlInput = document.getElementById('wallpaperUrl').value;
-                const fileInput = document.getElementById('wallpaperFile');
-                const presetSelect = document.getElementById('wallpaperPreset').value;
-                const messagesArea = document.querySelector('.whatsapp-pattern');
-                
-                let wallpaperUrl = '';
-                
-                // Priority: File > URL > Preset
-                if (fileInput.files && fileInput.files[0]) {
-                    const file = fileInput.files[0];
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        applyWallpaperImage(e.target.result);
-                    };
-                    reader.readAsDataURL(file);
+                if (!newDate.trim()) {
+                    showNotification('❌ A data não pode estar vazia.', 'error');
                     return;
-                } else if (urlInput.trim()) {
-                    wallpaperUrl = urlInput.trim();
-                } else if (presetSelect !== 'default') {
-                    wallpaperUrl = presetSelect;
+                }
+
+                messages.forEach(message => {
+                    if (message.date === oldDate) {
+                        message.date = newDate;
+                    }
+                });
+                editingDateHeader = false; // Reset control variable
+                oldDate = null; // Clear old date
+                showNotification('✅ Data das mensagens atualizada!');
+
+            } else {
+                // Original logic for editing/adding a single message
+                if (!text.trim()) {
+                    showNotification('❌ O texto da mensagem não pode estar vazio.', 'error');
+                    return;
                 }
                 
-                if (wallpaperUrl) {
-                    applyWallpaperImage(wallpaperUrl);
+                const messageData = { type, text, time, status, date };
+                
+                if (currentEditingIndex !== null) {
+                    messages[currentEditingIndex] = { ...messages[currentEditingIndex], ...messageData };
+                    showNotification('✅ Mensagem atualizada!');
+                } else {
+                    messages.push(messageData);
+                    showNotification('✅ Mensagem adicionada!');
                 }
             }
             
-            function applyWallpaperImage(imageUrl) {
-                const messagesArea = document.querySelector('.whatsapp-pattern');
-                messagesArea.style.backgroundImage = `url('${imageUrl}')`;
-                messagesArea.style.backgroundSize = 'cover';
-                messagesArea.style.backgroundPosition = 'center';
-                messagesArea.style.backgroundRepeat = 'no-repeat';
-                messagesArea.style.backgroundAttachment = 'fixed';
+            renderMessages();
+            closeMessageModal();
+        }
+
+        // Wallpaper functions
+        function applyWallpaper() {
+            const urlInput = document.getElementById('wallpaperUrl').value;
+            const fileInput = document.getElementById('wallpaperFile');
+            const presetSelect = document.getElementById('wallpaperPreset').value;
+            const messagesArea = document.querySelector('.whatsapp-pattern');
+            
+            let wallpaperUrl = '';
+            
+            // Priority: File > URL > Preset
+            if (fileInput.files && fileInput.files[0]) {
+                const file = fileInput.files[0];
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    applyWallpaperImage(e.target.result);
+                };
+                reader.readAsDataURL(file);
+                return;
+            } else if (urlInput.trim()) {
+                wallpaperUrl = urlInput.trim();
+            } else if (presetSelect !== 'default') {
+                wallpaperUrl = presetSelect;
             }
             
-            function resetWallpaper() {
-                const messagesArea = document.querySelector('.whatsapp-pattern');
-                messagesArea.style.backgroundImage = '';
-                messagesArea.style.backgroundSize = '';
-                messagesArea.style.backgroundPosition = '';
-                messagesArea.style.backgroundRepeat = '';
-                messagesArea.style.backgroundAttachment = '';
-                
-                // Clear all inputs
+            if (wallpaperUrl) {
+                applyWallpaperImage(wallpaperUrl);
+            }
+        }
+        
+        function applyWallpaperImage(imageUrl) {
+            const messagesArea = document.querySelector('.whatsapp-pattern');
+            messagesArea.style.backgroundImage = `url('${imageUrl}')`;
+            messagesArea.style.backgroundSize = 'cover';
+            messagesArea.style.backgroundPosition = 'center';
+            messagesArea.style.backgroundRepeat = 'no-repeat';
+            messagesArea.style.backgroundAttachment = 'fixed';
+        }
+        
+        function resetWallpaper() {
+            const messagesArea = document.querySelector('.whatsapp-pattern');
+            messagesArea.style.backgroundImage = '';
+            messagesArea.style.backgroundSize = '';
+            messagesArea.style.backgroundPosition = '';
+            messagesArea.style.backgroundRepeat = '';
+            messagesArea.style.backgroundAttachment = '';
+            
+            // Clear all inputs
+            document.getElementById('wallpaperUrl').value = '';
+            document.getElementById('wallpaperFile').value = '';
+            document.getElementById('wallpaperPreset').value = 'default';
+        }
+
+        // Event listeners
+        document.getElementById('contactName').addEventListener('input', updateContactInfo);
+        document.getElementById('onlineStatus').addEventListener('input', updateContactInfo);
+        // document.getElementById('contactPhoto').addEventListener('input', updateContactInfo); // Removed this, now handled by new functions
+
+        // Wallpaper event listeners
+        document.getElementById('wallpaperPreset').addEventListener('change', function() {
+            if (this.value !== 'default') {
                 document.getElementById('wallpaperUrl').value = '';
                 document.getElementById('wallpaperFile').value = '';
-                document.getElementById('wallpaperPreset').value = 'default';
             }
+        });
 
-            // Event listeners
-            document.getElementById('contactName').addEventListener('input', updateContactInfo);
-            document.getElementById('onlineStatus').addEventListener('input', updateContactInfo);
-            document.getElementById('contactPhoto').addEventListener('input', updateContactInfo);
+        // Screenshot functions
+        let capturedCanvas = null;
+
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg text-white z-50 transition-opacity duration-300 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
             
-            // Wallpaper event listeners
-            document.getElementById('wallpaperPreset').addEventListener('change', function() {
-                if (this.value !== 'default') {
-                    document.getElementById('wallpaperUrl').value = '';
-                    document.getElementById('wallpaperFile').value = '';
-                }
-            });
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => document.body.removeChild(notification), 300);
+            }, 3000);
+        }
 
-            // Screenshot functions
-            let capturedCanvas = null;
-
-            function showNotification(message, type = 'success') {
-                const notification = document.createElement('div');
-                notification.className = `fixed top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded-lg text-white z-50 transition-opacity duration-300 ${type === 'success' ? 'bg-green-500' : 'bg-red-500'}`;
-                notification.textContent = message;
-                document.body.appendChild(notification);
+        async function captureScreen() {
+            try {
+                // Hide editor panel temporarily
+                const editorPanel = document.getElementById('editorPanel');
+                const editorToggle = document.getElementById('editorToggle');
+                const wasEditorVisible = !editorPanel.classList.contains('hidden');
                 
-                setTimeout(() => {
-                    notification.style.opacity = '0';
-                    setTimeout(() => document.body.removeChild(notification), 300);
-                }, 3000);
+                if (wasEditorVisible) {
+                    editorPanel.classList.add('hidden');
+                    editorToggle.classList.remove('hidden');
+                }
+
+                // Get the WhatsApp interface container
+                const whatsappContainer = document.querySelector('.max-w-md');
+                
+                if (!whatsappContainer) {
+                    throw new Error('Não foi possível encontrar a área da conversa');
+                }
+
+                // Wait for any pending images to load
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                // Capture the screen
+                capturedCanvas = await html2canvas(whatsappContainer, {
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: null,
+                    scale: 2, // Higher quality
+                    logging: false,
+                    onclone: function(clonedDoc) {
+                        // Ensure all images are loaded in the cloned document
+                        const images = clonedDoc.querySelectorAll('img');
+                        images.forEach(img => {
+                            if (img.src) {
+                                img.crossOrigin = 'anonymous';
+                            }
+                        });
+                    }
+                });
+
+                // Restore editor panel if it was visible
+                if (wasEditorVisible) {
+                    editorPanel.classList.remove('hidden');
+                    editorToggle.classList.add('hidden');
+                }
+
+                // Enable copy and download buttons
+                document.getElementById('copyBtn').disabled = false;
+                document.getElementById('downloadBtn').disabled = false;
+
+                showNotification('✅ Conversa capturada com sucesso!');
+
+            } catch (error) {
+                console.error('Erro ao capturar:', error);
+                showNotification('❌ Erro ao capturar a conversa', 'error');
+            }
+        }
+
+        async function copyScreenshot() {
+            if (!capturedCanvas) {
+                showNotification('❌ Capture a conversa primeiro', 'error');
+                return;
             }
 
-            async function captureScreen() {
-                try {
-                    // Hide editor panel temporarily
-                    const editorPanel = document.getElementById('editorPanel');
-                    const editorToggle = document.getElementById('editorToggle');
-                    const wasEditorVisible = !editorPanel.classList.contains('hidden');
-                    
-                    if (wasEditorVisible) {
-                        editorPanel.classList.add('hidden');
-                        editorToggle.classList.remove('hidden');
-                    }
-
-                    // Get the WhatsApp interface container
-                    const whatsappContainer = document.querySelector('.max-w-md');
-                    
-                    if (!whatsappContainer) {
-                        throw new Error('Não foi possível encontrar a área da conversa');
-                    }
-
-                    // Wait for any pending images to load
-                    await new Promise(resolve => setTimeout(resolve, 500));
-
-                    // Capture the screen
-                    capturedCanvas = await html2canvas(whatsappContainer, {
-                        useCORS: true,
-                        allowTaint: true,
-                        backgroundColor: null,
-                        scale: 2, // Higher quality
-                        logging: false,
-                        onclone: function(clonedDoc) {
-                            // Ensure all images are loaded in the cloned document
-                            const images = clonedDoc.querySelectorAll('img');
-                            images.forEach(img => {
-                                if (img.src) {
-                                    img.crossOrigin = 'anonymous';
-                                }
-                            });
-                        }
-                    });
-
-                    // Restore editor panel if it was visible
-                    if (wasEditorVisible) {
-                        editorPanel.classList.remove('hidden');
-                        editorToggle.classList.add('hidden');
-                    }
-
-                    // Enable copy and download buttons
-                    document.getElementById('copyBtn').disabled = false;
-                    document.getElementById('downloadBtn').disabled = false;
-
-                    showNotification('✅ Conversa capturada com sucesso!');
-
-                } catch (error) {
-                    console.error('Erro ao capturar:', error);
-                    showNotification('❌ Erro ao capturar a conversa', 'error');
-                }
-            }
-
-            async function copyScreenshot() {
-                if (!capturedCanvas) {
-                    showNotification('❌ Capture a conversa primeiro', 'error');
-                    return;
-                }
-
-                try {
-                    // Convert canvas to blob
-                    capturedCanvas.toBlob(async function(blob) {
-                        try {
-                            // Use the Clipboard API to copy the image
-                            await navigator.clipboard.write([
-                                new ClipboardItem({
-                                    'image/png': blob
-                                })
-                            ]);
-                            showNotification('📋 Imagem copiada para a área de transferência!');
-                        } catch (error) {
-                            console.error('Erro ao copiar:', error);
-                            
-                            // Fallback: Create download link
-                            const url = URL.createObjectURL(blob);
-                            const a = document.createElement('a');
-                            a.href = url;
-                            a.download = `whatsapp-conversa-${Date.now()}.png`;
-                            a.click();
-                            URL.revokeObjectURL(url);
-                            
-                            showNotification('📁 Download iniciado (clipboard não suportado)');
-                        }
-                    }, 'image/png');
-
-                } catch (error) {
-                    console.error('Erro ao processar imagem:', error);
-                    showNotification('❌ Erro ao processar a imagem', 'error');
-                }
-            }
-
-            function downloadScreenshot() {
-                if (!capturedCanvas) {
-                    showNotification('❌ Capture a conversa primeiro', 'error');
-                    return;
-                }
-
-                try {
-                    // Convert canvas to download link
-                    capturedCanvas.toBlob(function(blob) {
+            try {
+                // Convert canvas to blob
+                capturedCanvas.toBlob(async function(blob) {
+                    try {
+                        // Use the Clipboard API to copy the image
+                        await navigator.clipboard.write([
+                            new ClipboardItem({
+                                'image/png': blob
+                            })
+                        ]);
+                        showNotification('📋 Imagem copiada para a área de transferência!');
+                    } catch (error) {
+                        console.error('Erro ao copiar:', error);
+                        
+                        // Fallback: Create download link
                         const url = URL.createObjectURL(blob);
                         const a = document.createElement('a');
                         a.href = url;
                         a.download = `whatsapp-conversa-${Date.now()}.png`;
-                        document.body.appendChild(a);
                         a.click();
-                        document.body.removeChild(a);
                         URL.revokeObjectURL(url);
                         
-                        showNotification('📁 Download concluído!');
-                    }, 'image/png');
+                        showNotification('📁 Download iniciado (clipboard não suportado)');
+                    }
+                }, 'image/png');
 
-                } catch (error) {
-                    console.error('Erro ao baixar:', error);
-                    showNotification('❌ Erro ao baixar a imagem', 'error');
-                }
+            } catch (error) {
+                console.error('Erro ao processar imagem:', error);
+                showNotification('❌ Erro ao processar a imagem', 'error');
+            }
+        }
+
+        function downloadScreenshot() {
+            if (!capturedCanvas) {
+                showNotification('❌ Capture a conversa primeiro', 'error');
+                return;
             }
 
-            // Initialize the app
-            renderMessages();
-            
-            // Hide editor initially
-            document.getElementById('editorPanel').classList.add('hidden');
-        </script>
-    </body>
-    </html>
+            try {
+                // Convert canvas to download link
+                capturedCanvas.toBlob(function(blob) {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `whatsapp-conversa-${Date.now()}.png`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    showNotification('📁 Download concluído!');
+                }, 'image/png');
+
+            } catch (error) {
+                console.error('Erro ao baixar:', error);
+                showNotification('❌ Erro ao baixar a imagem', 'error');
+            }
+        }
+
+        // Cropper.js functions
+        function setupCropperModal() {
+            const image = document.getElementById('imageForCropper');
+            cropper = new Cropper(image, {
+                aspectRatio: 1, // For a square/circle profile picture
+                viewMode: 1, // Restrict the crop box to not exceed the canvas
+                autoCropArea: 0.8, // Initial crop area
+                responsive: true,
+                movable: true,
+                zoomable: true,
+                rotatable: true,
+                scalable: true,
+                zoomOnWheel: true,
+                // Add more options as needed
+            });
+        }
+
+        function handlePhotoUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const cropperModal = document.getElementById('cropperModal');
+                    const imageForCropper = document.getElementById('imageForCropper');
+                    imageForCropper.src = e.target.result;
+                    cropperModal.style.display = 'flex'; // Show modal
+
+                    // Destroy existing cropper instance if any
+                    if (cropper) {
+                        cropper.destroy();
+                    }
+                    // Initialize cropper after image is loaded
+                    imageForCropper.onload = () => {
+                        setupCropperModal();
+                    };
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function cropAndApplyPhoto() {
+            if (cropper) {
+                const croppedCanvas = cropper.getCroppedCanvas({
+                    width: 200, // Desired width for profile picture
+                    height: 200, // Desired height for profile picture
+                    fillColor: '#fff', // Background color for transparent areas (if any)
+                });
+
+                const headerPhoto = document.getElementById('headerPhoto');
+                headerPhoto.src = croppedCanvas.toDataURL('image/png'); // Or 'image/jpeg'
+
+                showNotification('✅ Foto de perfil atualizada!');
+                closeCropperModal();
+            } else {
+                showNotification('❌ Nenhuma imagem para cortar.', 'error');
+            }
+        }
+
+        function closeCropperModal() {
+            document.getElementById('cropperModal').style.display = 'none';
+            if (cropper) {
+                cropper.destroy(); // Destroy cropper instance when modal is closed
+            }
+            document.getElementById('contactPhotoUpload').value = '';
+        }
+
+        // Initialize the app
+        renderMessages();
+        
+        // Hide editor initially
+        document.getElementById('editorPanel').classList.add('hidden');
+
+        // Event listener for the new file input
+        document.getElementById('contactPhotoUpload').addEventListener('change', handlePhotoUpload);
+    </script>
+</body>
+</html>
