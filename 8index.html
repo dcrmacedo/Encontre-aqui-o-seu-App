@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./agr.png?v=2">
+    <title>CronômetrodeTime</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+    <div class="bg-gray-100 dark:bg-gray-800 border-b border-gray-300 dark:border-gray-700 p-3">
+        <div class="flex flex-col sm:flex-row justify-between items-center"> <h1 class="text-xl font-bold text-primary mb-2 sm:mb-0">CronômetrodeTime</h1> <div class="flex flex-wrap justify-center sm:justify-end items-center gap-2 w-full sm:w-auto"> <button onclick="showSaveOptions()" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm w-full sm:w-auto">
+                    <i class="fas fa-save mr-1"></i>Salvar
+                </button>
+                <button onclick="loadData()" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm w-full sm:w-auto">
+                    <i class="fas fa-upload mr-1"></i>Carregar
+                </button>
+                <button onclick="toggleTheme()" class="px-3 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 text-sm w-full sm:w-auto">
+                    <i class="fas fa-palette mr-1"></i>Tema
+                </button>
+                <button onclick="showExitDialog()" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm w-full sm:w-auto">
+                    <i class="fas fa-sign-out-alt mr-1"></i>Sair
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex h-screen flex-col md:flex-row"> <div class="w-full md:w-1/3 bg-gray-50 dark:bg-gray-800 border-r border-gray-300 dark:border-gray-700 p-4 overflow-y-auto">
+            <div class="mb-4">
+                <h2 class="text-lg font-semibold mb-3">Times</h2>
+                <button onclick="showCreateTeamDialog()" class="w-full px-4 py-2 bg-primary text-white rounded hover:bg-purple-600 transition-colors">
+                    <i class="fas fa-plus mr-2"></i>Criar Time
+                </button>
+            </div>
+            
+            <div id="teamsList" class="space-y-2">
+                </div>
+        </div>
+
+        <div class="flex-1 p-6 overflow-y-auto">
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Configuração da Partida</h2>
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4 sm:gap-0"> <div>
+                        <label for="gamePhase" class="block text-sm font-medium mb-1">Fase do Jogo:</label>
+                        <select id="gamePhase" onchange="setGamePhase(this.value)" class="w-full sm:w-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base">
+                            <option value="friendly">Amistoso</option>
+                            <option value="round_of_16">Oitavas de Final</option>
+                            <option value="quarter_finals">Quartas de Final</option>
+                            <option value="semi_finals">Semifinal</option>
+                            <option value="final">Final</option>
+                        </select>
+                    </div>
+                    <button onclick="showSelectMatchTeamsDialog()" class="w-full sm:w-auto px-4 py-2 bg-primary text-white rounded hover:bg-purple-600">
+                        <i class="fas fa-users mr-2"></i>Escolher Times
+                    </button>
+                </div>
+                <div id="currentMatchTeams" class="text-lg font-medium text-center">
+                    Nenhum time selecionado para a partida.
+                </div>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Placar</h2>
+                <div id="scoreboardContainer">
+                    <div id="noTeamsForScore" class="text-center text-gray-500 py-8">
+                        Selecione pelo menos dois times para começar a partida
+                    </div>
+                    <div id="scoreboardContent" class="hidden">
+                        <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3 sm:gap-0">
+                            <h3 class="text-lg font-medium">Partida Atual</h3>
+                            <div class="flex gap-2 w-full sm:w-auto justify-center">
+                                <button onclick="resetScore()" class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 text-sm flex-1 sm:flex-none">
+                                    <i class="fas fa-undo mr-1"></i>Reset Placar
+                                </button>
+                                <button onclick="showScoreHistoryDialog()" class="px-3 py-1 bg-blue-500 text-white rounded hover:bg-blue-600 text-sm flex-1 sm:flex-none">
+                                    <i class="fas fa-history mr-1"></i>Histórico
+                                </button>
+                            </div>
+                        </div>
+                        <div id="scoreDisplay" class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4"> </div>
+                        <div class="text-center">
+                            <button onclick="showQuickScoreDialog()" class="w-full sm:w-auto px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
+                                <i class="fas fa-plus mr-2"></i>Adicionar Gol
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Artilheiro do Campeonato</h2>
+                <div id="topScorerDisplay" class="text-center text-lg">
+                    Nenhum artilheiro definido ainda.
+                </div>
+                <div class="text-center mt-4">
+                    <button onclick="calculateTopScorer(true)" class="w-full sm:w-auto px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600">
+                        <i class="fas fa-trophy mr-2"></i>Ver Artilheiro
+                    </button>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">Cronômetro</h2>
+                
+                <div class="text-center mb-6">
+                    <div id="timerDisplay" class="text-4xl sm:text-5xl lg:text-6xl font-mono font-bold text-primary mb-4">00:00:00</div> <div class="flex flex-wrap justify-center gap-3 mb-4"> <button id="startBtn" onclick="startTimer()" class="px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex-1 sm:flex-none">
+                            <i class="fas fa-play mr-1"></i>Iniciar
+                        </button>
+                        <button id="pauseBtn" onclick="pauseTimer()" class="px-4 py-2 bg-yellow-500 text-white rounded hover:bg-yellow-600 flex-1 sm:flex-none">
+                            <i class="fas fa-pause mr-1"></i>Pausar
+                        </button>
+                        <button onclick="resetTimer()" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex-1 sm:flex-none">
+                            <i class="fas fa-stop mr-1"></i>Zerar
+                        </button>
+                        <button onclick="showCustomTimeDialog()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 flex-1 sm:flex-none">
+                            <i class="fas fa-clock mr-1"></i>Tempo Personalizado
+                        </button>
+                    </div>
+                    
+                    <div class="flex justify-center gap-4">
+                        <label class="flex items-center">
+                            <input type="radio" name="timerMode" value="progressive" checked class="mr-2">
+                            Progressivo
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="timerMode" value="regressive" class="mr-2">
+                            Regressivo
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6">
+                <div class="flex flex-col sm:flex-row justify-between items-center mb-4 gap-3 sm:gap-0">
+                    <h2 class="text-xl font-semibold">Membros do Time</h2>
+                    <select id="selectedTeam" onchange="loadTeamMembers()" class="w-full sm:w-auto px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base">
+                        <option value="">Selecione um time</option>
+                    </select>
+                </div>
+                
+                <div id="membersSection" class="hidden">
+                    <button onclick="showAddMemberDialog()" class="mb-4 w-full sm:w-auto px-4 py-2 bg-primary text-white rounded hover:bg-purple-600">
+                        <i class="fas fa-user-plus mr-2"></i>Adicionar Membro
+                    </button>
+                    <div id="membersList" class="space-y-2">
+                        </div>
+                </div>
+                
+                <div id="noTeamSelected" class="text-center text-gray-500 py-8">
+                    Selecione um time para ver os membros
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div id="modalContent" class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm sm:max-w-md w-full mx-4"> </div>
+    </div>
+
+    <script>
+        // Global variables
+        let teams = [];
+        let currentTeamId = null;
+        let timerInterval = null;
+        let currentTime = 0;
+        let isRunning = false;
+        let timerMode = 'progressive';
+        let customTime = 0;
+        let scoreHistory = [];
+        let currentMatch = {
+            id: null, // Unique ID for the match
+            phase: 'friendly', // e.g., 'friendly', 'round_of_16', 'quarter_finals', 'semi_finals', 'final'
+            team1: null,
+            team2: null,
+            scores: {},
+            startTime: null,
+            endTime: null
+        };
+
+        // Theme management
+        function initializeTheme() {
+            if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+                document.documentElement.classList.add('dark');
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+                if (event.matches) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            });
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        // Team management
+        function generateId() {
+            return Date.now().toString(36) + Math.random().toString(36).substr(2);
+        }
+
+        function showCreateTeamDialog() {
+            showModal(`
+                <h3 class="text-lg font-semibold mb-4">Criar Novo Time</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nome do Time</label>
+                        <input type="text" id="teamName" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base" placeholder="Digite o nome do time">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Cor do Time</label>
+                        <input type="color" id="teamColor" value="#5D5CDE" class="w-full h-10 border border-gray-300 dark:border-gray-600 rounded">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Membros (um por linha)</label>
+                        <textarea id="memberNames" rows="4" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base" placeholder="Nome do jogador 1&#10;Nome do jogador 2&#10;..."></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Separe os nomes dos jogadores por linha.</p>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="hideModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                    <button onclick="createTeam()" class="px-4 py-2 bg-primary text-white hover:bg-purple-600 rounded">Criar</button>
+                </div>
+            `);
+        }
+
+        function createTeam() {
+            const name = document.getElementById('teamName').value.trim();
+            const color = document.getElementById('teamColor').value;
+            const memberNamesInput = document.getElementById('memberNames').value.trim();
+            
+            if (!name) {
+                showAlert('Por favor, digite um nome para o time');
+                return;
+            }
+
+            const newMembers = [];
+            if (memberNamesInput) {
+                const namesArray = memberNamesInput.split('\n').map(n => n.trim()).filter(n => n !== '');
+                namesArray.forEach(memberName => {
+                    newMembers.push({
+                        id: generateId(),
+                        name: memberName,
+                        goals: 0 // Initialize goals for new member
+                    });
+                });
+            }
+
+            const team = {
+                id: generateId(),
+                name: name,
+                color: color,
+                members: newMembers // Assign new members here
+            };
+
+            teams.push(team);
+            renderTeams();
+            updateTeamSelect();
+            initializeScoreboard(); // Re-initialize scoreboard to update team options
+            hideModal();
+            showAlert('Time criado com sucesso!');
+        }
+
+        function editTeam(teamId) {
+            const team = teams.find(t => t.id === teamId);
+            if (!team) return;
+
+            showModal(`
+                <h3 class="text-lg font-semibold mb-4">Editar Time</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nome do Time</label>
+                        <input type="text" id="editTeamName" value="${team.name}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Cor do Time</label>
+                        <input type="color" id="editTeamColor" value="${team.color}" class="w-full h-10 border border-gray-300 dark:border-gray-600 rounded">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="hideModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                    <button onclick="saveTeamEdit('${teamId}')" class="px-4 py-2 bg-primary text-white hover:bg-purple-600 rounded">Salvar</button>
+                </div>
+            `);
+        }
+
+        function saveTeamEdit(teamId) {
+            const name = document.getElementById('editTeamName').value.trim();
+            const color = document.getElementById('editTeamColor').value;
+            
+            if (!name) {
+                showAlert('Por favor, digite um nome para o time');
+                return;
+            }
+
+            const team = teams.find(t => t.id === teamId);
+            team.name = name;
+            team.color = color;
+            
+            renderTeams();
+            updateTeamSelect();
+            initializeScoreboard(); // Re-initialize scoreboard to update team names/colors
+            updateCurrentMatchTeamsDisplay(); // Update display if currently selected
+            hideModal();
+            showAlert('Time atualizado com sucesso!');
+        }
+
+        function deleteTeam(teamId) {
+            const team = teams.find(t => t.id === teamId);
+            showConfirmDialog(`Tem certeza que deseja excluir o time "${team.name}"? Isso também removerá todos os seus membros e seus gols.`, () => {
+                teams = teams.filter(t => t.id !== teamId);
+                if (currentTeamId === teamId) {
+                    currentTeamId = null;
+                    document.getElementById('selectedTeam').value = '';
+                    hideMembers();
+                }
+                // Also reset current match if deleted team was part of it
+                if (currentMatch.team1 === teamId) {
+                    currentMatch.team1 = null;
+                    if (currentMatch.team2) { // If only team1 was deleted, keep team2 if exists
+                        currentMatch.team2 = currentMatch.team2; // No change
+                    } else { // If both were deleted or only one selected, clear both
+                        currentMatch.team2 = null;
+                    }
+                }
+                if (currentMatch.team2 === teamId) {
+                    currentMatch.team2 = null;
+                    if (currentMatch.team1) { // If only team2 was deleted, keep team1 if exists
+                        currentMatch.team1 = currentMatch.team1; // No change
+                    } else { // If both were deleted or only one selected, clear both
+                        currentMatch.team1 = null;
+                    }
+                }
+                // Remove team's score from current match
+                if (currentMatch.scores && currentMatch.scores[teamId] !== undefined) {
+                    delete currentMatch.scores[teamId];
+                }
+
+                renderTeams();
+                updateTeamSelect();
+                initializeScoreboard(); // Re-initialize scoreboard after team deletion
+                updateCurrentMatchTeamsDisplay();
+                calculateTopScorer(); // Recalculate top scorer
+                showAlert('Time excluído com sucesso!');
+            });
+        }
+
+        function renderTeams() {
+            const teamsList = document.getElementById('teamsList');
+            teamsList.innerHTML = '';
+
+            teams.forEach(team => {
+                const teamElement = document.createElement('div');
+                teamElement.className = 'p-3 border border-gray-300 dark:border-gray-600 rounded-lg';
+                teamElement.style.borderColor = team.color;
+                teamElement.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center">
+                            <div class="w-4 h-4 rounded-full mr-2" style="background-color: ${team.color}"></div>
+                            <span class="font-medium">${team.name}</span>
+                            <span class="ml-2 text-sm text-gray-500">(${team.members.length})</span>
+                        </div>
+                        <div class="flex gap-1">
+                            <button onclick="editTeam('${team.id}')" class="p-1 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900 rounded">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button onclick="deleteTeam('${team.id}')" class="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+                teamsList.appendChild(teamElement);
+            });
+        }
+
+        function updateTeamSelect() {
+            const select = document.getElementById('selectedTeam');
+            select.innerHTML = '<option value="">Selecione um time</option>';
+            
+            teams.forEach(team => {
+                const option = document.createElement('option');
+                option.value = team.id;
+                option.textContent = team.name;
+                select.appendChild(option);
+            });
+        }
+
+        // Member management
+        function loadTeamMembers() {
+            const select = document.getElementById('selectedTeam');
+            currentTeamId = select.value;
+            
+            if (currentTeamId) {
+                showMembers();
+                renderMembers();
+            } else {
+                hideMembers();
+            }
+        }
+
+        function showMembers() {
+            document.getElementById('membersSection').classList.remove('hidden');
+            document.getElementById('noTeamSelected').classList.add('hidden');
+        }
+
+        function hideMembers() {
+            document.getElementById('membersSection').classList.add('hidden');
+            document.getElementById('noTeamSelected').classList.remove('hidden');
+        }
+
+        function showAddMemberDialog() {
+            if (!currentTeamId) return;
+
+            showModal(`
+                <h3 class="text-lg font-semibold mb-4">Adicionar Membro</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nome do Membro</label>
+                        <input type="text" id="memberName" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base" placeholder="Digite o nome do membro">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="hideModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                    <button onclick="addMember()" class="px-4 py-2 bg-primary text-white hover:bg-purple-600 rounded">Adicionar</button>
+                </div>
+            `);
+        }
+
+        function addMember() {
+            const name = document.getElementById('memberName').value.trim();
+            
+            if (!name) {
+                showAlert('Por favor, digite um nome para o membro');
+                return;
+            }
+
+            const team = teams.find(t => t.id === currentTeamId);
+            const member = {
+                id: generateId(),
+                name: name,
+                goals: 0 // Initialize goals for new member
+            };
+
+            team.members.push(member);
+            renderMembers();
+            renderTeams(); // Update team count
+            hideModal();
+            showAlert('Membro adicionado com sucesso!');
+        }
+
+        function editMember(memberId) {
+            const team = teams.find(t => t.id === currentTeamId);
+            const member = team.members.find(m => m.id === memberId);
+            
+            showModal(`
+                <h3 class="text-lg font-semibold mb-4">Editar Membro</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Nome do Membro</label>
+                        <input type="text" id="editMemberName" value="${member.name}" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="hideModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                    <button onclick="saveMemberEdit('${memberId}')" class="px-4 py-2 bg-primary text-white hover:bg-purple-600 rounded">Salvar</button>
+                </div>
+            `);
+        }
+
+        function saveMemberEdit(memberId) {
+            const name = document.getElementById('editMemberName').value.trim();
+            
+            if (!name) {
+                showAlert('Por favor, digite um nome para o membro');
+                return;
+            }
+
+            const team = teams.find(t => t.id === currentTeamId);
+            const member = team.members.find(m => m.id === memberId);
+            member.name = name;
+            
+            renderMembers();
+            hideModal();
+            showAlert('Membro atualizado com sucesso!');
+        }
+
+        function deleteMember(memberId) {
+            const team = teams.find(t => t.id === currentTeamId);
+            const member = team.members.find(m => m.id === memberId);
+            
+            showConfirmDialog(`Tem certeza que deseja remover "${member.name}" do time? Os gols dele serão perdidos.`, () => {
+                team.members = team.members.filter(m => m.id !== memberId);
+                renderMembers();
+                renderTeams(); // Update team member count
+                calculateTopScorer(); // Recalculate top scorer
+                showAlert('Membro removido com sucesso!');
+            });
+        }
+
+        function renderMembers() {
+            if (!currentTeamId) return;
+            
+            const team = teams.find(t => t.id === currentTeamId);
+            const membersList = document.getElementById('membersList');
+            membersList.innerHTML = '';
+
+            if (team.members.length === 0) {
+                membersList.innerHTML = '<p class="text-gray-500 text-center py-4">Nenhum membro adicionado ainda</p>';
+                return;
+            }
+
+            team.members.forEach(member => {
+                const memberElement = document.createElement('div');
+                memberElement.className = 'flex justify-between items-center p-3 border border-gray-300 dark:border-gray-600 rounded-lg';
+                memberElement.innerHTML = `
+                    <div class="flex items-center">
+                        <i class="fas fa-user mr-2 text-gray-500"></i>
+                        <span>${member.name}</span>
+                        <span class="ml-2 text-sm text-gray-500">(Gols: ${member.goals || 0})</span>
+                    </div>
+                    <div class="flex gap-1">
+                        <button onclick="editMember('${member.id}')" class="p-1 text-blue-500 hover:bg-blue-100 dark:hover:bg-blue-900 rounded">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deleteMember('${member.id}')" class="p-1 text-red-500 hover:bg-red-100 dark:hover:bg-red-900 rounded">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                `;
+                membersList.appendChild(memberElement);
+            });
+        }
+
+        // Timer functionality
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function updateTimerDisplay() {
+            document.getElementById('timerDisplay').textContent = formatTime(currentTime);
+        }
+
+        function startTimer() {
+            if (isRunning) return;
+            
+            isRunning = true;
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
+            
+            const mode = document.querySelector('input[name="timerMode"]:checked').value;
+            timerMode = mode;
+
+            if (!currentMatch.startTime) {
+                currentMatch.startTime = new Date().toISOString();
+            }
+            
+            timerInterval = setInterval(() => {
+                if (timerMode === 'progressive') {
+                    currentTime++;
+                } else {
+                    if (currentTime > 0) {
+                        currentTime--;
+                    } else {
+                        pauseTimer();
+                        showAlert('Tempo esgotado!');
+                        if (!currentMatch.endTime) {
+                            currentMatch.endTime = new Date().toISOString();
+                        }
+                        return;
+                    }
+                }
+                updateTimerDisplay();
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            currentTime = customTime;
+            updateTimerDisplay();
+            currentMatch.startTime = null;
+            currentMatch.endTime = null;
+        }
+
+        function showCustomTimeDialog() {
+            showModal(`
+                <h3 class="text-lg font-semibold mb-4">Definir Tempo Personalizado</h3>
+                <div class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3"> <div>
+                            <label class="block text-sm font-medium mb-1">Horas</label>
+                            <input type="number" id="customHours" min="0" max="23" value="0" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Minutos</label>
+                            <input type="number" id="customMinutes" min="0" max="59" value="0" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1">Segundos</label>
+                            <input type="number" id="customSeconds" min="0" max="59" value="0" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base">
+                        </div>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="hideModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                    <button onclick="setCustomTime()" class="px-4 py-2 bg-primary text-white hover:bg-purple-600 rounded">Definir</button>
+                </div>
+            `);
+        }
+
+        function setCustomTime() {
+            const hours = parseInt(document.getElementById('customHours').value) || 0;
+            const minutes = parseInt(document.getElementById('customMinutes').value) || 0;
+            const seconds = parseInt(document.getElementById('customSeconds').value) || 0;
+            
+            customTime = hours * 3600 + minutes * 60 + seconds;
+            currentTime = customTime;
+            updateTimerDisplay();
+            hideModal();
+            showAlert('Tempo personalizado definido!');
+        }
+
+        // Modal functionality
+        function showModal(content) {
+            document.getElementById('modalContent').innerHTML = content;
+            document.getElementById('modalOverlay').classList.remove('hidden');
+        }
+
+        function hideModal() {
+            document.getElementById('modalOverlay').classList.add('hidden');
+        }
+
+        function showAlert(message) {
+            showModal(`
+                <h3 class="text-lg font-semibold mb-4">Aviso</h3>
+                <p class="text-gray-700 dark:text-gray-300 mb-4">${message}</p>
+                <div class="flex justify-end">
+                    <button onclick="hideModal()" class="px-4 py-2 bg-primary text-white hover:bg-purple-600 rounded">OK</button>
+                </div>
+            `);
+        }
+
+        function showConfirmDialog(message, onConfirm) {
+            showModal(`
+                <h3 class="text-lg font-semibold mb-4">Confirmação</h3>
+                <p class="text-gray-700 dark:text-gray-300 mb-4">${message}</p>
+                <div class="flex justify-end space-x-3">
+                    <button onclick="hideModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                    <button id="confirmActionButton" class="px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded">Confirmar</button>
+                </div>
+            `);
+            // Attach the event listener directly to the confirm button
+            document.getElementById('confirmActionButton').onclick = () => {
+                hideModal();
+                onConfirm(); // Directly call the function
+            };
+        }
+
+        function showExitDialog() {
+            showConfirmDialog('Tem certeza que deseja sair? Dados não salvos serão perdidos.', () => {
+                window.close();
+            });
+        }
+
+        // Data persistence
+        function showSaveOptions() {
+            showModal(`
+                <h3 class="text-lg font-semibold mb-4">Opções de Salvar</h3>
+                <p class="text-gray-700 dark:text-gray-300 mb-4">Selecione o formato para salvar seus dados:</p>
+                <div class="flex flex-col space-y-3">
+                    <button onclick="saveDataAsJson()" class="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded">
+                        <i class="fas fa-file-code mr-1"></i> Salvar como JSON
+                    </button>
+                    <button onclick="exportToCsv()" class="px-4 py-2 bg-green-500 text-white hover:bg-green-600 rounded">
+                        <i class="fas fa-file-excel mr-1"></i> Salvar como Excel (CSV)
+                    </button>
+                </div>
+                <div class="flex justify-end mt-6">
+                    <button onclick="hideModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                </div>
+            `);
+        }
+
+        function saveDataAsJson() {
+            try {
+                const data = {
+                    teams: teams,
+                    currentTime: currentTime,
+                    customTime: customTime,
+                    timerMode: timerMode,
+                    currentMatch: currentMatch,
+                    scoreHistory: scoreHistory
+                };
+                
+                // Create downloadable JSON file
+                const dataStr = JSON.stringify(data, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = 'teammanager_data.json';
+                link.click();
+                URL.revokeObjectURL(url);
+                
+                hideModal();
+                showAlert('Dados exportados para download como JSON!');
+            } catch (error) {
+                showAlert('Erro ao salvar dados: ' + error.message);
+            }
+        }
+
+        function exportToCsv() {
+            try {
+                let csvContent = "data:text/csv;charset=utf-8,";
+                
+                // Headers for Members Data
+                csvContent += "Tipo,Nome do Time,ID do Time,Nome do Membro,ID do Membro,Gols\n";
+                teams.forEach(team => {
+                    team.members.forEach(member => {
+                        csvContent += `"Membro","${team.name}","${team.id}","${member.name}","${member.id}",${member.goals || 0}\n`;
+                    });
+                });
+
+                // Headers for Score History
+                csvContent += "\nTipo,Time (ID),Time (Nome),Jogador (ID),Jogador (Nome),Pontos,Novo Total,Timestamp,Tempo Cronometro,ID Partida\n";
+                scoreHistory.forEach(entry => {
+                    csvContent += `"Historico","${entry.teamId}","${entry.teamName}","${entry.memberId || ''}","${entry.memberName || ''}",${entry.points},${entry.newTotal},"${entry.timestamp}","${entry.timerTime}","${entry.matchId || ''}"\n`;
+                });
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", "teammanager_data.csv");
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+
+                hideModal();
+                showAlert('Dados exportados para download como CSV (Excel)!');
+            } catch (error) {
+                showAlert('Erro ao exportar para CSV: ' + error.message);
+            }
+        }
+
+
+        function loadData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.accept = '.json';
+            input.onchange = (event) => {
+                const file = event.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            teams = data.teams || [];
+                            currentTime = data.currentTime || 0;
+                            customTime = data.customTime || 0;
+                            timerMode = data.timerMode || 'progressive';
+                            // Ensure all currentMatch properties are initialized for compatibility
+                            currentMatch = { 
+                                id: data.currentMatch ? data.currentMatch.id : null,
+                                phase: data.currentMatch ? data.currentMatch.phase : 'friendly',
+                                team1: data.currentMatch ? data.currentMatch.team1 : null,
+                                team2: data.currentMatch ? data.currentMatch.team2 : null,
+                                scores: data.currentMatch ? data.currentMatch.scores : {},
+                                startTime: data.currentMatch ? data.currentMatch.startTime : null,
+                                endTime: data.currentMatch ? data.currentMatch.endTime : null
+                            };
+                            scoreHistory = data.scoreHistory || [];
+
+                            // Ensure 'goals' property exists for all members after loading
+                            teams.forEach(team => {
+                                team.members.forEach(member => {
+                                    if (typeof member.goals === 'undefined' || member.goals === null) {
+                                        member.goals = 0;
+                                    }
+                                });
+                            });
+                            
+                            // Update UI
+                            renderTeams();
+                            updateTeamSelect();
+                            updateTimerDisplay();
+                            document.querySelector(`input[name="timerMode"][value="${timerMode}"]`).checked = true;
+                            document.getElementById('gamePhase').value = currentMatch.phase;
+                            updateCurrentMatchTeamsDisplay();
+                            initializeScoreboard(); // Re-initialize scoreboard to show loaded match
+                            calculateTopScorer(); // Recalculate after loading data
+                            
+                            showAlert('Dados carregados com sucesso!');
+                        } catch (error) {
+                            showAlert('Erro ao carregar dados: arquivo inválido. Detalhes: ' + error.message);
+                        }
+                    };
+                    reader.readAsText(file);
+                }
+            };
+            input.click();
+        }
+
+        // Score management
+        function initializeScoreboard() {
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const noTeamsMessage = document.getElementById('noTeamsForScore');
+            const scoreboardContent = document.getElementById('scoreboardContent');
+            scoreDisplay.innerHTML = ''; // Clear previous scores
+
+            if (currentMatch.team1 && currentMatch.team2) {
+                noTeamsMessage.classList.add('hidden');
+                scoreboardContent.classList.remove('hidden');
+
+                const team1 = teams.find(t => t.id === currentMatch.team1);
+                const team2 = teams.find(t => t.id === currentMatch.team2);
+
+                if (!team1 || !team2) {
+                    showAlert('Times selecionados para a partida não encontrados. Por favor, re-selecione os times.');
+                    currentMatch.team1 = null;
+                    currentMatch.team2 = null;
+                    currentMatch.scores = {};
+                    initializeScoreboard(); // Recurse to show "no teams" message
+                    return;
+                }
+
+                // Ensure scores are initialized for the selected teams
+                if (!(team1.id in currentMatch.scores)) {
+                    currentMatch.scores[team1.id] = 0;
+                }
+                if (!(team2.id in currentMatch.scores)) {
+                    currentMatch.scores[team2.id] = 0;
+                }
+
+                [team1, team2].forEach(team => {
+                    const score = currentMatch.scores[team.id] || 0;
+                    const scoreCard = document.createElement('div');
+                    scoreCard.className = 'bg-white dark:bg-gray-700 p-4 rounded-lg border-2';
+                    scoreCard.style.borderColor = team.color;
+                    scoreCard.innerHTML = `
+                        <div class="text-center">
+                            <div class="flex items-center justify-center mb-2">
+                                <div class="w-3 h-3 rounded-full mr-2" style="background-color: ${team.color}"></div>
+                                <h3 class="font-semibold">${team.name}</h3>
+                            </div>
+                            <div class="text-4xl font-bold text-primary mb-3">${score}</div>
+                            <div class="flex justify-center gap-2">
+                                <button onclick="showQuickScoreDialog('${team.id}')" class="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600 text-sm">
+                                    <i class="fas fa-plus mr-1"></i>Adicionar Gol
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    scoreDisplay.appendChild(scoreCard);
+                });
+            } else {
+                noTeamsMessage.classList.remove('hidden');
+                scoreboardContent.classList.add('hidden');
+            }
+        }
+
+
+        function renderScoreboard() {
+            // Re-calls initializeScoreboard to redraw with current scores
+            initializeScoreboard();
+        }
+
+        function addScore(teamId, memberId, points) {
+            if (!currentMatch.scores[teamId]) {
+                currentMatch.scores[teamId] = 0;
+            }
+            
+            const newScore = currentMatch.scores[teamId] + points;
+            
+            if (newScore >= 0) { // Ensure score doesn't go negative
+                currentMatch.scores[teamId] = newScore;
+                
+                // Update player's goals
+                const team = teams.find(t => t.id === teamId);
+                const member = team ? team.members.find(m => m.id === memberId) : null;
+                
+                if (member) {
+                    member.goals = (member.goals || 0) + points;
+                    if (member.goals < 0) member.goals = 0; // Goals can't be negative
+                }
+
+                // Add to history
+                const timestamp = new Date().toLocaleTimeString();
+                const timerTime = formatTime(currentTime);
+                
+                scoreHistory.push({
+                    teamId: teamId,
+                    teamName: team ? team.name : 'Time Desconhecido',
+                    teamColor: team ? team.color : '#CCCCCC',
+                    memberId: memberId,
+                    memberName: member ? member.name : 'Jogador Desconhecido',
+                    points: points,
+                    newTotal: newScore,
+                    timestamp: timestamp,
+                    timerTime: timerTime,
+                    matchId: currentMatch.id // Associate with current match
+                });
+                
+                renderScoreboard();
+                renderMembers(); // Update member list to show new goal counts
+                calculateTopScorer(); // Recalculate top scorer
+            }
+        }
+
+        function showQuickScoreDialog(preselectedTeamId = null) {
+            if (!currentMatch.team1 || !currentMatch.team2) {
+                showAlert('Por favor, selecione os times da partida antes de adicionar gols.');
+                return;
+            }
+
+            let teamOptionsHTML = '<option value="">Selecione o time</option>';
+            const teamA = teams.find(t => t.id === currentMatch.team1);
+            const teamB = teams.find(t => t.id === currentMatch.team2);
+
+            if (teamA) teamOptionsHTML += `<option value="${teamA.id}">${teamA.name}</option>`;
+            if (teamB) teamOptionsHTML += `<option value="${teamB.id}">${teamB.name}</option>`;
+            
+            showModal(`
+                <h3 class="text-lg font-semibold mb-4">Adicionar Gol</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Time</label>
+                        <select id="goalTeam" onchange="loadMembersForGoal()" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base">
+                            ${teamOptionsHTML}
+                        </select>
+                    </div>
+                    <div id="goalPlayerContainer" class="hidden">
+                        <label class="block text-sm font-medium mb-1">Jogador</label>
+                        <select id="goalPlayer" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base">
+                            <option value="">Selecione o jogador</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Pontos</label>
+                        <div class="flex gap-2">
+                            <button onclick="document.getElementById('goalPoints').value='1'" class="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 flex-1">+1</button>
+                            <button onclick="document.getElementById('goalPoints').value='-1'" class="px-3 py-2 bg-red-500 text-white rounded hover:bg-red-600 flex-1">-1</button>
+                        </div>
+                        <input type="number" id="goalPoints" value="1" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base mt-2" placeholder="Ou digite um valor">
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="hideModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                    <button onclick="addQuickScore()" class="px-4 py-2 bg-green-500 text-white hover:bg-green-600 rounded">Adicionar Gol</button>
+                </div>
+            `);
+
+            if (preselectedTeamId) {
+                document.getElementById('goalTeam').value = preselectedTeamId;
+                loadMembersForGoal(); // Load members for the pre-selected team
+            }
+        }
+
+        function loadMembersForGoal() {
+            const teamId = document.getElementById('goalTeam').value;
+            const playerSelect = document.getElementById('goalPlayer');
+            const playerContainer = document.getElementById('goalPlayerContainer');
+            playerSelect.innerHTML = '<option value="">Selecione o jogador</option>';
+
+            if (teamId) {
+                const team = teams.find(t => t.id === teamId);
+                if (team && team.members.length > 0) {
+                    team.members.forEach(member => {
+                        playerSelect.innerHTML += `<option value="${member.id}">${member.name}</option>`;
+                    });
+                    playerContainer.classList.remove('hidden');
+                } else {
+                    playerContainer.classList.add('hidden');
+                    showAlert('O time selecionado não tem membros. Adicione membros a este time primeiro.');
+                }
+            } else {
+                playerContainer.classList.add('hidden');
+            }
+        }
+
+        function addQuickScore() {
+            const teamId = document.getElementById('goalTeam').value;
+            const memberId = document.getElementById('goalPlayer').value;
+            const points = parseInt(document.getElementById('goalPoints').value) || 1;
+            
+            if (!teamId) {
+                showAlert('Por favor, selecione um time.');
+                return;
+            }
+            if (!memberId) {
+                showAlert('Por favor, selecione o jogador que fez o gol.');
+                return;
+            }
+            if (isNaN(points) || points === 0) {
+                showAlert('Os pontos devem ser um número diferente de zero (ex: 1 para gol, -1 para remover).');
+                return;
+            }
+            
+            // Allow negative points for removing a goal
+            if (points < -10 || points > 10) { // Limit points for sanity
+                showAlert('Os pontos devem estar entre -10 e 10.');
+                return;
+            }
+
+            addScore(teamId, memberId, points);
+            hideModal();
+            
+            const team = teams.find(t => t.id === teamId);
+            const member = team.members.find(m => m.id === memberId);
+            
+            let message = '';
+            if (points > 0) {
+                message = `+${points} ${points === 1 ? 'gol' : 'gols'} para ${member.name} (${team.name})!`;
+            } else {
+                message = `${points} ${points === -1 ? 'gol' : 'gols'} para ${member.name} (${team.name})!`;
+            }
+            showAlert(message);
+        }
+
+        function resetScore() {
+            showConfirmDialog('Tem certeza que deseja resetar o placar da partida atual? Isso também limpará o histórico apenas para esta partida e NÃO resetará os gols individuais dos jogadores.', () => {
+                if (currentMatch.team1) currentMatch.scores[currentMatch.team1] = 0;
+                if (currentMatch.team2) currentMatch.scores[currentMatch.team2] = 0;
+                scoreHistory = scoreHistory.filter(entry => entry.matchId !== currentMatch.id); // Clear history for this match
+                renderScoreboard();
+                showAlert('Placar resetado!');
+            });
+        }
+
+        function showScoreHistoryDialog() {
+            // Filter history to only show entries for the current match, if teams are selected
+            const relevantHistory = currentMatch.team1 && currentMatch.team2
+                ? scoreHistory.filter(entry => entry.matchId === currentMatch.id)
+                : scoreHistory;
+
+            let historyHTML = '';
+            if (relevantHistory.length === 0 && (currentMatch.team1 && currentMatch.team2)) {
+                 historyHTML = '<p class="text-gray-500 text-center py-4">Nenhum gol registrado para a partida atual.</p>';
+            } else if (relevantHistory.length === 0) {
+                historyHTML = '<p class="text-gray-500 text-center py-4">Nenhum gol registrado ainda.</p>';
+            } else {
+                historyHTML = '<div class="max-h-64 overflow-y-auto space-y-2">';
+                relevantHistory.slice().reverse().forEach((entry, index) => {
+                    const pointsText = entry.points > 0 ? `+${entry.points}` : entry.points.toString();
+                    const pointsColor = entry.points > 0 ? 'text-green-600' : 'text-red-600';
+                    
+                    historyHTML += `
+                        <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                            <div class="flex items-center">
+                                <div class="w-3 h-3 rounded-full mr-2" style="background-color: ${entry.teamColor}"></div>
+                                <span class="font-medium">${entry.memberName} (${entry.teamName})</span>
+                                <span class="ml-2 ${pointsColor} font-bold">${pointsText}</span>
+                                <span class="ml-2 text-gray-500">→ ${entry.newTotal}</span>
+                            </div>
+                            <div class="text-sm text-gray-500">
+                                <div>${entry.timestamp}</div>
+                                <div>Timer: ${entry.timerTime}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+                historyHTML += '</div>';
+            }
+
+            showModal(`
+                <h3 class="text-lg font-semibold mb-4">Histórico de Pontuação</h3>
+                ${historyHTML}
+                <div class="flex justify-between mt-6">
+                    <button onclick="exportScoreHistory()" class="px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded">
+                        <i class="fas fa-download mr-1"></i>Exportar
+                    </button>
+                    <button onclick="hideModal()" class="px-4 py-2 bg-gray-500 text-white hover:bg-gray-600 rounded">Fechar</button>
+                </div>
+            `);
+        }
+
+        function exportScoreHistory() {
+            try {
+                const historyData = {
+                    match: {
+                        id: currentMatch.id,
+                        phase: currentMatch.phase,
+                        date: new Date().toLocaleString(),
+                        teams: currentMatch.team1 && currentMatch.team2 ? [teams.find(t=>t.id === currentMatch.team1), teams.find(t=>t.id === currentMatch.team2)].map(t => ({ id: t.id, name: t.name, color: t.color })) : [],
+                        finalScores: currentMatch.scores,
+                        startTime: currentMatch.startTime,
+                        endTime: currentMatch.endTime
+                    },
+                    history: scoreHistory.filter(entry => entry.matchId === currentMatch.id) // Export only current match history
+                };
+                
+                const dataStr = JSON.stringify(historyData, null, 2);
+                const dataBlob = new Blob([dataStr], {type: 'application/json'});
+                const url = URL.createObjectURL(dataBlob);
+                const link = document.createElement('a');
+                link.href = url;
+                link.download = `partida_${currentMatch.id || new Date().toISOString().split('T')[0]}.json`;
+                link.click();
+                URL.revokeObjectURL(url);
+                
+                showAlert('Histórico exportado com sucesso!');
+            } catch (error) {
+                showAlert('Erro ao exportar histórico: ' + error.message);
+            }
+        }
+
+        // Match setup functions
+        function setGamePhase(phase) {
+            currentMatch.phase = phase;
+            showAlert(`Fase do jogo definida para: ${document.getElementById('gamePhase').options[document.getElementById('gamePhase').selectedIndex].text}`);
+        }
+
+        function showSelectMatchTeamsDialog() {
+            if (teams.length < 2) {
+                showAlert('Você precisa de pelo menos dois times para configurar uma partida.');
+                return;
+            }
+
+            let teamOptions = '<option value="">Selecione um time</option>';
+            teams.forEach(team => {
+                teamOptions += `<option value="${team.id}">${team.name}</option>`;
+            });
+
+            showModal(`
+                <h3 class="text-lg font-semibold mb-4">Escolher Times da Partida</h3>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Time 1</label>
+                        <select id="matchTeam1" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base">
+                            ${teamOptions}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium mb-1">Time 2</label>
+                        <select id="matchTeam2" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-base">
+                            ${teamOptions}
+                        </select>
+                    </div>
+                </div>
+                <div class="flex justify-end space-x-3 mt-6">
+                    <button onclick="hideModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                    <button onclick="selectMatchTeams()" class="px-4 py-2 bg-primary text-white hover:bg-purple-600 rounded">Confirmar</button>
+                </div>
+            `);
+
+            // Pre-select if teams are already set
+            if (currentMatch.team1) {
+                document.getElementById('matchTeam1').value = currentMatch.team1;
+            }
+            if (currentMatch.team2) {
+                document.getElementById('matchTeam2').value = currentMatch.team2;
+            }
+        }
+
+        function selectMatchTeams() {
+            const team1Id = document.getElementById('matchTeam1').value;
+            const team2Id = document.getElementById('matchTeam2').value;
+
+            if (!team1Id || !team2Id) {
+                showAlert('Por favor, selecione ambos os times.');
+                return;
+            }
+            if (team1Id === team2Id) {
+                showAlert('Os times devem ser diferentes.');
+                return;
+            }
+
+            // Reset scores for the new match if teams are different or it's a new match
+            if (currentMatch.team1 !== team1Id || currentMatch.team2 !== team2Id || !currentMatch.id) {
+                currentMatch.id = generateId(); // Assign a new match ID
+                currentMatch.scores = {}; // Reset scores for new match
+                currentMatch.startTime = null;
+                currentMatch.endTime = null;
+                showAlert('Nova partida iniciada com times selecionados!');
+            } else {
+                showAlert('Times da partida atualizados!');
+            }
+
+            currentMatch.team1 = team1Id;
+            currentMatch.team2 = team2Id;
+            
+            updateCurrentMatchTeamsDisplay();
+            initializeScoreboard();
+            hideModal();
+        }
+
+        function updateCurrentMatchTeamsDisplay() {
+            const displayDiv = document.getElementById('currentMatchTeams');
+            const team1 = teams.find(t => t.id === currentMatch.team1);
+            const team2 = teams.find(t => t.id === currentMatch.team2);
+
+            if (team1 && team2) {
+                displayDiv.innerHTML = `
+                    <div class="flex items-center justify-center gap-4">
+                        <span class="font-bold" style="color: ${team1.color}">${team1.name}</span>
+                        <span class="text-gray-500">vs</span>
+                        <span class="font-bold" style="color: ${team2.color}">${team2.name}</span>
+                    </div>
+                `;
+            } else {
+                displayDiv.textContent = 'Nenhum time selecionado para a partida.';
+            }
+        }
+
+        // Top Scorer calculation
+        function calculateTopScorer(showAlertIfNone = false) {
+            let topScorer = {
+                name: 'Nenhum',
+                teamName: '',
+                goals: 0
+            };
+
+            teams.forEach(team => {
+                team.members.forEach(member => {
+                    if ((member.goals || 0) > topScorer.goals) {
+                        topScorer.goals = member.goals;
+                        topScorer.name = member.name;
+                        topScorer.teamName = team.name;
+                    }
+                });
+            });
+
+            const topScorerDisplay = document.getElementById('topScorerDisplay');
+            if (topScorer.goals > 0) {
+                topScorerDisplay.innerHTML = `<span class="font-bold text-primary">${topScorer.name}</span> (${topScorer.teamName}) com <span class="font-bold text-primary">${topScorer.goals}</span> gols!`;
+            } else {
+                topScorerDisplay.textContent = 'Nenhum artilheiro definido ainda.';
+                if (showAlertIfNone) {
+                    showAlert('Nenhum gol registrado por jogadores ainda.');
+                }
+            }
+        }
+
+
+        // Initialize app
+        document.addEventListener('DOMContentLoaded', () => {
+            initializeTheme();
+            updateTimerDisplay();
+            
+            // Set initial game phase
+            document.getElementById('gamePhase').value = currentMatch.phase;
+            updateCurrentMatchTeamsDisplay(); // Update display on load
+            initializeScoreboard(); // Initialize scoreboard on load
+            calculateTopScorer(); // Calculate top scorer on load
+
+            // Click outside modal to close
+            document.getElementById('modalOverlay').addEventListener('click', (e) => {
+                if (e.target === document.getElementById('modalOverlay')) {
+                    hideModal();
+                }
+            });
+            
+            // Timer mode change handler
+            document.querySelectorAll('input[name="timerMode"]').forEach(radio => {
+                radio.addEventListener('change', () => {
+                    timerMode = radio.value;
+                    if (timerMode === 'regressive' && currentTime === 0) {
+                        currentTime = customTime;
+                        updateTimerDisplay();
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

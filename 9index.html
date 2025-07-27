@@ -1,0 +1,782 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./agr.png?v=2">
+    <title>ABC e Sílabas dos Animais</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#FF4385',
+                        secondary: '#FFB443',
+                        accent: '#43C2FF',
+                        green: '#65E065',
+                        purple: '#9747FF',
+                        yellow: '#FFE234',
+                        background: {
+                            light: '#F9F5FF',
+                            dark: '#2D2B55'
+                        }
+                    },
+                    animation: {
+                        'bounce-slow': 'bounce 2s infinite',
+                        'wiggle': 'wiggle 1s ease-in-out infinite',
+                        'pop': 'pop 0.5s ease-out',
+                        'float': 'float 3s ease-in-out infinite',
+                        'shine': 'shine 2s infinite',
+                    },
+                    keyframes: {
+                        wiggle: {
+                            '0%, 100%': { transform: 'rotate(-3deg)' },
+                            '50%': { transform: 'rotate(3deg)' },
+                        },
+                        pop: {
+                            '0%': { transform: 'scale(0.95)', opacity: '0.8' },
+                            '50%': { transform: 'scale(1.1)' },
+                            '100%': { transform: 'scale(1)', opacity: '1' },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        shine: {
+                            '0%, 100%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' }
+                        }
+                    },
+                    borderRadius: {
+                        'xl': '1rem',
+                        '2xl': '1.5rem',
+                        '3xl': '2rem',
+                    },
+                    boxShadow: {
+                        'rainbow': '0 4px 6px -1px rgba(255, 0, 0, 0.2), 0 6px 8px -1px rgba(255, 165, 0, 0.1), 0 8px 10px -1px rgba(255, 255, 0, 0.1), 0 10px 12px -1px rgba(0, 128, 0, 0.1), 0 12px 14px -1px rgba(0, 0, 255, 0.1), 0 14px 16px -1px rgba(75, 0, 130, 0.1), 0 16px 18px -1px rgba(238, 130, 238, 0.1)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@400;600;700&display=swap');
+
+        body {
+            font-family: 'Baloo 2', cursive;
+            touch-action: manipulation;
+            background-image: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%239C92AC' fill-opacity='0.08'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+        }
+
+        .card-flip {
+            perspective: 1000px;
+        }
+
+        .card-inner {
+            transition: transform 0.8s;
+            transform-style: preserve-3d;
+        }
+
+        .card-flip.flipped .card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .card-front, .card-back {
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            border: 5px solid #FFB443;
+            border-radius: 24px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-back {
+            transform: rotateY(180deg);
+        }
+
+        .animal-container {
+            height: 150px;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dark .card-front, .dark .card-back {
+            background-color: #3D3A70;
+            color: white;
+            border-color: #9747FF;
+        }
+
+        .letter-display {
+            text-shadow: 3px 3px 0px rgba(0, 0, 0, 0.2);
+        }
+        
+        .rainbow-border {
+            position: relative;
+        }
+        
+        .rainbow-border::before {
+            content: '';
+            position: absolute;
+            top: -3px;
+            left: -3px;
+            right: -3px;
+            bottom: -3px;
+            z-index: -1;
+            border-radius: inherit;
+            background: linear-gradient(45deg, #ff0000, #ff8000, #ffff00, #80ff00, #00ff80, #0080ff, #8000ff, #ff0080);
+            animation: rainbow-border 3s linear infinite;
+        }
+        
+        @keyframes rainbow-border {
+            0% {
+                filter: hue-rotate(0deg);
+            }
+            100% {
+                filter: hue-rotate(360deg);
+            }
+        }
+        
+        .glow-btn {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .glow-btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(255,255,255,0) 70%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .glow-btn:hover::after {
+            opacity: 0.3;
+        }
+        
+        .cloud {
+            position: absolute;
+            z-index: -1;
+            opacity: 0.7;
+            animation: float 8s ease-in-out infinite;
+        }
+        
+        .cloud-1 {
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+        
+        .cloud-2 {
+            top: 15%;
+            right: 15%;
+            animation-delay: 2s;
+        }
+        
+        .cloud-3 {
+            bottom: 15%;
+            left: 15%;
+            animation-delay: 4s;
+        }
+        
+        .cloud-4 {
+            bottom: 10%;
+            right: 10%;
+            animation-delay: 6s;
+        }
+        
+        .gradient-text {
+            background: linear-gradient(90deg, #FF4385, #43C2FF, #FFB443, #65E065);
+            background-size: 300% 100%;
+            animation: shine 4s linear infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .tab-active {
+            transform: translateY(-8px);
+            border-width: 2px;
+        }
+    </style>
+</head>
+<body class="antialiased bg-background-light dark:bg-background-dark min-h-screen">
+    <!-- Nuvens decorativas -->
+    <div class="cloud cloud-1">
+        <svg width="100" height="60" viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M90 40C90 51.046 81.046 60 70 60H20C8.954 60 0 51.046 0 40C0 28.954 8.954 20 20 20C20.6039 20 21.2017 20.0359 21.791 20.1064C24.0764 8.65289 34.0372 0 46 0C57.9628 0 67.9236 8.65289 70.209 20.1064C70.7983 20.0359 71.3961 20 72 20C81.9411 20 90 28.0589 90 38C90 38.6753 89.9311 39.3432 89.7968 40H90Z" fill="#FFFFFF"/>
+        </svg>
+    </div>
+    <div class="cloud cloud-2">
+        <svg width="80" height="48" viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M90 40C90 51.046 81.046 60 70 60H20C8.954 60 0 51.046 0 40C0 28.954 8.954 20 20 20C20.6039 20 21.2017 20.0359 21.791 20.1064C24.0764 8.65289 34.0372 0 46 0C57.9628 0 67.9236 8.65289 70.209 20.1064C70.7983 20.0359 71.3961 20 72 20C81.9411 20 90 28.0589 90 38C90 38.6753 89.9311 39.3432 89.7968 40H90Z" fill="#FFFFFF"/>
+        </svg>
+    </div>
+    <div class="cloud cloud-3">
+        <svg width="90" height="54" viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M90 40C90 51.046 81.046 60 70 60H20C8.954 60 0 51.046 0 40C0 28.954 8.954 20 20 20C20.6039 20 21.2017 20.0359 21.791 20.1064C24.0764 8.65289 34.0372 0 46 0C57.9628 0 67.9236 8.65289 70.209 20.1064C70.7983 20.0359 71.3961 20 72 20C81.9411 20 90 28.0589 90 38C90 38.6753 89.9311 39.3432 89.7968 40H90Z" fill="#FFFFFF"/>
+        </svg>
+    </div>
+    <div class="cloud cloud-4">
+        <svg width="70" height="42" viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M90 40C90 51.046 81.046 60 70 60H20C8.954 60 0 51.046 0 40C0 28.954 8.954 20 20 20C20.6039 20 21.2017 20.0359 21.791 20.1064C24.0764 8.65289 34.0372 0 46 0C57.9628 0 67.9236 8.65289 70.209 20.1064C70.7983 20.0359 71.3961 20 72 20C81.9411 20 90 28.0589 90 38C90 38.6753 89.9311 39.3432 89.7968 40H90Z" fill="#FFFFFF"/>
+        </svg>
+    </div>
+    
+    <div class="container mx-auto px-4 py-8">
+        <header class="text-center mb-4">
+            <h1 class="text-5xl md:text-6xl font-bold bg-gradient-to-r from-primary via-accent to-green bg-clip-text text-transparent mb-2 animate-bounce-slow">Aprendendo com Animais</h1>
+            <p class="text-xl text-purple dark:text-yellow font-bold mb-6">Alfabeto e sílabas com bichinhos divertidos!</p>
+            
+            <!-- Seletor de Fase (Abas) -->
+            <div class="flex justify-center gap-4 mb-6">
+                <button id="abc-tab" class="tab-btn tab-active px-6 py-3 bg-primary text-white rounded-t-2xl rounded-b-lg font-bold text-xl transform transition-transform duration-300 hover:opacity-90 shadow-lg border-2 border-accent">
+                    Fase 1: ABC
+                </button>
+                <button id="silabas-tab" class="tab-btn px-6 py-3 bg-secondary text-white rounded-t-2xl rounded-b-lg font-bold text-xl transform transition-transform duration-300 hover:opacity-90 shadow-lg border-2 border-transparent">
+                    Fase 2: Sílabas
+                </button>
+            </div>
+        </header>
+
+        <!-- Fase 1: ABC -->
+        <div id="abc-section" class="fase-section">
+            <div class="flex justify-center mb-6">
+                <button id="prev-btn-abc" class="glow-btn bg-gradient-to-r from-purple to-primary hover:opacity-90 text-white font-bold py-4 px-8 rounded-full mr-6 text-3xl shadow-lg transition transform hover:scale-105">
+                    ←
+                </button>
+                <button id="next-btn-abc" class="glow-btn bg-gradient-to-r from-green to-accent hover:opacity-90 text-white font-bold py-4 px-8 rounded-full text-3xl shadow-lg transition transform hover:scale-105">
+                    →
+                </button>
+            </div>
+
+            <div id="card-container-abc" class="card-flip mx-auto max-w-md mb-8 animate-pop">
+                <div class="card-inner w-full h-full">
+                    <div class="card-front bg-gradient-to-br from-yellow via-accent to-green rounded-3xl shadow-rainbow p-8 flex flex-col items-center justify-center">
+                        <div class="letter-display text-9xl font-bold mb-4 text-white animate-float">A</div>
+                        <p class="text-2xl text-white font-bold">Toque para ver o animal</p>
+                    </div>
+                    <div class="card-back bg-gradient-to-br from-primary via-purple to-accent rounded-3xl shadow-rainbow p-8 absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
+                        <div class="letter-display text-5xl font-bold mb-4 text-white">A de <span id="animal-name-abc">Arara</span></div>
+                        <div class="animal-container mb-6 bg-white bg-opacity-20 p-4 rounded-2xl">
+                            <!-- Aqui vai ser exibida a ilustração do animal -->
+                        </div>
+                        <button id="say-btn-abc" class="glow-btn bg-secondary hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full text-xl shadow-lg transition transform hover:scale-105 mt-2">
+                            🔊 Ouvir
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
+                <div id="abc-nav" class="flex flex-wrap justify-center gap-3">
+                    <!-- Letras do alfabeto para navegação rápida -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Fase 2: Sílabas -->
+        <div id="silabas-section" class="fase-section hidden">
+            <div class="silabas-navigation flex justify-center mb-8">
+                <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-2 inline-flex">
+                    <button id="prev-syllable-group" class="bg-accent hover:opacity-90 text-white font-bold py-2 px-4 rounded-l-lg">◀ Anterior</button>
+                    <div id="current-syllable-group" class="px-6 py-2 font-bold gradient-text text-xl">BA BE BI BO BU</div>
+                    <button id="next-syllable-group" class="bg-accent hover:opacity-90 text-white font-bold py-2 px-4 rounded-r-lg">Próximo ▶</button>
+                </div>
+            </div>
+            
+            <div class="flex justify-center mb-6">
+                <button id="prev-btn-silaba" class="glow-btn bg-gradient-to-r from-green to-accent hover:opacity-90 text-white font-bold py-4 px-8 rounded-full mr-6 text-3xl shadow-lg transition transform hover:scale-105">
+                    ←
+                </button>
+                <button id="next-btn-silaba" class="glow-btn bg-gradient-to-r from-purple to-primary hover:opacity-90 text-white font-bold py-4 px-8 rounded-full text-3xl shadow-lg transition transform hover:scale-105">
+                    →
+                </button>
+            </div>
+
+            <div id="card-container-silaba" class="card-flip mx-auto max-w-md mb-8 animate-pop">
+                <div class="card-inner w-full h-full">
+                    <div class="card-front bg-gradient-to-br from-purple via-primary to-accent rounded-3xl shadow-rainbow p-8 flex flex-col items-center justify-center">
+                        <div class="letter-display text-9xl font-bold mb-4 text-white animate-float">BA</div>
+                        <p class="text-2xl text-white font-bold">Toque para ver o animal</p>
+                    </div>
+                    <div class="card-back bg-gradient-to-br from-green via-yellow to-secondary rounded-3xl shadow-rainbow p-8 absolute top-0 left-0 w-full h-full flex flex-col items-center justify-center">
+                        <div class="letter-display text-5xl font-bold mb-4 text-white"><span id="syllable-display">BA</span> de <span id="animal-name-silaba">Babuíno</span></div>
+                        <div class="animal-container-silaba mb-6 bg-white bg-opacity-20 p-4 rounded-2xl h-44 flex items-center justify-center">
+                            <!-- Aqui vai ser exibida a ilustração do animal das sílabas -->
+                        </div>
+                        <button id="say-btn-silaba" class="glow-btn bg-primary hover:bg-opacity-90 text-white font-bold py-3 px-6 rounded-full text-xl shadow-lg transition transform hover:scale-105 mt-2">
+                            🔊 Ouvir
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-8 text-center">
+                <div id="silabas-nav" class="flex flex-wrap justify-center gap-3">
+                    <!-- Sílabas para navegação rápida -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Detectar modo escuro
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Dados do alfabeto com os animais
+            const alphabet = [
+                { letter: 'A', animal: 'Arara', color: '#FF5252' },
+                { letter: 'B', animal: 'Baleia', color: '#448AFF' },
+                { letter: 'C', animal: 'Cachorro', color: '#FF9800' },
+                { letter: 'D', animal: 'Dinossauro', color: '#4CAF50' },
+                { letter: 'E', animal: 'Elefante', color: '#9C27B0' },
+                { letter: 'F', animal: 'Formiga', color: '#F44336' },
+                { letter: 'G', animal: 'Gato', color: '#673AB7' },
+                { letter: 'H', animal: 'Hipopótamo', color: '#3F51B5' },
+                { letter: 'I', animal: 'Iguana', color: '#00BCD4' },
+                { letter: 'J', animal: 'Jacaré', color: '#009688' },
+                { letter: 'K', animal: 'Koala', color: '#E91E63' },
+                { letter: 'L', animal: 'Leão', color: '#FF9800' },
+                { letter: 'M', animal: 'Macaco', color: '#795548' },
+                { letter: 'N', animal: 'Narval', color: '#607D8B' },
+                { letter: 'O', animal: 'Ovelha', color: '#9E9E9E' },
+                { letter: 'P', animal: 'Pinguim', color: '#2196F3' },
+                { letter: 'Q', animal: 'Quati', color: '#8BC34A' },
+                { letter: 'R', animal: 'Rinoceronte', color: '#CDDC39' },
+                { letter: 'S', animal: 'Sapo', color: '#4CAF50' },
+                { letter: 'T', animal: 'Tartaruga', color: '#009688' },
+                { letter: 'U', animal: 'Urso', color: '#795548' },
+                { letter: 'V', animal: 'Vaca', color: '#9C27B0' },
+                { letter: 'W', animal: 'Wallaby', color: '#FFC107' },
+                { letter: 'X', animal: 'Xexéu', color: '#FF5722' },
+                { letter: 'Y', animal: 'Yak', color: '#607D8B' },
+                { letter: 'Z', animal: 'Zebra', color: '#424242' }
+            ];
+            
+            // Grupos de sílabas com animais
+            const syllableGroups = [
+                {
+                    name: "BA BE BI BO BU",
+                    syllables: [
+                        { syllable: "BA", animal: "Babuíno", color: "#FF5252" },
+                        { syllable: "BE", animal: "Beija-flor", color: "#448AFF" },
+                        { syllable: "BI", animal: "Bisonte", color: "#FF9800" },
+                        { syllable: "BO", animal: "Borboleta", color: "#4CAF50" },
+                        { syllable: "BU", animal: "Búfalo", color: "#9C27B0" }
+                    ]
+                },
+                {
+                    name: "CA CE CI CO CU",
+                    syllables: [
+                        { syllable: "CA", animal: "Cachorro", color: "#F44336" },
+                        { syllable: "CE", animal: "Cervo", color: "#673AB7" },
+                        { syllable: "CI", animal: "Cisne", color: "#3F51B5" },
+                        { syllable: "CO", animal: "Cobra", color: "#00BCD4" },
+                        { syllable: "CU", animal: "Cupim", color: "#009688" }
+                    ]
+                },
+                {
+                    name: "DA DE DI DO DU",
+                    syllables: [
+                        { syllable: "DA", animal: "Dálmata", color: "#E91E63" },
+                        { syllable: "DE", animal: "Dengue (mosquito)", color: "#FF9800" },
+                        { syllable: "DI", animal: "Dinossauro", color: "#795548" },
+                        { syllable: "DO", animal: "Doninha", color: "#607D8B" },
+                        { syllable: "DU", animal: "Dugongo", color: "#9E9E9E" }
+                    ]
+                },
+                {
+                    name: "FA FE FI FO FU",
+                    syllables: [
+                        { syllable: "FA", animal: "Falcão", color: "#2196F3" },
+                        { syllable: "FE", animal: "Fênix", color: "#8BC34A" },
+                        { syllable: "FI", animal: "Flamingo", color: "#CDDC39" },
+                        { syllable: "FO", animal: "Foca", color: "#4CAF50" },
+                        { syllable: "FU", animal: "Furão", color: "#009688" }
+                    ]
+                },
+                {
+                    name: "GA GE GI GO GU",
+                    syllables: [
+                        { syllable: "GA", animal: "Gato", color: "#795548" },
+                        { syllable: "GE", animal: "Geco", color: "#9C27B0" },
+                        { syllable: "GI", animal: "Girafa", color: "#FFC107" },
+                        { syllable: "GO", animal: "Gorila", color: "#FF5722" },
+                        { syllable: "GU", animal: "Guaxinim", color: "#607D8B" }
+                    ]
+                }
+            ];
+
+            // Variáveis para a fase do ABC
+            let currentAbcIndex = 0;
+            const cardContainerAbc = document.getElementById('card-container-abc');
+            const animalNameElAbc = document.getElementById('animal-name-abc');
+            const prevBtnAbc = document.getElementById('prev-btn-abc');
+            const nextBtnAbc = document.getElementById('next-btn-abc');
+            const sayBtnAbc = document.getElementById('say-btn-abc');
+            
+            // Variáveis para a fase das sílabas
+            let currentSyllableGroupIndex = 0;
+            let currentSyllableIndex = 0;
+            const cardContainerSilaba = document.getElementById('card-container-silaba');
+            const animalNameElSilaba = document.getElementById('animal-name-silaba');
+            const syllableDisplay = document.getElementById('syllable-display');
+            const prevBtnSilaba = document.getElementById('prev-btn-silaba');
+            const nextBtnSilaba = document.getElementById('next-btn-silaba');
+            const sayBtnSilaba = document.getElementById('say-btn-silaba');
+            const currentSyllableGroupEl = document.getElementById('current-syllable-group');
+            const prevSyllableGroupBtn = document.getElementById('prev-syllable-group');
+            const nextSyllableGroupBtn = document.getElementById('next-syllable-group');
+            
+            // Abas para alternar entre fases
+            const abcTab = document.getElementById('abc-tab');
+            const silabasTab = document.getElementById('silabas-tab');
+            const abcSection = document.getElementById('abc-section');
+            const silabasSection = document.getElementById('silabas-section');
+            
+            // Alternar entre as fases (abas)
+            abcTab.addEventListener('click', function() {
+                abcSection.classList.remove('hidden');
+                silabasSection.classList.add('hidden');
+                abcTab.classList.add('tab-active');
+                silabasTab.classList.remove('tab-active');
+            });
+            
+            silabasTab.addEventListener('click', function() {
+                abcSection.classList.add('hidden');
+                silabasSection.classList.remove('hidden');
+                abcTab.classList.remove('tab-active');
+                silabasTab.classList.add('tab-active');
+            });
+
+            // === CONFIGURAÇÃO FASE 1: ABC ===
+            
+            // Criar navegação de letras do alfabeto
+            const abcNav = document.getElementById('abc-nav');
+            alphabet.forEach((item, index) => {
+                const letterBtn = document.createElement('button');
+                const colors = ['bg-primary', 'bg-secondary', 'bg-accent', 'bg-green', 'bg-purple', 'bg-yellow'];
+                const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                letterBtn.className = `w-12 h-12 rounded-full ${randomColor} text-white font-bold hover:opacity-90 transition transform hover:scale-110 shadow-md`;
+                letterBtn.textContent = item.letter;
+                letterBtn.addEventListener('click', () => {
+                    currentAbcIndex = index;
+                    updateAbcCard();
+                    cardContainerAbc.classList.add('animate-pop');
+                    setTimeout(() => {
+                        cardContainerAbc.classList.remove('animate-pop');
+                    }, 500);
+                });
+                abcNav.appendChild(letterBtn);
+            });
+
+            // Função para renderizar o animal atual da fase ABC
+            function renderAbcAnimal(animal) {
+                const animalContainer = cardContainerAbc.querySelector('.animal-container');
+                animalContainer.innerHTML = '';
+                
+                const animalDiv = document.createElement('div');
+                animalDiv.className = 'animal-drawing animate-wiggle';
+                animalDiv.innerHTML = getAnimalDrawing(animal);
+                
+                animalContainer.appendChild(animalDiv);
+            }
+
+            // Atualizar o cartão com a letra e animal atual da fase ABC
+            function updateAbcCard() {
+                const current = alphabet[currentAbcIndex];
+                
+                // Atualizar a letra
+                cardContainerAbc.querySelector('.card-front .letter-display').textContent = current.letter;
+                cardContainerAbc.querySelector('.card-back .letter-display').innerHTML = 
+                    `${current.letter} de <span id="animal-name-abc">${current.animal}</span>`;
+                
+                // Atualizar a cor da letra
+                cardContainerAbc.querySelector('.card-front .letter-display').style.color = current.color;
+                cardContainerAbc.querySelector('.card-back .letter-display').style.color = current.color;
+                
+                // Renderizar o animal
+                renderAbcAnimal(current.animal);
+                
+                // Resetar flip
+                cardContainerAbc.classList.remove('flipped');
+            }
+
+            // Evento de clique para virar o cartão ABC
+            cardContainerAbc.addEventListener('click', function() {
+                const wasFlipped = cardContainerAbc.classList.contains('flipped');
+                cardContainerAbc.classList.toggle('flipped');
+                
+                if (!wasFlipped) {
+                    setTimeout(() => {
+                        const current = alphabet[currentAbcIndex];
+                        speak(`${current.letter} de ${current.animal}`);
+                    }, 800);
+                }
+            });
+
+            // Botões de navegação do alfabeto
+            prevBtnAbc.addEventListener('click', function(e) {
+                e.stopPropagation();
+                currentAbcIndex = (currentAbcIndex - 1 + alphabet.length) % alphabet.length;
+                updateAbcCard();
+            });
+
+            nextBtnAbc.addEventListener('click', function(e) {
+                e.stopPropagation();
+                currentAbcIndex = (currentAbcIndex + 1) % alphabet.length;
+                updateAbcCard();
+            });
+
+            sayBtnAbc.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const current = alphabet[currentAbcIndex];
+                speak(`${current.letter} de ${current.animal}`);
+            });
+            
+            // === CONFIGURAÇÃO FASE 2: SÍLABAS ===
+            
+            // Criar navegação de sílabas
+            function updateSyllableNav() {
+                const silabasNav = document.getElementById('silabas-nav');
+                silabasNav.innerHTML = ''; // Limpar navegação atual
+                
+                const currentGroup = syllableGroups[currentSyllableGroupIndex];
+                currentSyllableGroupEl.textContent = currentGroup.name;
+                
+                currentGroup.syllables.forEach((item, index) => {
+                    const syllableBtn = document.createElement('button');
+                    const colors = ['bg-primary', 'bg-secondary', 'bg-accent', 'bg-green', 'bg-purple', 'bg-yellow'];
+                    const randomColor = colors[Math.floor(Math.random() * colors.length)];
+                    syllableBtn.className = `w-16 h-16 rounded-full ${randomColor} text-white font-bold hover:opacity-90 transition transform hover:scale-110 shadow-md text-xl`;
+                    syllableBtn.textContent = item.syllable;
+                    syllableBtn.addEventListener('click', () => {
+                        currentSyllableIndex = index;
+                        updateSyllabeCard();
+                        cardContainerSilaba.classList.add('animate-pop');
+                        setTimeout(() => {
+                            cardContainerSilaba.classList.remove('animate-pop');
+                        }, 500);
+                    });
+                    silabasNav.appendChild(syllableBtn);
+                });
+            }
+            
+            // Função para renderizar o animal atual da fase Sílabas
+            function renderSyllabeAnimal(animal) {
+                const animalContainer = cardContainerSilaba.querySelector('.animal-container-silaba');
+                animalContainer.innerHTML = '';
+                
+                const animalDiv = document.createElement('div');
+                animalDiv.className = 'animal-drawing animate-wiggle';
+                animalDiv.innerHTML = getAnimalDrawing(animal);
+                
+                animalContainer.appendChild(animalDiv);
+            }
+            
+            // Atualizar o cartão com a sílaba e animal atual
+            function updateSyllabeCard() {
+                const currentGroup = syllableGroups[currentSyllableGroupIndex];
+                const current = currentGroup.syllables[currentSyllableIndex];
+                
+                // Atualizar a sílaba
+                cardContainerSilaba.querySelector('.card-front .letter-display').textContent = current.syllable;
+                syllableDisplay.textContent = current.syllable;
+                animalNameElSilaba.textContent = current.animal;
+                
+                // Atualizar a cor da sílaba
+                cardContainerSilaba.querySelector('.card-front .letter-display').style.color = current.color;
+                cardContainerSilaba.querySelector('.card-back .letter-display').style.color = current.color;
+                
+                // Renderizar o animal
+                renderSyllabeAnimal(current.animal);
+                
+                // Resetar flip
+                cardContainerSilaba.classList.remove('flipped');
+            }
+            
+            // Evento de clique para virar o cartão Sílabas
+            cardContainerSilaba.addEventListener('click', function() {
+                const wasFlipped = cardContainerSilaba.classList.contains('flipped');
+                cardContainerSilaba.classList.toggle('flipped');
+                
+                if (!wasFlipped) {
+                    setTimeout(() => {
+                        const currentGroup = syllableGroups[currentSyllableGroupIndex];
+                        const current = currentGroup.syllables[currentSyllableIndex];
+                        speak(`${current.syllable} de ${current.animal}`);
+                    }, 800);
+                }
+            });
+            
+            // Botões de navegação das sílabas
+            prevBtnSilaba.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const currentGroup = syllableGroups[currentSyllableGroupIndex];
+                currentSyllableIndex = (currentSyllableIndex - 1 + currentGroup.syllables.length) % currentGroup.syllables.length;
+                updateSyllabeCard();
+            });
+            
+            nextBtnSilaba.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const currentGroup = syllableGroups[currentSyllableGroupIndex];
+                currentSyllableIndex = (currentSyllableIndex + 1) % currentGroup.syllables.length;
+                updateSyllabeCard();
+            });
+            
+            sayBtnSilaba.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const currentGroup = syllableGroups[currentSyllableGroupIndex];
+                const current = currentGroup.syllables[currentSyllableIndex];
+                speak(`${current.syllable} de ${current.animal}`);
+            });
+            
+            // Navegação entre grupos de sílabas
+            prevSyllableGroupBtn.addEventListener('click', function() {
+                currentSyllableGroupIndex = (currentSyllableGroupIndex - 1 + syllableGroups.length) % syllableGroups.length;
+                currentSyllableIndex = 0; // Resetar para a primeira sílaba do grupo
+                updateSyllableNav();
+                updateSyllabeCard();
+            });
+            
+            nextSyllableGroupBtn.addEventListener('click', function() {
+                currentSyllableGroupIndex = (currentSyllableGroupIndex + 1) % syllableGroups.length;
+                currentSyllableIndex = 0; // Resetar para a primeira sílaba do grupo
+                updateSyllableNav();
+                updateSyllabeCard();
+            });
+
+            // === FUNÇÕES COMPARTILHADAS ===
+            
+            // Função para criar desenhos de animais
+            function getAnimalDrawing(animal) {
+                const animalMap = {
+                    // ABC
+                    'Arara': `<div style="font-size: 140px; color: #FF3333; filter: drop-shadow(0 0 5px rgba(255,0,0,0.5));">🦜</div>`,
+                    'Baleia': `<div style="font-size: 140px; color: #3366FF; filter: drop-shadow(0 0 5px rgba(0,0,255,0.5));">🐳</div>`,
+                    'Cachorro': `<div style="font-size: 140px; color: #C17817; filter: drop-shadow(0 0 5px rgba(193,120,23,0.5));">🐕</div>`,
+                    'Dinossauro': `<div style="font-size: 140px; color: #33CC33; filter: drop-shadow(0 0 5px rgba(0,255,0,0.5));">🦖</div>`,
+                    'Elefante': `<div style="font-size: 140px; color: #9966CC; filter: drop-shadow(0 0 5px rgba(153,102,204,0.5));">🐘</div>`,
+                    'Formiga': `<div style="font-size: 140px; color: #CD5C5C; filter: drop-shadow(0 0 5px rgba(205,92,92,0.5));">🐜</div>`,
+                    'Gato': `<div style="font-size: 140px; color: #FF9933; filter: drop-shadow(0 0 5px rgba(255,153,51,0.5));">🐱</div>`,
+                    'Hipopótamo': `<div style="font-size: 140px; color: #9370DB; filter: drop-shadow(0 0 5px rgba(147,112,219,0.5));">🦛</div>`,
+                    'Iguana': `<div style="font-size: 140px; color: #66CC66; filter: drop-shadow(0 0 5px rgba(102,204,102,0.5));">🦎</div>`,
+                    'Jacaré': `<div style="font-size: 140px; color: #006633; filter: drop-shadow(0 0 5px rgba(0,102,51,0.5));">🐊</div>`,
+                    'Koala': `<div style="font-size: 140px; color: #A9A9A9; filter: drop-shadow(0 0 5px rgba(169,169,169,0.5));">🐨</div>`,
+                    'Leão': `<div style="font-size: 140px; color: #FF9900; filter: drop-shadow(0 0 5px rgba(255,153,0,0.5));">🦁</div>`,
+                    'Macaco': `<div style="font-size: 140px; color: #8B4513; filter: drop-shadow(0 0 5px rgba(139,69,19,0.5));">🐵</div>`,
+                    'Narval': `<div style="font-size: 140px; color: #87CEFA; filter: drop-shadow(0 0 5px rgba(135,206,250,0.5));">🐬</div>`,
+                    'Ovelha': `<div style="font-size: 140px; color: #F5F5DC; filter: drop-shadow(0 0 5px rgba(245,245,220,0.5));">🐑</div>`,
+                    'Pinguim': `<div style="font-size: 140px; color: #191970; filter: drop-shadow(0 0 5px rgba(25,25,112,0.5));">🐧</div>`,
+                    'Quati': `<div style="font-size: 140px; color: #B22222; filter: drop-shadow(0 0 5px rgba(178,34,34,0.5));">🦝</div>`,
+                    'Rinoceronte': `<div style="font-size: 140px; color: #708090; filter: drop-shadow(0 0 5px rgba(112,128,144,0.5));">🦏</div>`,
+                    'Sapo': `<div style="font-size: 140px; color: #32CD32; filter: drop-shadow(0 0 5px rgba(50,205,50,0.5));">🐸</div>`,
+                    'Tartaruga': `<div style="font-size: 140px; color: #2E8B57; filter: drop-shadow(0 0 5px rgba(46,139,87,0.5));">🐢</div>`,
+                    'Urso': `<div style="font-size: 140px; color: #A0522D; filter: drop-shadow(0 0 5px rgba(160,82,45,0.5));">🐻</div>`,
+                    'Vaca': `<div style="font-size: 140px; color: #FFFFFF; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));">🐄</div>`,
+                    'Wallaby': `<div style="font-size: 140px; color: #D2691E; filter: drop-shadow(0 0 5px rgba(210,105,30,0.5));">🦘</div>`,
+                    'Xexéu': `<div style="font-size: 140px; color: #FFD700; filter: drop-shadow(0 0 5px rgba(255,215,0,0.5));">🐦</div>`,
+                    'Yak': `<div style="font-size: 140px; color: #8B4513; filter: drop-shadow(0 0 5px rgba(139,69,19,0.5));">🐃</div>`,
+                    'Zebra': `<div style="font-size: 140px; color: #FFFFFF; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));">🦓</div>`,
+                    
+                        // Sílabas
+                    'Babuíno': `<div style="font-size: 140px; color: #8B4513; filter: drop-shadow(0 0 5px rgba(139,69,19,0.5));">🐒</div>`,
+                    'Beija-flor': `<div style="font-size: 140px; color: #FF00FF; filter: drop-shadow(0 0 5px rgba(255,0,255,0.5));">🐦</div>`,
+                    'Bisonte': `<div style="font-size: 140px; color: #8B4513; filter: drop-shadow(0 0 5px rgba(139,69,19,0.5));">🐂</div>`,
+                    'Borboleta': `<div style="font-size: 140px; color: #FF69B4; filter: drop-shadow(0 0 5px rgba(255,105,180,0.5));">🦋</div>`,
+                    'Búfalo': `<div style="font-size: 140px; color: #8B4513; filter: drop-shadow(0 0 5px rgba(139,69,19,0.5));">🐃</div>`,
+                    'Cervo': `<div style="font-size: 140px; color: #8B4513; filter: drop-shadow(0 0 5px rgba(139,69,19,0.5));">🦌</div>`,
+                    'Cisne': `<div style="font-size: 140px; color: #FFFFFF; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));">🦢</div>`,
+                    'Cobra': `<div style="font-size: 140px; color: #008000; filter: drop-shadow(0 0 5px rgba(0,128,0,0.5));">🐍</div>`,
+                    'Cupim': `<div style="font-size: 140px; color: #CD853F; filter: drop-shadow(0 0 5px rgba(205,133,63,0.5));">🐜</div>`,
+                    'Dálmata': `<div style="font-size: 140px; color: #FFFFFF; filter: drop-shadow(0 0 5px rgba(255,255,255,0.5));">🐕</div>`,
+                    'Dengue (mosquito)': `<div style="font-size: 140px; color: #A9A9A9; filter: drop-shadow(0 0 5px rgba(169,169,169,0.5));">🦟</div>`,
+                    'Doninha': `<div style="font-size: 140px; color: #8B4513; filter: drop-shadow(0 0 5px rgba(139,69,19,0.5));">🦡</div>`,
+                    'Dugongo': `<div style="font-size: 140px; color: #708090; filter: drop-shadow(0 0 5px rgba(112,128,144,0.5));">🧜</div>`,
+                    'Falcão': `<div style="font-size: 140px; color: #8B4513; filter: drop-shadow(0 0 5px rgba(139,69,19,0.5));">🦅</div>`,
+                    'Fênix': `<div style="font-size: 140px; color: #FF4500; filter: drop-shadow(0 0 5px rgba(255,69,0,0.5));">🔥🦅</div>`,
+                    'Flamingo': `<div style="font-size: 140px; color: #FF69B4; filter: drop-shadow(0 0 5px rgba(255,105,180,0.5));">🦩</div>`,
+                    'Foca': `<div style="font-size: 140px; color: #708090; filter: drop-shadow(0 0 5px rgba(112,128,144,0.5));">🦭</div>`,
+                    'Furão': `<div style="font-size: 140px; color: #D2B48C; filter: drop-shadow(0 0 5px rgba(210,180,140,0.5));">🦦</div>`,
+                    'Geco': `<div style="font-size: 140px; color: #90EE90; filter: drop-shadow(0 0 5px rgba(144,238,144,0.5));">🦎</div>`,
+                    'Girafa': `<div style="font-size: 140px; color: #F0E68C; filter: drop-shadow(0 0 5px rgba(240,230,140,0.5));">🦒</div>`,
+                    'Gorila': `<div style="font-size: 140px; color: #696969; filter: drop-shadow(0 0 5px rgba(105,105,105,0.5));">🦍</div>`,
+                    'Guaxinim': `<div style="font-size: 140px; color: #A9A9A9; filter: drop-shadow(0 0 5px rgba(169,169,169,0.5));">🦝</div>`
+                };
+                
+                return animalMap[animal] || `<div style="font-size: 120px;">❓</div>`;
+            }
+
+            // Função para falar o texto
+            function speak(text) {
+                if ('speechSynthesis' in window) {
+                    const utterance = new SpeechSynthesisUtterance(text);
+                    utterance.lang = 'pt-BR';
+                    utterance.rate = 0.9; // Um pouco mais lento para crianças
+                    speechSynthesis.speak(utterance);
+                }
+            }
+
+            // Inicialização de ambas as fases
+            updateAbcCard();
+            updateSyllableNav();
+            updateSyllabeCard();
+
+            // Adicionar suporte a teclado
+            document.addEventListener('keydown', function(e) {
+                // Verifica qual seção está ativa
+                const abcIsActive = !abcSection.classList.contains('hidden');
+                
+                if (e.key === 'ArrowRight') {
+                    if (abcIsActive) {
+                        nextBtnAbc.click();
+                    } else {
+                        nextBtnSilaba.click();
+                    }
+                } else if (e.key === 'ArrowLeft') {
+                    if (abcIsActive) {
+                        prevBtnAbc.click();
+                    } else {
+                        prevBtnSilaba.click();
+                    }
+                } else if (e.key === 'ArrowUp') {
+                    if (!abcIsActive) {
+                        prevSyllableGroupBtn.click();
+                    }
+                } else if (e.key === 'ArrowDown') {
+                    if (!abcIsActive) {
+                        nextSyllableGroupBtn.click();
+                    }
+                } else if (e.key === ' ' || e.key === 'Enter') {
+                    if (abcIsActive) {
+                        cardContainerAbc.click();
+                    } else {
+                        cardContainerSilaba.click();
+                    }
+                } else if (e.key === '1') {
+                    abcTab.click();
+                } else if (e.key === '2') {
+                    silabasTab.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
