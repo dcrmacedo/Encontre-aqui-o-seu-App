@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./agr.png?v=2">
+    <title>Texto Criptografado - AES-128-ECB</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-gray-100 min-h-screen transition-colors duration-200">
+    <div class="container mx-auto px-4 py-8 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-200 mb-2">Texto Criptografado</h1>
+            <p class="text-gray-600 dark:text-gray-400">Ferramenta de criptografia AES-128-ECB</p>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid lg:grid-cols-2 gap-8">
+            <!-- Encryption Side -->
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-lg">
+                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">Texto para criptografar:</h2>
+                
+                <textarea 
+                    id="plainText"
+                    class="w-full h-40 p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-base"
+                    placeholder="Digite o texto que deseja criptografar..."
+                ></textarea>
+                
+                <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                    <input 
+                        id="encryptKey"
+                        type="text"
+                        class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-base"
+                        placeholder="Chave"
+                    />
+                    <button 
+                        onclick="encryptText()"
+                        class="px-6 py-3 bg-primary hover:bg-blue-600 text-white font-medium rounded-lg transition-colors duration-200 focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                    >
+                        Codificar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Decryption Side -->
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-6 shadow-lg">
+                <h2 class="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-4">Código para descriptografar:</h2>
+                
+                <textarea 
+                    id="encryptedText"
+                    class="w-full h-40 p-3 border border-gray-300 dark:border-gray-600 rounded-lg resize-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-base"
+                    placeholder="Cole aqui o texto criptografado..."
+                ></textarea>
+                
+                <div class="mt-4 flex flex-col sm:flex-row gap-3">
+                    <input 
+                        id="decryptKey"
+                        type="text"
+                        class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent bg-white dark:bg-gray-700 text-base"
+                        placeholder="Chave"
+                    />
+                    <button 
+                        onclick="decryptText()"
+                        class="px-6 py-3 bg-primary hover:bg-blue-600 text-white font-medium rounded-lg transition-colors duration-200 focus:ring-2 focus:ring-primary focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                    >
+                        Decodificar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Result Area -->
+        <div id="resultArea" class="mt-8 hidden">
+            <div class="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                <h3 class="text-lg font-semibold text-green-800 dark:text-green-300 mb-2">Resultado:</h3>
+                <div id="resultText" class="bg-white dark:bg-gray-800 p-3 rounded border text-gray-900 dark:text-gray-100 font-mono text-sm break-all"></div>
+                <button 
+                    onclick="copyResult()"
+                    class="mt-3 px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-medium rounded transition-colors duration-200"
+                >
+                    Copiar Resultado
+                </button>
+            </div>
+        </div>
+
+        <!-- Error Area -->
+        <div id="errorArea" class="mt-8 hidden">
+            <div class="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-4">
+                <h3 class="text-lg font-semibold text-red-800 dark:text-red-300 mb-2">Erro:</h3>
+                <div id="errorText" class="text-red-700 dark:text-red-300"></div>
+            </div>
+        </div>
+
+        <!-- Information -->
+        <div class="mt-12 text-center space-y-3">
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                O algoritmo de criptografia utilizado nesta ferramenta é o AES-128-ECB. Nenhum dado informado é armazenado por nós.
+            </p>
+            <p class="text-gray-600 dark:text-gray-400 text-sm">
+                Quando o texto descriptografado não é mostrado, significa que a chave utilizada está incorreta.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode support
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        function showResult(text) {
+            document.getElementById('resultText').textContent = text;
+            document.getElementById('resultArea').classList.remove('hidden');
+            document.getElementById('errorArea').classList.add('hidden');
+        }
+
+        function showError(message) {
+            document.getElementById('errorText').textContent = message;
+            document.getElementById('errorArea').classList.remove('hidden');
+            document.getElementById('resultArea').classList.add('hidden');
+        }
+
+        function hideMessages() {
+            document.getElementById('resultArea').classList.add('hidden');
+            document.getElementById('errorArea').classList.add('hidden');
+        }
+
+        function normalizeKey(key) {
+            // Convert key to exactly 16 bytes for AES-128
+            if (key.length > 16) {
+                return key.substring(0, 16);
+            } else if (key.length < 16) {
+                return key.padEnd(16, '0');
+            }
+            return key;
+        }
+
+        function encryptText() {
+            const plainText = document.getElementById('plainText').value.trim();
+            const key = document.getElementById('encryptKey').value.trim();
+
+            if (!plainText) {
+                showError('Por favor, digite o texto que deseja criptografar.');
+                return;
+            }
+
+            if (!key) {
+                showError('Por favor, digite uma chave para a criptografia.');
+                return;
+            }
+
+            try {
+                const normalizedKey = normalizeKey(key);
+                const keyWords = CryptoJS.enc.Utf8.parse(normalizedKey);
+                
+                // Encrypt using AES-128-ECB
+                const encrypted = CryptoJS.AES.encrypt(plainText, keyWords, {
+                    mode: CryptoJS.mode.ECB,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+
+                const encryptedText = encrypted.toString();
+                showResult(encryptedText);
+                
+                // Copy result to encrypted textarea
+                document.getElementById('encryptedText').value = encryptedText;
+                document.getElementById('decryptKey').value = key;
+
+            } catch (error) {
+                showError('Erro ao criptografar o texto. Verifique os dados inseridos.');
+            }
+        }
+
+        function decryptText() {
+            const encryptedText = document.getElementById('encryptedText').value.trim();
+            const key = document.getElementById('decryptKey').value.trim();
+
+            if (!encryptedText) {
+                showError('Por favor, cole o texto criptografado.');
+                return;
+            }
+
+            if (!key) {
+                showError('Por favor, digite a chave para descriptografar.');
+                return;
+            }
+
+            try {
+                const normalizedKey = normalizeKey(key);
+                const keyWords = CryptoJS.enc.Utf8.parse(normalizedKey);
+                
+                // Decrypt using AES-128-ECB
+                const decrypted = CryptoJS.AES.decrypt(encryptedText, keyWords, {
+                    mode: CryptoJS.mode.ECB,
+                    padding: CryptoJS.pad.Pkcs7
+                });
+
+                const decryptedText = decrypted.toString(CryptoJS.enc.Utf8);
+                
+                if (!decryptedText) {
+                    showError('Não foi possível descriptografar o texto. Verifique se a chave está correta.');
+                    return;
+                }
+
+                showResult(decryptedText);
+                
+                // Copy result to plain textarea
+                document.getElementById('plainText').value = decryptedText;
+                document.getElementById('encryptKey').value = key;
+
+            } catch (error) {
+                showError('Erro ao descriptografar o texto. Verifique se a chave está correta.');
+            }
+        }
+
+        function copyResult() {
+            const resultText = document.getElementById('resultText').textContent;
+            
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(resultText).then(() => {
+                    // Change button text temporarily
+                    const button = event.target;
+                    const originalText = button.textContent;
+                    button.textContent = 'Copiado!';
+                    button.classList.add('bg-green-700');
+                    
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.classList.remove('bg-green-700');
+                    }, 2000);
+                }).catch(() => {
+                    showError('Não foi possível copiar o texto.');
+                });
+            } else {
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = resultText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    const button = event.target;
+                    const originalText = button.textContent;
+                    button.textContent = 'Copiado!';
+                    button.classList.add('bg-green-700');
+                    
+                    setTimeout(() => {
+                        button.textContent = originalText;
+                        button.classList.remove('bg-green-700');
+                    }, 2000);
+                } catch {
+                    showError('Não foi possível copiar o texto.');
+                }
+                document.body.removeChild(textArea);
+            }
+        }
+
+        // Allow Enter key to trigger encryption/decryption
+        document.getElementById('encryptKey').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                encryptText();
+            }
+        });
+
+        document.getElementById('decryptKey').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                decryptText();
+            }
+        });
+
+        // Clear messages when user starts typing
+        document.getElementById('plainText').addEventListener('input', hideMessages);
+        document.getElementById('encryptedText').addEventListener('input', hideMessages);
+    </script>
+</body>
+</html>

@@ -1,0 +1,572 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./agr.png?v=2">
+    <title>Sorteio Fácil</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE',
+                        'primary-dark': '#4A49C7'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #5D5CDE 0%, #7C6AE8 50%, #9B8BF5 100%);
+        }
+        
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .dark .glass-effect {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .animate-bounce-slow {
+            animation: bounce 2s infinite;
+        }
+        
+        .animate-pulse-glow {
+            animation: pulse-glow 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(93, 92, 222, 0.3);
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(93, 92, 222, 0.6);
+            }
+        }
+        
+        .winner-card {
+            animation: slideInUp 0.6s ease-out forwards;
+        }
+        
+        @keyframes slideInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        .roulette-animation {
+            animation: roulette 3s ease-out forwards;
+        }
+        
+        @keyframes roulette {
+            0% { transform: scale(1); }
+            25% { transform: scale(1.1); }
+            50% { transform: scale(0.95); }
+            75% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <div class="min-h-screen gradient-bg flex items-center justify-center p-4">
+        <div class="w-full max-w-2xl">
+            <!-- Header -->
+            <div class="text-center mb-8">
+                <h1 class="text-4xl md:text-5xl font-bold text-white mb-2 drop-shadow-lg">
+                    Sorteio Fácil
+                </h1>
+                <p class="text-white/90 text-sm md:text-lg font-medium">
+                    Cole ou digite nomes (vírgula ou quebra de linha). Escolha quantos vencedores e clique em Sortear!
+                </p>
+            </div>
+
+            <!-- Main Card -->
+            <div class="glass-effect rounded-3xl p-6 md:p-8 shadow-2xl">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Left Column - Participants List -->
+                    <div class="space-y-4">
+                        <div>
+                            <label for="participants" class="block text-white font-semibold mb-3 text-lg">
+                                Lista de participantes
+                            </label>
+                            <textarea
+                                id="participants"
+                                placeholder="Ex: João, Maria, Pedro&#10;ou&#10;cada nome em uma linha"
+                                class="w-full h-64 p-4 text-base border-2 border-white/30 rounded-xl bg-white/20 text-white placeholder-white/70 focus:outline-none focus:border-white focus:bg-white/30 transition-all duration-300 resize-none"
+                            ></textarea>
+                        </div>
+
+                        <div class="text-sm text-white/80 mb-4">
+                            Você pode colar uma lista grande — duplicatas serão ignoradas.
+                        </div>
+
+                        <!-- List Management Buttons -->
+                        <div class="flex flex-wrap gap-3">
+                            <button
+                                id="loadListBtn"
+                                class="bg-cyan-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-cyan-600 transition-all duration-300"
+                            >
+                                Carregar Lista
+                            </button>
+                            <button
+                                id="clearListBtn"
+                                class="bg-white/20 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white/30 transition-all duration-300 border-2 border-white/30"
+                            >
+                                Limpar Lista
+                            </button>
+                            <button
+                                id="exampleBtn"
+                                class="bg-white/20 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white/30 transition-all duration-300 border-2 border-white/30"
+                            >
+                                Colar exemplo
+                            </button>
+                        </div>
+
+                        <div class="text-sm text-white/70">
+                            <span id="participantCount">Participantes carregados: 0</span>
+                        </div>
+                    </div>
+
+                    <!-- Right Column - Controls and Results -->
+                    <div class="space-y-6">
+                        <!-- Number of Winners -->
+                        <div>
+                            <label for="winners" class="block text-white font-semibold mb-3 text-lg">
+                                Número de vencedores
+                            </label>
+                            <input
+                                type="number"
+                                id="winners"
+                                min="1"
+                                value="1"
+                                class="w-full p-4 text-base border-2 border-white/30 rounded-xl bg-white/20 text-white placeholder-white/70 focus:outline-none focus:border-white focus:bg-white/30 transition-all duration-300"
+                            />
+                        </div>
+
+                        <!-- Draw Buttons -->
+                        <div class="flex gap-4">
+                            <button
+                                id="drawBtn"
+                                class="flex-1 bg-cyan-500 text-white font-bold py-4 px-6 rounded-xl hover:bg-cyan-600 transition-all duration-300 text-lg"
+                            >
+                                Sortear
+                            </button>
+                            <button
+                                id="resetBtn"
+                                class="flex-1 bg-white/20 text-white font-bold py-4 px-6 rounded-xl hover:bg-white/30 transition-all duration-300 text-lg border-2 border-white/30"
+                            >
+                                Novo Sorteio
+                            </button>
+                        </div>
+
+                        <!-- Results Section -->
+                        <div id="resultsSection" class="hidden">
+                            <!-- Default State -->
+                            <div id="defaultState" class="text-center py-12">
+                                <div class="text-6xl text-white/50 mb-4">---</div>
+                                <div class="text-white/70">Estado: lista carregada — pronta para sortear.</div>
+                            </div>
+
+                            <!-- Animation Container -->
+                            <div id="animationContainer" class="mb-6 hidden">
+                                <div class="bg-white/20 rounded-xl p-6 text-center">
+                                    <div class="text-xl font-semibold text-white mb-2">Sorteando...</div>
+                                    <div id="animationText" class="text-2xl font-bold text-white animate-pulse-glow roulette-animation">
+                                        🎲
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Winners Display -->
+                            <div id="winnersContainer" class="space-y-4 hidden">
+                                <!-- Winners will be inserted here -->
+                            </div>
+
+                            <!-- Copy Winners Button -->
+                            <div id="copySection" class="mt-4 hidden">
+                                <div class="text-sm text-white/70 mb-2">
+                                    Dica: clique em "Carregar Lista" após editar os nomes.
+                                </div>
+                                <button
+                                    id="copyWinnersBtn"
+                                    class="bg-white/20 text-white font-semibold py-2 px-4 rounded-lg hover:bg-white/30 transition-all duration-300 border-2 border-white/30"
+                                >
+                                    Copiar vencedores
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Alerts -->
+    <div id="modalOverlay" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow-lg max-w-sm w-full mx-4">
+            <div class="text-center">
+                <div class="text-4xl mb-4">⚠️</div>
+                <p id="modalMessage" class="text-gray-700 dark:text-gray-300 mb-6 text-lg"></p>
+                <button 
+                    id="modalOkBtn"
+                    class="px-6 py-3 bg-primary text-white hover:bg-primary-dark rounded-lg font-semibold transition-colors duration-300"
+                >
+                    Entendi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Custom modal functions
+        function showAlert(message) {
+            const modal = document.getElementById('modalOverlay');
+            const messageEl = document.getElementById('modalMessage');
+            messageEl.textContent = message;
+            modal.classList.remove('hidden');
+        }
+
+        function hideModal() {
+            const modal = document.getElementById('modalOverlay');
+            modal.classList.add('hidden');
+        }
+
+        // Modal event listeners
+        document.getElementById('modalOkBtn').addEventListener('click', hideModal);
+        document.getElementById('modalOverlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                hideModal();
+            }
+        });
+
+        // App state
+        let originalParticipants = [];
+        let loadedParticipants = [];
+        let isDrawing = false;
+        let currentWinners = [];
+
+        // Elements
+        const participantsInput = document.getElementById('participants');
+        const winnersInput = document.getElementById('winners');
+        const drawBtn = document.getElementById('drawBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const loadListBtn = document.getElementById('loadListBtn');
+        const clearListBtn = document.getElementById('clearListBtn');
+        const exampleBtn = document.getElementById('exampleBtn');
+        const copyWinnersBtn = document.getElementById('copyWinnersBtn');
+        const participantCount = document.getElementById('participantCount');
+        const resultsSection = document.getElementById('resultsSection');
+        const defaultState = document.getElementById('defaultState');
+        const animationContainer = document.getElementById('animationContainer');
+        const animationText = document.getElementById('animationText');
+        const winnersContainer = document.getElementById('winnersContainer');
+        const copySection = document.getElementById('copySection');
+
+        // Parse participants from input
+        function parseParticipants(text) {
+            return text
+                .split(/[,\n]/)
+                .map(item => item.trim())
+                .filter(item => item.length > 0);
+        }
+
+        // Shuffle array using Fisher-Yates algorithm
+        function shuffleArray(array) {
+            const shuffled = [...array];
+            for (let i = shuffled.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+            }
+            return shuffled;
+        }
+
+        // Animation during draw
+        function playDrawAnimation(participants, duration = 3000) {
+            return new Promise((resolve) => {
+                const startTime = Date.now();
+                const shuffled = shuffleArray(participants);
+                let currentIndex = 0;
+                let animationInterval;
+
+                animationContainer.classList.remove('hidden');
+                
+                const runAnimation = () => {
+                    const elapsed = Date.now() - startTime;
+                    const progress = elapsed / duration;
+                    
+                    // Show current participant
+                    if (shuffled.length > 0) {
+                        animationText.textContent = shuffled[currentIndex % shuffled.length];
+                        currentIndex++;
+                    }
+                    
+                    if (elapsed >= duration) {
+                        clearInterval(animationInterval);
+                        animationContainer.classList.add('hidden');
+                        resolve();
+                        return;
+                    }
+                    
+                    // Slow down the animation as it progresses
+                    const speed = Math.max(100, 300 - (progress * 200));
+                    animationInterval = setTimeout(runAnimation, speed);
+                };
+                
+                runAnimation();
+            });
+        }
+
+        // Display winners
+        function displayWinners(winners) {
+            winnersContainer.innerHTML = '';
+            winnersContainer.classList.remove('hidden');
+
+            winners.forEach((winner, index) => {
+                setTimeout(() => {
+                    const winnerCard = document.createElement('div');
+                    winnerCard.className = 'winner-card bg-white/20 rounded-xl p-6 text-center border-2 border-white/30';
+                    
+                    const position = winners.length > 1 ? `${index + 1}º lugar` : 'Vencedor';
+                    
+                    winnerCard.innerHTML = `
+                        <div class="text-lg font-semibold text-white/90 mb-2">${position}</div>
+                        <div class="text-2xl font-bold text-white">${winner}</div>
+                        <div class="text-4xl mt-3">${index === 0 ? '' : index === 1 ? '' : index === 2 ? '' : ''}</div>
+                    `;
+                    
+                    winnersContainer.appendChild(winnerCard);
+                }, index * 200);
+            });
+        }
+
+        // Main draw function
+        async function performDraw() {
+            if (isDrawing) return;
+
+            const participantsText = participantsInput.value.trim();
+            const numWinners = parseInt(winnersInput.value) || 1;
+
+            if (!participantsText) {
+                showAlert('Por favor, digite a lista de participantes!');
+                participantsInput.focus();
+                return;
+            }
+
+            const participants = parseParticipants(participantsText);
+
+            if (participants.length === 0) {
+                showAlert('Por favor, digite pelo menos um participante válido!');
+                participantsInput.focus();
+                return;
+            }
+
+            if (numWinners > participants.length) {
+                showAlert(`Número de vencedores (${numWinners}) não pode ser maior que o número de participantes (${participants.length})!`);
+                winnersInput.focus();
+                return;
+            }
+
+            if (numWinners < 1) {
+                showAlert('O número de vencedores deve ser pelo menos 1!');
+                winnersInput.focus();
+                return;
+            }
+
+            // Store original participants
+            originalParticipants = [...participants];
+            
+            isDrawing = true;
+            drawBtn.disabled = true;
+            drawBtn.textContent = '🎲 Sorteando...';
+            
+            // Show results section
+            resultsSection.classList.remove('hidden');
+            winnersContainer.classList.add('hidden');
+
+            try {
+                // Hide default state
+                defaultState.classList.add('hidden');
+                
+                // Play animation
+                await playDrawAnimation(participants);
+
+                // Perform the actual draw
+                const shuffled = shuffleArray(participants);
+                const winners = shuffled.slice(0, numWinners);
+                currentWinners = winners;
+
+                // Display results
+                displayWinners(winners);
+                
+                // Show copy section
+                copySection.classList.remove('hidden');
+
+            } catch (error) {
+                console.log('Erro no sorteio:', error);
+                showAlert('Erro durante o sorteio. Tente novamente!');
+            } finally {
+                isDrawing = false;
+                drawBtn.disabled = false;
+                drawBtn.textContent = '🎯 Sortear';
+            }
+        }
+
+        // Reset function
+        function resetDraw() {
+            animationContainer.classList.add('hidden');
+            winnersContainer.classList.add('hidden');
+            winnersContainer.innerHTML = '';
+            copySection.classList.add('hidden');
+            currentWinners = [];
+            
+            // Show default state if there are loaded participants
+            if (loadedParticipants.length > 0) {
+                resultsSection.classList.remove('hidden');
+                defaultState.classList.remove('hidden');
+            } else {
+                resultsSection.classList.add('hidden');
+            }
+            
+            // Don't clear the participants input to keep the original list
+            // Just reset the winners count to 1
+            winnersInput.value = '1';
+            
+            isDrawing = false;
+            drawBtn.disabled = false;
+            drawBtn.textContent = 'Sortear';
+        }
+
+        // Update participant count
+        function updateParticipantCount() {
+            const participants = parseParticipants(participantsInput.value);
+            const uniqueParticipants = [...new Set(participants)]; // Remove duplicates
+            loadedParticipants = uniqueParticipants;
+            participantCount.textContent = `Participantes carregados: ${uniqueParticipants.length}`;
+            
+            // Show/hide results section based on loaded participants
+            if (uniqueParticipants.length > 0) {
+                resultsSection.classList.remove('hidden');
+                defaultState.classList.remove('hidden');
+                winnersContainer.classList.add('hidden');
+                copySection.classList.add('hidden');
+            } else {
+                resultsSection.classList.add('hidden');
+            }
+        }
+
+        // Load list from textarea
+        function loadList() {
+            const text = participantsInput.value.trim();
+            if (!text) {
+                showAlert('Por favor, digite alguns participantes primeiro!');
+                participantsInput.focus();
+                return;
+            }
+            updateParticipantCount();
+        }
+
+        // Clear list
+        function clearList() {
+            participantsInput.value = '';
+            loadedParticipants = [];
+            updateParticipantCount();
+            resetDraw();
+        }
+
+        // Load example
+        function loadExample() {
+            const examples = [
+                'Ana Silva\nBruno Costa\nCarla Mendes\nDaniel Santos\nErica Oliveira\nFabio Lima\nGabriela Souza\nHenrique Alves',
+                'João, Maria, Pedro, Ana, Carlos, Fernanda, Ricardo, Juliana',
+                'Alice\nBob\nCharlie\nDiana\nEve\nFrank\nGrace\nHenry'
+            ];
+            const randomExample = examples[Math.floor(Math.random() * examples.length)];
+            participantsInput.value = randomExample;
+            updateParticipantCount();
+        }
+
+        // Copy winners to clipboard
+        async function copyWinners() {
+            if (currentWinners.length === 0) {
+                showAlert('Não há vencedores para copiar!');
+                return;
+            }
+
+            try {
+                const winnersText = currentWinners.join('\n');
+                await navigator.clipboard.writeText(winnersText);
+                copyWinnersBtn.textContent = 'Copiado!';
+                setTimeout(() => {
+                    copyWinnersBtn.textContent = 'Copiar vencedores';
+                }, 2000);
+            } catch (err) {
+                showAlert('Erro ao copiar para a área de transferência');
+            }
+        }
+
+        // Event listeners
+        drawBtn.addEventListener('click', performDraw);
+        resetBtn.addEventListener('click', resetDraw);
+        loadListBtn.addEventListener('click', loadList);
+        clearListBtn.addEventListener('click', clearList);
+        exampleBtn.addEventListener('click', loadExample);
+        copyWinnersBtn.addEventListener('click', copyWinners);
+
+        // Allow Enter key to trigger draw
+        participantsInput.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                performDraw();
+            }
+        });
+
+        winnersInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                performDraw();
+            }
+        });
+
+        // Auto-resize textarea
+        participantsInput.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = Math.max(128, this.scrollHeight) + 'px';
+        });
+
+        // Prevent negative numbers in winners input
+        winnersInput.addEventListener('input', function() {
+            if (this.value < 1) {
+                this.value = 1;
+            }
+        });
+    </script>
+</body>
+</html>
