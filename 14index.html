@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="js">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./agr.png?v=2">
+    <title>LeitorWeb - Sistema de Leitura</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Definições das variáveis de cor */
+        :root {
+            --color-primary: #5D5CDE;
+            --color-reading-bg: #FEFEFE;
+        }
+
+        html.dark {
+            --color-primary: #5D5CDE;
+            --color-reading-bg: #1A1A1A;
+        }
+
+        /* Classes utilitárias usando as variáveis */
+        .bg-primary { background-color: var(--color-primary); }
+        .text-primary { color: var(--color-primary); }
+
+        .reading-text {
+            line-height: 1.8;
+            font-family: 'Georgia', serif;
+        }
+        .highlight {
+            background-color: #FFD700;
+            color: #000;
+        }
+        .dark .highlight {
+            background-color: #B8860B;
+            color: #FFF;
+        }
+        .focus-mode .reading-text p:not(.in-focus) {
+            opacity: 0.3;
+            transition: opacity 0.3s ease;
+        }
+        .auto-scroll {
+            scroll-behavior: smooth;
+        }
+        .progress-bar {
+            transition: width 0.1s ease;
+        }
+    </style>
+</head>
+<body class="bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors duration-300">
+    <div class="fixed top-0 left-0 w-full h-1 bg-gray-200 dark:bg-gray-700 z-50">
+        <div id="progressBar" class="progress-bar h-full bg-primary" style="width: 0%"></div>
+    </div>
+
+    <nav class="fixed top-1 left-0 right-0 bg-white/80 dark:bg-gray-900/80 backdrop-blur-sm border-b border-gray-200 dark:border-gray-700 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <h1 class="text-xl font-bold text-primary">LeitorWeb</h1>
+                    <button id="newTextBtn" class="px-4 py-2 text-sm bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                        Novo Texto
+                    </button>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button id="settingsBtn" class="p-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
+                        ⚙️
+                    </button>
+                    <button id="helpBtn" class="p-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
+                        ❓
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div id="inputScreen" class="min-h-screen pt-20 px-4">
+        <div class="max-w-4xl mx-auto">
+            <div class="text-center mb-8">
+                <h2 class="text-3xl font-bold mb-4 text-gray-900 dark:text-white">Sistema de Leitura Inteligente</h2>
+                <p class="text-gray-600 dark:text-gray-400">Digite, cole ou importe um texto para começar sua experiência de leitura otimizada</p>
+            </div>
+            
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+                <label for="textInput" class="block text-sm font-medium mb-3">Digite ou cole seu texto:</label>
+                <textarea 
+                    id="textInput" 
+                    class="w-full h-64 p-4 text-base border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 focus:ring-2 focus:ring-primary focus:border-transparent resize-none"
+                    placeholder="Cole ou digite seu texto aqui..."
+                ></textarea>
+                <div class="flex flex-col sm:flex-row gap-4 mt-4">
+                    <button id="startReadingBtn" class="flex-1 px-6 py-3 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors font-medium">
+                        Iniciar Leitura
+                    </button>
+                    <input type="file" id="fileInput" accept=".txt" class="hidden">
+                    <button id="importBtn" class="flex-1 px-6 py-3 border border-primary text-primary hover:bg-primary hover:text-white rounded-lg transition-colors font-medium">
+                        Importar Arquivo .txt
+                    </button>
+                </div>
+            </div>
+            
+            <div class="grid md:grid-cols-3 gap-6 text-center">
+                <div class="p-4">
+                    <div class="text-2xl mb-2">📖</div>
+                    <h3 class="font-semibold mb-2">Leitura Otimizada</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Interface limpa focada na legibilidade</p>
+                </div>
+                <div class="p-4">
+                    <div class="text-2xl mb-2">🔊</div>
+                    <h3 class="font-semibold mb-2">Síntese de Voz</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Escute seu texto com Text-to-Speech</p>
+                </div>
+                <div class="p-4">
+                    <div class="text-2xl mb-2">⚡</div>
+                    <h3 class="font-semibold mb-2">Funcionalidades Avançadas</h3>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Rolagem automática, destaque, estatísticas</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="readingScreen" class="hidden min-h-screen pt-20">
+        <div class="fixed bottom-6 left-6 right-6 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-xl border border-gray-200 dark:border-gray-700 p-4 z-30">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <button id="playPauseBtn" class="p-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                        ▶️
+                    </button>
+                    <button id="stopBtn" class="p-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors">
+                        ⏹️
+                    </button>
+                    <div class="flex items-center space-x-2">
+                        <span class="text-sm">Velocidade:</span>
+                        <input id="speedRange" type="range" min="0.5" max="2" step="0.1" value="1" class="w-20">
+                        <span id="speedValue" class="text-sm w-8">1x</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <button id="fontSizeDown" class="p-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
+                        A-
+                    </button>
+                    <button id="fontSizeUp" class="p-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
+                        A+
+                    </button>
+                    <button id="autoScrollBtn" class="p-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
+                        📜
+                    </button>
+                    <button id="focusModeBtn" class="p-2 text-gray-600 dark:text-gray-400 hover:text-primary transition-colors">
+                        🎯
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="max-w-4xl mx-auto px-6 pb-32">
+            <div id="readingArea" class="reading-text bg-reading-bg rounded-xl p-8 shadow-lg border border-gray-200 dark:border-gray-700">
+                <div id="textContent" class="prose dark:prose-invert max-w-none"></div>
+            </div>
+            
+            <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <div class="text-2xl font-bold text-primary" id="wordCount">0</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Palavras</div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <div class="text-2xl font-bold text-primary" id="readingTime">0</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Min. Leitura</div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <div class="text-2xl font-bold text-primary" id="progressPercent">0%</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Progresso</div>
+                </div>
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-lg p-4">
+                    <div class="text-2xl font-bold text-primary" id="currentParagraph">1</div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400">Parágrafo</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="settingsModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-md w-full p-6">
+            <h3 class="text-xl font-bold mb-4">Configurações</h3>
+            
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Velocidade de Rolagem Automática</label>
+                    <input id="autoScrollSpeed" type="range" min="1" max="10" value="3" class="w-full">
+                    <div class="text-sm text-gray-600 dark:text-gray-400 mt-1">Lenta ← → Rápida</div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Espaçamento entre Linhas</label>
+                    <input id="lineHeight" type="range" min="1.4" max="2.5" step="0.1" value="1.8" class="w-full">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Velocidade da Voz</label>
+                    <input id="voiceSpeed" type="range" min="0.5" max="2" step="0.1" value="1" class="w-full">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Tom da Voz</label>
+                    <input id="voicePitch" type="range" min="0.5" max="2" step="0.1" value="1" class="w-full">
+                </div>
+            </div>
+            
+            <div class="flex justify-end space-x-3 mt-6">
+                <button id="closeSettings" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">
+                    Fechar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="helpModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl max-w-2xl w-full p-6">
+            <h3 class="text-xl font-bold mb-4">Como Usar o LeitorWeb</h3>
+            
+            <div class="space-y-4 text-sm">
+                <div>
+                    <h4 class="font-semibold mb-2">📝 Adicionando Texto</h4>
+                    <p class="text-gray-600 dark:text-gray-400">Digite ou cole texto na área inicial, ou importe um arquivo .txt usando o botão "Importar".</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-2">🔊 Síntese de Voz</h4>
+                    <p class="text-gray-600 dark:text-gray-400">Use ▶️ para iniciar/pausar a leitura em voz alta. Ajuste velocidade e outros parâmetros nas configurações.</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-2">🎯 Modo Foco</h4>
+                    <p class="text-gray-600 dark:text-gray-400">Ative o modo foco para destacar apenas o parágrafo atual e esmaecer o resto do texto.</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-2">📜 Rolagem Automática</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Ative a rolagem automática para o texto se mover sozinho. Ajuste a velocidade nas configurações.</p>
+                </div>
+                
+                <div>
+                    <h4 class="font-semibold mb-2">✨ Destaque de Texto</h4>
+                    <p class="text-sm text-gray-600 dark:text-gray-400">Selecione qualquer texto na área de leitura para destacá-lo temporariamente.</p>
+                </div>
+            </div>
+            
+            <div class="flex justify-end mt-6">
+                <button id="closeHelp" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+                    Entendi
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        class LeitorWeb {
+            constructor() {
+                this.currentText = '';
+                this.fontSize = 18;
+                this.isAutoScrolling = false;
+                this.autoScrollInterval = null;
+                this.isFocusMode = false;
+                this.isReading = false;
+                this.speechSynth = window.speechSynthesis;
+                this.currentUtterance = null;
+                this.currentParagraphIndex = 0;
+                
+                this.initializeElements();
+                this.bindEvents();
+                this.initializeTheme();
+                this.loadSettings();
+            }
+            
+            initializeElements() {
+                // Screens
+                this.inputScreen = document.getElementById('inputScreen');
+                this.readingScreen = document.getElementById('readingScreen');
+                
+                // Input elements
+                this.textInput = document.getElementById('textInput');
+                this.fileInput = document.getElementById('fileInput');
+                this.startReadingBtn = document.getElementById('startReadingBtn');
+                this.importBtn = document.getElementById('importBtn');
+                
+                // Navigation
+                this.newTextBtn = document.getElementById('newTextBtn');
+                this.settingsBtn = document.getElementById('settingsBtn');
+                this.helpBtn = document.getElementById('helpBtn');
+                
+                // Reading controls
+                this.playPauseBtn = document.getElementById('playPauseBtn');
+                this.stopBtn = document.getElementById('stopBtn');
+                this.speedRange = document.getElementById('speedRange');
+                this.speedValue = document.getElementById('speedValue');
+                this.fontSizeDown = document.getElementById('fontSizeDown');
+                this.fontSizeUp = document.getElementById('fontSizeUp');
+                this.autoScrollBtn = document.getElementById('autoScrollBtn');
+                this.focusModeBtn = document.getElementById('focusModeBtn');
+                
+                // Reading area
+                this.readingArea = document.getElementById('readingArea');
+                this.textContent = document.getElementById('textContent');
+                
+                // Progress and stats
+                this.progressBar = document.getElementById('progressBar');
+                this.wordCount = document.getElementById('wordCount');
+                this.readingTime = document.getElementById('readingTime');
+                this.progressPercent = document.getElementById('progressPercent');
+                this.currentParagraphEl = document.getElementById('currentParagraph');
+                
+                // Modals
+                this.settingsModal = document.getElementById('settingsModal');
+                this.helpModal = document.getElementById('helpModal');
+                this.closeSettings = document.getElementById('closeSettings');
+                this.closeHelp = document.getElementById('closeHelp');
+                
+                // Settings controls
+                this.autoScrollSpeed = document.getElementById('autoScrollSpeed');
+                this.lineHeight = document.getElementById('lineHeight');
+                this.voiceSpeed = document.getElementById('voiceSpeed');
+                this.voicePitch = document.getElementById('voicePitch');
+            }
+            
+            bindEvents() {
+                // Navigation events
+                this.startReadingBtn.addEventListener('click', () => this.startReading());
+                this.importBtn.addEventListener('click', () => this.fileInput.click());
+                this.fileInput.addEventListener('change', (e) => this.handleFileImport(e));
+                this.newTextBtn.addEventListener('click', () => this.showInputScreen());
+                
+                // Modals
+                this.settingsBtn.addEventListener('click', () => this.showModal('settings'));
+                this.helpBtn.addEventListener('click', () => this.showModal('help'));
+                this.closeSettings.addEventListener('click', () => this.hideModal('settings'));
+                this.closeHelp.addEventListener('click', () => this.hideModal('help'));
+                
+                // Reading controls
+                this.playPauseBtn.addEventListener('click', () => this.toggleSpeech());
+                this.stopBtn.addEventListener('click', () => this.stopSpeech());
+                this.speedRange.addEventListener('input', (e) => this.updateSpeed(e.target.value));
+                this.fontSizeDown.addEventListener('click', () => this.adjustFontSize(-2));
+                this.fontSizeUp.addEventListener('click', () => this.adjustFontSize(2));
+                this.autoScrollBtn.addEventListener('click', () => this.toggleAutoScroll());
+                this.focusModeBtn.addEventListener('click', () => this.toggleFocusMode());
+                
+                // Settings
+                this.lineHeight.addEventListener('input', (e) => this.updateLineHeight(e.target.value));
+                this.voiceSpeed.addEventListener('input', (e) => this.updateVoiceSpeed(e.target.value));
+                this.voicePitch.addEventListener('input', (e) => this.updateVoicePitch(e.target.value));
+                
+                // Scroll tracking
+                window.addEventListener('scroll', () => this.updateProgress());
+                
+                // Text selection for highlighting
+                document.addEventListener('mouseup', () => this.handleTextSelection());
+                
+                // Modal close on outside click
+                this.settingsModal.addEventListener('click', (e) => {
+                    if (e.target === this.settingsModal) this.hideModal('settings');
+                });
+                this.helpModal.addEventListener('click', (e) => {
+                    if (e.target === this.helpModal) this.hideModal('help');
+                });
+            }
+            
+            initializeTheme() {
+                // Check initial theme preference
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                
+                if (prefersDark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+                
+                // Listen for system theme changes
+                window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+                    if (event.matches) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                });
+            }
+            
+            loadSettings() {
+                // Apply default settings
+                this.updateLineHeight(this.lineHeight.value);
+                this.updateSpeed(this.speedRange.value);
+            }
+            
+            startReading() {
+                const text = this.textInput.value.trim();
+                if (!text) {
+                    this.showCustomAlert('Por favor, digite ou importe um texto antes de iniciar a leitura.');
+                    return;
+                }
+                
+                this.currentText = text;
+                this.displayText(text);
+                this.calculateStats(text);
+                this.showReadingScreen();
+            }
+            
+            handleFileImport(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+                
+                if (!file.name.endsWith('.txt')) {
+                    this.showCustomAlert('Por favor, selecione apenas arquivos .txt');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    this.textInput.value = e.target.result;
+                    this.startReading();
+                };
+                reader.readAsText(file);
+            }
+            
+            displayText(text) {
+                const paragraphs = text.split('\n').filter(p => p.trim());
+                this.textContent.innerHTML = paragraphs
+                    .map((p, index) => `<p data-paragraph="${index}">${p}</p>`)
+                    .join('');
+            }
+            
+            calculateStats(text) {
+                const words = text.trim().split(/\s+/).length;
+                const readingTimeMinutes = Math.ceil(words / 200); // Average reading speed
+                
+                this.wordCount.textContent = words.toLocaleString();
+                this.readingTime.textContent = readingTimeMinutes;
+            }
+            
+            showInputScreen() {
+                this.inputScreen.classList.remove('hidden');
+                this.readingScreen.classList.add('hidden');
+                this.stopSpeech();
+                this.stopAutoScroll();
+                
+                // Reset form and states
+                this.textInput.value = '';
+                this.currentText = '';
+                this.fontSize = 18;
+                this.isAutoScrolling = false;
+                this.isFocusMode = false;
+                this.isReading = false;
+                this.currentParagraphIndex = 0;
+                
+                // Reset progress
+                this.progressBar.style.width = '0%';
+                this.progressPercent.textContent = '0%';
+                this.wordCount.textContent = '0';
+                this.readingTime.textContent = '0';
+                this.currentParagraphEl.textContent = '1';
+                
+                // Reset button states
+                this.autoScrollBtn.style.color = '';
+                this.focusModeBtn.style.color = '';
+                this.playPauseBtn.textContent = '▶️';
+                
+                // Clear file input
+                this.fileInput.value = '';
+                
+                // Focus on text input
+                setTimeout(() => {
+                    this.textInput.focus();
+                }, 100);
+            }
+            
+            showReadingScreen() {
+                this.inputScreen.classList.add('hidden');
+                this.readingScreen.classList.remove('hidden');
+                this.updateProgress();
+            }
+            
+            showModal(type) {
+                if (type === 'settings') {
+                    this.settingsModal.classList.remove('hidden');
+                } else if (type === 'help') {
+                    this.helpModal.classList.remove('hidden');
+                }
+            }
+            
+            hideModal(type) {
+                if (type === 'settings') {
+                    this.settingsModal.classList.add('hidden');
+                } else if (type === 'help') {
+                    this.helpModal.classList.add('hidden');
+                }
+            }
+            
+            toggleSpeech() {
+                if (this.isReading) {
+                    this.pauseSpeech();
+                } else {
+                    this.startSpeech();
+                }
+            }
+            
+            startSpeech() {
+                if (!this.currentText) return;
+                
+                this.currentUtterance = new SpeechSynthesisUtterance(this.currentText);
+                this.currentUtterance.rate = parseFloat(this.voiceSpeed.value);
+                this.currentUtterance.pitch = parseFloat(this.voicePitch.value);
+                
+                this.currentUtterance.onend = () => {
+                    this.isReading = false;
+                    this.playPauseBtn.textContent = '▶️';
+                };
+                
+                this.speechSynth.speak(this.currentUtterance);
+                this.isReading = true;
+                this.playPauseBtn.textContent = '⏸️';
+            }
+            
+            pauseSpeech() {
+                this.speechSynth.cancel();
+                this.isReading = false;
+                this.playPauseBtn.textContent = '▶️';
+            }
+            
+            stopSpeech() {
+                this.speechSynth.cancel();
+                this.isReading = false;
+                this.playPauseBtn.textContent = '▶️';
+            }
+            
+            updateSpeed(value) {
+                this.speedValue.textContent = value + 'x';
+                if (this.currentUtterance) {
+                    this.currentUtterance.rate = parseFloat(value);
+                }
+            }
+            
+            adjustFontSize(delta) {
+                this.fontSize = Math.max(12, Math.min(32, this.fontSize + delta));
+                this.textContent.style.fontSize = this.fontSize + 'px';
+            }
+            
+            toggleAutoScroll() {
+                if (this.isAutoScrolling) {
+                    this.stopAutoScroll();
+                } else {
+                    this.startAutoScroll();
+                }
+            }
+            
+            startAutoScroll() {
+                this.isAutoScrolling = true;
+                this.autoScrollBtn.style.color = '#5D5CDE';
+                
+                const speed = parseInt(this.autoScrollSpeed.value);
+                const scrollSpeed = 200 / speed; // Pixels per second
+                
+                this.autoScrollInterval = setInterval(() => {
+                    window.scrollBy(0, 1);
+                }, scrollSpeed);
+            }
+            
+            stopAutoScroll() {
+                this.isAutoScrolling = false;
+                this.autoScrollBtn.style.color = '';
+                if (this.autoScrollInterval) {
+                    clearInterval(this.autoScrollInterval);
+                    this.autoScrollInterval = null;
+                }
+            }
+            
+            toggleFocusMode() {
+                this.isFocusMode = !this.isFocusMode;
+                this.readingArea.classList.toggle('focus-mode', this.isFocusMode);
+                this.focusModeBtn.style.color = this.isFocusMode ? '#5D5CDE' : '';
+                
+                if (this.isFocusMode) {
+                    this.updateFocusParagraph();
+                }
+            }
+            
+            updateFocusParagraph() {
+                if (!this.isFocusMode) return;
+                
+                const paragraphs = this.textContent.querySelectorAll('p');
+                const scrollY = window.scrollY;
+                const windowHeight = window.innerHeight;
+                
+                paragraphs.forEach((p, index) => {
+                    const rect = p.getBoundingClientRect();
+                    const isInFocus = rect.top < windowHeight / 2 && rect.bottom > windowHeight / 2;
+                    
+                    p.classList.toggle('in-focus', isInFocus);
+                    if (isInFocus) {
+                        this.currentParagraphIndex = index;
+                        this.currentParagraphEl.textContent = index + 1;
+                    }
+                });
+            }
+            
+            updateProgress() {
+                const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+                const scrolled = window.scrollY;
+                const progress = (scrolled / docHeight) * 100;
+                
+                this.progressBar.style.width = Math.min(100, Math.max(0, progress)) + '%';
+                this.progressPercent.textContent = Math.round(progress) + '%';
+                
+                if (this.isFocusMode) {
+                    this.updateFocusParagraph();
+                }
+            }
+            
+            updateLineHeight(value) {
+                this.textContent.style.lineHeight = value;
+            }
+            
+            updateVoiceSpeed(value) {
+                if (this.currentUtterance) {
+                    this.currentUtterance.rate = parseFloat(value);
+                }
+            }
+            
+            updateVoicePitch(value) {
+                if (this.currentUtterance) {
+                    this.currentUtterance.pitch = parseFloat(value);
+                }
+            }
+            
+            handleTextSelection() {
+                const selection = window.getSelection();
+                if (selection.toString().length > 0) {
+                    const range = selection.getRangeAt(0);
+                    const span = document.createElement('span');
+                    span.className = 'highlight';
+                    
+                    try {
+                        range.surroundContents(span);
+                        selection.removeAllRanges();
+                    } catch (e) {
+                        // Handle cases where selection spans multiple elements
+                        console.log('Cannot highlight complex selection');
+                    }
+                }
+            }
+            
+            showCustomAlert(message) {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+                        <p class="text-gray-700 dark:text-gray-300 mb-4">${message}</p>
+                        <div class="flex justify-end">
+                            <button class="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded" onclick="this.closest('.fixed').remove()">OK</button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+        }
+        
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', () => {
+            new LeitorWeb();
+        });
+    </script>
+</body>
+</html>
