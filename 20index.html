@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recibo Online</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @media print {
+            .no-print { display: none !important; }
+            .print-area { 
+                background: white !important; 
+                color: black !important;
+                box-shadow: none !important;
+                border: none !important;
+            }
+            .print-area * {
+                color: black !important;
+            }
+        }
+        
+        .logo-placeholder {
+            border: 2px dashed #4a5568;
+            transition: all 0.3s ease;
+        }
+        
+        .logo-placeholder:hover {
+            border-color: #5D5CDE;
+        }
+        
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #5D5CDE;
+            box-shadow: 0 0 0 3px rgba(93, 92, 222, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <div class="container mx-auto px-4 py-6 max-w-4xl">
+        <h1 class="text-3xl font-bold text-center mb-8">Recibo Online</h1>
+        
+        <!-- Formulário de Entrada -->
+        <div class="no-print bg-gray-800 rounded-lg p-6 mb-6 space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <label class="block text-sm font-medium mb-2">Nome do Cliente</label>
+                    <input type="text" id="nomeCliente" class="w-full p-3 text-base bg-gray-700 border border-gray-600 rounded-md text-white" placeholder="Nome completo do cliente">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">CPF/CNPJ do Cliente</label>
+                    <input type="text" id="cpfCliente" class="w-full p-3 text-base bg-gray-700 border border-gray-600 rounded-md text-white" placeholder="000.000.000-00">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Valor Recebido (R$)</label>
+                    <input type="number" id="valorRecebido" step="0.01" class="w-full p-3 text-base bg-gray-700 border border-gray-600 rounded-md text-white" placeholder="0,00">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Cidade</label>
+                    <input type="text" id="cidade" class="w-full p-3 text-base bg-gray-700 border border-gray-600 rounded-md text-white" placeholder="Sua cidade">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium mb-2">Serviço Prestado / Descrição</label>
+                    <textarea id="servicoPrestado" rows="3" class="w-full p-3 text-base bg-gray-700 border border-gray-600 rounded-md text-white" placeholder="Descreva o serviço prestado"></textarea>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">Nome/Empresa do Emitente</label>
+                    <input type="text" id="nomeEmitente" class="w-full p-3 text-base bg-gray-700 border border-gray-600 rounded-md text-white" placeholder="Seu nome ou empresa">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium mb-2">CPF/CNPJ do Emitente</label>
+                    <input type="text" id="cpfEmitente" class="w-full p-3 text-base bg-gray-700 border border-gray-600 rounded-md text-white" placeholder="000.000.000-00">
+                </div>
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium mb-2">Logomarca</label>
+                    <div class="logo-placeholder rounded-lg p-4 text-center cursor-pointer" onclick="document.getElementById('logoInput').click()">
+                        <input type="file" id="logoInput" accept="image/*" class="hidden">
+                        <div id="logoPreview">
+                            <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                            </svg>
+                            <p class="mt-2 text-sm text-gray-400">Clique para adicionar logomarca</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Área do Recibo -->
+        <div id="reciboArea" class="print-area bg-white text-black border border-gray-300 rounded-lg">
+            <!-- Conteúdo será gerado dinamicamente -->
+        </div>
+
+        <!-- Controles -->
+        <div class="no-print flex flex-wrap gap-4 mt-6 justify-center">
+            <select id="numeroVias" class="px-4 py-2 bg-gray-700 border border-gray-600 rounded-md text-white">
+                <option value="1">1 Via</option>
+                <option value="2">2 Vias</option>
+                <option value="3">3 Vias</option>
+            </select>
+            <button onclick="limparCampos()" class="px-6 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition-colors">
+                Limpar
+            </button>
+            <button onclick="imprimirRecibo()" class="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-md transition-colors">
+                Imprimir
+            </button>
+            <button onclick="exportarPDF()" class="px-6 py-2 bg-primary hover:bg-purple-700 text-white rounded-md transition-colors">
+                Exportar PDF
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Detectar modo escuro
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        let numeroRecibo = 1;
+        let logoDataUrl = null;
+
+        // Formatar valor monetário brasileiro
+        function formatarMoeda(valor) {
+            return new Intl.NumberFormat('pt-BR', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2
+            }).format(valor);
+        }
+
+        // Converter número para extenso
+        function numeroParaExtenso(numero) {
+            if (numero === 0 || !numero) return "zero reais";
+            
+            const unidades = ["", "um", "dois", "três", "quatro", "cinco", "seis", "sete", "oito", "nove"];
+            const especiais = ["dez", "onze", "doze", "treze", "quatorze", "quinze", "dezesseis", "dezessete", "dezoito", "dezenove"];
+            const dezenas = ["", "", "vinte", "trinta", "quarenta", "cinquenta", "sessenta", "setenta", "oitenta", "noventa"];
+            const centenas = ["", "cento", "duzentos", "trezentos", "quatrocentos", "quinhentos", "seiscentos", "setecentos", "oitocentos", "novecentos"];
+
+            function converterGrupo(num) {
+                if (num === 0) return "";
+                
+                let resultado = "";
+                const c = Math.floor(num / 100);
+                const d = Math.floor((num % 100) / 10);
+                const u = num % 10;
+
+                if (c > 0) {
+                    if (num === 100) resultado += "cem";
+                    else resultado += centenas[c];
+                }
+
+                if (d > 0) {
+                    if (resultado) resultado += " e ";
+                    if (d === 1 && u > 0) {
+                        resultado += especiais[u];
+                        return resultado;
+                    } else {
+                        resultado += dezenas[d];
+                    }
+                }
+
+                if (u > 0) {
+                    if (resultado) resultado += " e ";
+                    resultado += unidades[u];
+                }
+
+                return resultado;
+            }
+
+            const partes = numero.toString().split('.');
+            const reais = parseInt(partes[0]) || 0;
+            const centavos = parseInt(partes[1]) || 0;
+
+            let resultado = "";
+            
+            if (reais > 0) {
+                // Separar em grupos de 3 dígitos (milhares, centenas)
+                const milhares = Math.floor(reais / 1000);
+                const restante = reais % 1000;
+
+                if (milhares > 0) {
+                    const textoMilhares = converterGrupo(milhares);
+                    if (milhares === 1) {
+                        resultado += "mil";
+                    } else {
+                        resultado += textoMilhares + " mil";
+                    }
+                }
+
+                if (restante > 0) {
+                    if (resultado) {
+                        if (restante < 100) {
+                            resultado += " e ";
+                        } else {
+                            resultado += " ";
+                        }
+                    }
+                    resultado += converterGrupo(restante);
+                }
+
+                if (reais === 1) {
+                    resultado += " real";
+                } else {
+                    resultado += " reais";
+                }
+            }
+
+            if (centavos > 0) {
+                if (resultado) resultado += " e ";
+                if (centavos === 1) {
+                    resultado += "um centavo";
+                } else {
+                    resultado += converterGrupo(centavos) + " centavos";
+                }
+            }
+
+            return resultado || "zero reais";
+        }
+
+        // Gerar recibo
+        function gerarRecibo() {
+            const nomeCliente = document.getElementById('nomeCliente').value || '[Nome do Cliente]';
+            const cpfCliente = document.getElementById('cpfCliente').value || '000.000.000-00';
+            const valorRecebido = parseFloat(document.getElementById('valorRecebido').value) || 0;
+            const cidade = document.getElementById('cidade').value || '[Cidade]';
+            const servicoPrestado = document.getElementById('servicoPrestado').value || '[Serviço Prestado]';
+            const nomeEmitente = document.getElementById('nomeEmitente').value || '[Nome do Emitente]';
+            const cpfEmitente = document.getElementById('cpfEmitente').value || '000.000.000-00';
+            const numeroVias = parseInt(document.getElementById('numeroVias').value);
+
+            const valorExtenso = numeroParaExtenso(valorRecebido);
+            const dataAtual = new Date().toLocaleDateString('pt-BR', {
+                day: 'numeric',
+                month: 'long',
+                year: 'numeric'
+            });
+
+            let reciboHTML = '';
+
+            for (let via = 1; via <= numeroVias; via++) {
+                reciboHTML += `
+                <div class="p-8 ${via > 1 ? 'border-t-2 border-dashed border-gray-400 mt-8 pt-8' : ''}">
+                    <!-- Cabeçalho -->
+                    <div class="flex justify-between items-start mb-8">
+                        <div class="flex items-center">
+                            ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Logo" class="max-w-24 max-h-24 object-contain mr-4">` : '<div class="w-24 h-24 border-2 border-dashed border-gray-400 flex items-center justify-center mr-4 text-xs text-gray-500">Logomarca</div>'}
+                        </div>
+                        <div class="text-right">
+                            <h2 class="text-2xl font-bold">RECIBO Nº ${numeroRecibo}</h2>
+                            <p class="text-lg mt-2">Valor: R$ ${formatarMoeda(valorRecebido)}</p>
+                        </div>
+                    </div>
+
+                    <!-- Corpo do Recibo -->
+                    <div class="space-y-4 mb-8">
+                        <p class="text-justify leading-relaxed">
+                            Receb(emos) de <strong>${nomeCliente}</strong>, CPF/CNPJ nº <strong>${cpfCliente}</strong>, 
+                            a importância de <strong>${valorExtenso}</strong> (R$ ${formatarMoeda(valorRecebido)}) 
+                            referente a(ao) <strong>${servicoPrestado}</strong>.
+                        </p>
+                        <p class="text-justify leading-relaxed">
+                            Para maior clareza firmo(amos) o presente recibo para que produza os seus efeitos, 
+                            dando plena, rasa e irrevogável quitação, pelo valor recebido.
+                        </p>
+                    </div>
+
+                    <!-- Rodapé -->
+                    <div class="flex justify-between items-end">
+                        <div class="text-center">
+                            <div class="border-t border-black w-64 mb-2"></div>
+                            <p class="text-sm"><strong>${nomeEmitente}</strong></p>
+                            <p class="text-sm">CPF/CNPJ: ${cpfEmitente}</p>
+                        </div>
+                        <div class="text-right">
+                            <p><strong>${cidade}</strong>, ${dataAtual}</p>
+                        </div>
+                    </div>
+                    
+                    ${numeroVias > 1 ? `<p class="text-center text-sm mt-4 text-gray-600">${via}ª Via</p>` : ''}
+                </div>
+                `;
+            }
+
+            document.getElementById('reciboArea').innerHTML = reciboHTML;
+        }
+
+        // Upload de logo
+        document.getElementById('logoInput').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    logoDataUrl = e.target.result;
+                    document.getElementById('logoPreview').innerHTML = `
+                        <img src="${logoDataUrl}" alt="Logo Preview" class="max-w-full max-h-24 object-contain mx-auto">
+                        <p class="mt-2 text-sm text-gray-400">Clique para alterar</p>
+                    `;
+                    gerarRecibo();
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Event listeners para atualizar o recibo em tempo real
+        document.querySelectorAll('input, textarea, select').forEach(element => {
+            element.addEventListener('input', gerarRecibo);
+        });
+
+        // Limpar campos
+        function limparCampos() {
+            document.querySelectorAll('input, textarea').forEach(el => el.value = '');
+            logoDataUrl = null;
+            document.getElementById('logoPreview').innerHTML = `
+                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <p class="mt-2 text-sm text-gray-400">Clique para adicionar logomarca</p>
+            `;
+            numeroRecibo++;
+            gerarRecibo();
+        }
+
+        // Imprimir
+        function imprimirRecibo() {
+            window.print();
+        }
+
+        // Exportar PDF
+        function exportarPDF() {
+            const { jsPDF } = window.jspdf;
+            const pdf = new jsPDF();
+            
+            const reciboElement = document.getElementById('reciboArea');
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            
+            // Configurações do canvas
+            canvas.width = 800;
+            canvas.height = 1000;
+            
+            // Fundo branco
+            ctx.fillStyle = 'white';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            
+            // Adicionar conteúdo do recibo ao PDF
+            pdf.html(reciboElement, {
+                callback: function (pdf) {
+                    pdf.save(`recibo-${numeroRecibo}.pdf`);
+                },
+                x: 10,
+                y: 10,
+                width: 190,
+                windowWidth: 800
+            });
+        }
+
+        // Gerar recibo inicial
+        gerarRecibo();
+    </script>
+</body>
+</html>
