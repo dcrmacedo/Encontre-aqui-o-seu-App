@@ -1,0 +1,1925 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./agr.png?v=2">
+    <title>Sistema de Gerenciamento de Partidas - Tempo Real</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+</head>
+<body class="min-h-full bg-gray-50 dark:bg-gray-900 transition-colors">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="px-4 py-2">
+            <div class="flex justify-between items-center">
+                <h1 class="text-xl font-bold text-gray-900 dark:text-white">
+                    ⚽ Gerenciamento de Partidas
+                </h1>
+                <div class="flex items-center space-x-3">
+                    <div class="text-lg font-mono bg-primary text-white px-3 py-1 rounded cursor-pointer hover:bg-primary/90 transition-colors" 
+                         id="gameTimer" onclick="editTime()" title="Clique para alterar o tempo">
+                        00:00
+                    </div>
+                    <button onclick="toggleTimer()" id="timerBtn" class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded font-medium transition-colors text-sm">
+                        ▶️ Iniciar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="h-[calc(100vh-5rem)] flex flex-col px-2 py-2">
+        <!-- Placar Central -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 mb-3 flex-shrink-0">
+            <div class="flex items-center justify-center space-x-8">
+                <div class="text-center">
+                    <div class="w-12 h-12 mx-auto mb-1 cursor-pointer hover:opacity-80 transition-opacity" id="team1Logo" onclick="changeLogo('team1')">
+                        <svg viewBox="0 0 100 100" class="w-full h-full">
+                            <circle cx="50" cy="50" r="45" fill="#1e40af" stroke="#ffffff" stroke-width="4"/>
+                            <text x="50" y="58" text-anchor="middle" fill="white" font-size="32" font-weight="bold">F</text>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white" id="team1Name">FutPA</h2>
+                </div>
+                
+                <div class="text-center">
+                    <div class="flex items-center space-x-4">
+                        <span class="text-5xl font-bold text-gray-900 dark:text-white" id="score1">0</span>
+                        <span class="text-3xl text-gray-400">-</span>
+                        <span class="text-5xl font-bold text-gray-900 dark:text-white" id="score2">0</span>
+                    </div>
+                    <p class="text-gray-600 dark:text-gray-400 mt-1">Placar</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="w-12 h-12 mx-auto mb-1 cursor-pointer hover:opacity-80 transition-opacity" id="team2Logo" onclick="changeLogo('team2')">
+                        <svg viewBox="0 0 100 100" class="w-full h-full">
+                            <circle cx="50" cy="50" r="45" fill="#dc2626" stroke="#ffffff" stroke-width="4"/>
+                            <text x="50" y="58" text-anchor="middle" fill="white" font-size="28" font-weight="bold">ZN</text>
+                        </svg>
+                    </div>
+                    <h2 class="text-lg font-bold text-gray-900 dark:text-white" id="team2Name">Zona Norte</h2>
+                </div>
+            </div>
+        </div>
+
+        <!-- Teams Grid -->
+        <div class="grid lg:grid-cols-2 gap-3 flex-1 min-h-0">
+            <!-- Team 1 - FutPA -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+                <div class="bg-blue-600 text-white p-4 rounded-t-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8">
+                                <svg viewBox="0 0 100 100" class="w-full h-full">
+                                    <circle cx="50" cy="50" r="45" fill="#ffffff" stroke="#1e40af" stroke-width="4"/>
+                                    <text x="50" y="58" text-anchor="middle" fill="#1e40af" font-size="32" font-weight="bold">F</text>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold">FutPA</h3>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="flex items-center space-x-1">
+                                <span id="team1FoulCount" class="text-white text-xs font-bold bg-orange-600 px-2 py-1 rounded">0/5</span>
+                                <button onclick="showFoulsForTeam('team1')" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
+                                    ⚠️ Faltas
+                                </button>
+                            </div>
+                            <button onclick="showTimeoutForTeam('team1')" class="bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
+                                ⏰ Tempo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-3 flex flex-col h-full">
+                    <!-- Header Table -->
+                    <div class="mb-3 flex-shrink-0">
+                        <div class="grid grid-cols-8 gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                            <div>NOME</div>
+                            <div class="text-center">CAMISA</div>
+                            <div class="text-center">🟨</div>
+                            <div class="text-center">🟥</div>
+                            <div class="text-center">🔵 PRÓ</div>
+                            <div class="text-center">🔴 CONTRA</div>
+                            <div class="text-center">🔄 SUB</div>
+                            <div class="text-center">AÇÕES</div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-1 overflow-y-auto flex-1" id="team1Players">
+                        <!-- Players will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Team 2 - Zona Norte -->
+            <div class="bg-white dark:bg-gray-800 rounded-lg shadow-lg">
+                <div class="bg-red-600 text-white p-4 rounded-t-lg">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-3">
+                            <div class="w-8 h-8">
+                                <svg viewBox="0 0 100 100" class="w-full h-full">
+                                    <circle cx="50" cy="50" r="45" fill="#ffffff" stroke="#dc2626" stroke-width="4"/>
+                                    <text x="50" y="58" text-anchor="middle" fill="#dc2626" font-size="28" font-weight="bold">ZN</text>
+                                </svg>
+                            </div>
+                            <h3 class="text-xl font-bold">Zona Norte</h3>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <div class="flex items-center space-x-1">
+                                <span id="team2FoulCount" class="text-white text-xs font-bold bg-orange-600 px-2 py-1 rounded">0/5</span>
+                                <button onclick="showFoulsForTeam('team2')" class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
+                                    ⚠️ Faltas
+                                </button>
+                            </div>
+                            <button onclick="showTimeoutForTeam('team2')" class="bg-cyan-500 hover:bg-cyan-600 text-white px-3 py-1 rounded text-xs font-medium transition-colors">
+                                ⏰ Tempo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="p-3 flex flex-col h-full">
+                    <!-- Header Table -->
+                    <div class="mb-3 flex-shrink-0">
+                        <div class="grid grid-cols-8 gap-2 text-xs font-semibold text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 p-2 rounded">
+                            <div>NOME</div>
+                            <div class="text-center">CAMISA</div>
+                            <div class="text-center">🟨</div>
+                            <div class="text-center">🟥</div>
+                            <div class="text-center">🔵 PRÓ</div>
+                            <div class="text-center">🔴 CONTRA</div>
+                            <div class="text-center">🔄 SUB</div>
+                            <div class="text-center">AÇÕES</div>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-1 overflow-y-auto flex-1" id="team2Players">
+                        <!-- Players will be populated by JavaScript -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Bottom Actions -->
+        <div class="mt-3 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 flex-shrink-0">
+            <div class="flex flex-wrap gap-2 justify-center">
+                <button onclick="exportToPDF()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+                    📄 PDF
+                </button>
+                <button onclick="exportToExcel()" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+                    📊 Excel
+                </button>
+                <button onclick="toggleEventLog()" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+                    📝 Log de Eventos
+                </button>
+                <button onclick="loadPlayersData()" class="bg-purple-500 hover:bg-purple-600 text-white px-4 py-2 rounded text-sm font-medium transition-colors">
+                    📥 Carregar Dados
+                </button>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Event Modal -->
+    <div id="eventModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Selecionar Jogador</h3>
+            <select id="playerSelect" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base">
+                <!-- Options will be populated by JavaScript -->
+            </select>
+            <div class="flex justify-end space-x-3 mt-4">
+                <button onclick="closeEventModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                    Cancelar
+                </button>
+                <button onclick="confirmEvent()" class="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded transition-colors">
+                    Confirmar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // Game state
+        let gameState = {
+            timer: 0,
+            isRunning: false,
+            isCountdown: false,
+            maxTime: 90 * 60, // 90 minutes default
+            team1Score: 0,
+            team2Score: 0,
+            events: [],
+            team1Players: [
+                {id: 1, number: 1, name: 'Carlos Silva', events: []},
+                {id: 2, number: 7, name: 'João Santos', events: []},
+                {id: 3, number: 10, name: 'Pedro Lima', events: []},
+                {id: 4, number: 11, name: 'Rafael Costa', events: []},
+                {id: 5, number: 15, name: 'Lucas Oliveira', events: []},
+                {id: 6, number: 20, name: 'André Ferreira', events: []},
+                {id: 7, number: 23, name: 'Bruno Alves', events: []},
+                {id: 8, number: 25, name: 'Diego Martins', events: []},
+                {id: 9, number: 30, name: 'Felipe Rocha', events: []},
+                {id: 10, number: 33, name: 'Gabriel Souza', events: []},
+                {id: 11, number: 99, name: 'Mateus Pereira', events: []}
+            ],
+            team2Players: [
+                {id: 12, number: 1, name: 'Ricardo Mendes', events: []},
+                {id: 13, number: 2, name: 'Thiago Barbosa', events: []},
+                {id: 14, number: 4, name: 'Vinícius Castro', events: []},
+                {id: 15, number: 6, name: 'Rodrigo Nunes', events: []},
+                {id: 16, number: 8, name: 'Marcelo Dias', events: []},
+                {id: 17, number: 9, name: 'Leonardo Araujo', events: []},
+                {id: 18, number: 12, name: 'Gustavo Ribeiro', events: []},
+                {id: 19, number: 14, name: 'Henrique Moura', events: []},
+                {id: 20, number: 16, name: 'Igor Cardoso', events: []},
+                {id: 21, number: 18, name: 'Julio Cesar', events: []},
+                {id: 22, number: 21, name: 'Kaique Silva', events: []}
+            ]
+        };
+
+        let timerInterval;
+        let currentEventData = null;
+
+        // Timer functions
+        function toggleTimer() {
+            const btn = document.getElementById('timerBtn');
+            if (gameState.isRunning) {
+                pauseTimer();
+                btn.innerHTML = '▶️ Continuar';
+                btn.className = 'bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium transition-colors';
+            } else {
+                startTimer();
+                btn.innerHTML = '⏸️ Pausar';
+                btn.className = 'bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg font-medium transition-colors';
+            }
+        }
+
+        function startTimer() {
+            gameState.isRunning = true;
+            timerInterval = setInterval(updateTimer, 1000);
+        }
+
+        function pauseTimer() {
+            gameState.isRunning = false;
+            clearInterval(timerInterval);
+        }
+
+        function updateTimer() {
+            if (gameState.isCountdown) {
+                gameState.timer--;
+                if (gameState.timer < 0) {
+                    gameState.timer = 0;
+                    pauseTimer();
+                    document.getElementById('timerBtn').innerHTML = '⏰ Tempo Esgotado';
+                    document.getElementById('timerBtn').className = 'bg-red-500 text-white px-3 py-1 rounded font-medium';
+                }
+            } else {
+                gameState.timer++;
+            }
+            
+            const minutes = Math.floor(gameState.timer / 60);
+            const seconds = gameState.timer % 60;
+            document.getElementById('gameTimer').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        // Event functions
+        function addEvent(team, eventType) {
+            currentEventData = { team, eventType };
+            const playerSelect = document.getElementById('playerSelect');
+            playerSelect.innerHTML = '';
+            
+            const players = team === 'team1' ? gameState.team1Players : gameState.team2Players;
+            players.forEach(player => {
+                const option = document.createElement('option');
+                option.value = player.id;
+                option.textContent = `#${player.number} ${player.name}`;
+                playerSelect.appendChild(option);
+            });
+            
+            document.getElementById('eventModal').classList.remove('hidden');
+        }
+
+        function closeEventModal() {
+            document.getElementById('eventModal').classList.add('hidden');
+            currentEventData = null;
+        }
+
+        function confirmEvent() {
+            const playerSelect = document.getElementById('playerSelect');
+            const playerId = parseInt(playerSelect.value);
+            const { team, eventType } = currentEventData;
+            
+            const players = team === 'team1' ? gameState.team1Players : gameState.team2Players;
+            const player = players.find(p => p.id === playerId);
+            
+            const event = {
+                id: Date.now(),
+                playerId,
+                playerName: player.name,
+                playerNumber: player.number,
+                team,
+                type: eventType,
+                time: gameState.timer,
+                timestamp: new Date()
+            };
+            
+            player.events.push(event);
+            gameState.events.push(event);
+            
+            if (eventType === 'goal') {
+                if (team === 'team1') {
+                    gameState.team1Score++;
+                    document.getElementById('score1').textContent = gameState.team1Score;
+                } else {
+                    gameState.team2Score++;
+                    document.getElementById('score2').textContent = gameState.team2Score;
+                }
+            }
+            
+            updatePlayersDisplay();
+            updateEventLog();
+            closeEventModal();
+        }
+
+        // Display functions
+        function updatePlayersDisplay() {
+            updateTeamPlayers('team1', gameState.team1Players);
+            updateTeamPlayers('team2', gameState.team2Players);
+        }
+
+        function updateTeamPlayers(teamId, players) {
+            const container = document.getElementById(`${teamId}Players`);
+            container.innerHTML = '';
+            
+            players.forEach(player => {
+                const playerElement = document.createElement('div');
+                playerElement.className = 'grid grid-cols-8 gap-2 p-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-600 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors';
+                
+                // Contar eventos
+                const yellowCards = player.events.filter(e => e.type === 'yellow').length;
+                const redCards = player.events.filter(e => e.type === 'red').length;
+                const goals = player.events.filter(e => e.type === 'goal').length;
+                const substitutions = player.events.filter(e => e.type === 'substitution').length;
+                
+                playerElement.innerHTML = `
+                    <!-- Nome -->
+                    <div class="flex items-center text-sm font-medium text-gray-900 dark:text-white truncate">
+                        ${player.name}
+                    </div>
+                    
+                    <!-- Camisa -->
+                    <div class="flex justify-center">
+                        <div class="w-7 h-7 bg-primary text-white rounded-full flex items-center justify-center text-xs font-bold">
+                            ${player.number}
+                        </div>
+                    </div>
+                    
+                    <!-- Cartões Amarelos -->
+                    <div class="flex justify-center items-center">
+                        <button onclick="addDirectEvent('${teamId}', ${player.id}, 'yellow')" 
+                                class="w-6 h-8 bg-yellow-400 hover:bg-yellow-500 rounded text-white text-xs font-bold transition-colors ${yellowCards > 0 ? 'ring-2 ring-yellow-600' : ''}">
+                            ${yellowCards}
+                        </button>
+                    </div>
+                    
+                    <!-- Cartões Vermelhos -->
+                    <div class="flex justify-center items-center">
+                        <button onclick="addDirectEvent('${teamId}', ${player.id}, 'red')" 
+                                class="w-6 h-8 bg-red-500 hover:bg-red-600 rounded text-white text-xs font-bold transition-colors ${redCards > 0 ? 'ring-2 ring-red-700' : ''}">
+                            ${redCards}
+                        </button>
+                    </div>
+                    
+                    <!-- Pró (Gols a favor) -->
+                    <div class="flex justify-center items-center">
+                        <button onclick="addDirectEvent('${teamId}', ${player.id}, 'goal')" 
+                                class="w-6 h-8 bg-blue-500 hover:bg-blue-600 rounded text-white text-xs font-bold transition-colors ${goals > 0 ? 'ring-2 ring-blue-700' : ''}" 
+                                title="Gol a favor">
+                            🔵 ${goals}
+                        </button>
+                    </div>
+                    
+                    <!-- Contra (Gols contra) -->
+                    <div class="flex justify-center items-center">
+                        <button onclick="addDirectEvent('${teamId}', ${player.id}, 'own_goal')" 
+                                class="w-6 h-8 bg-red-500 hover:bg-red-600 rounded text-white text-xs font-bold transition-colors ${player.events.filter(e => e.type === 'own_goal').length > 0 ? 'ring-2 ring-red-700' : ''}" 
+                                title="Gol contra">
+                            🔴 ${player.events.filter(e => e.type === 'own_goal').length}
+                        </button>
+                    </div>
+                    
+                    <!-- Substituição -->
+                    <div class="flex justify-center items-center">
+                        <button onclick="showSubstitutionModal('${teamId}', ${player.id})" 
+                                class="w-6 h-8 bg-purple-500 hover:bg-purple-600 rounded text-white text-xs font-bold transition-colors ${substitutions > 0 ? 'ring-2 ring-purple-700' : ''}" 
+                                title="Substituição">
+                            🔄 ${substitutions}
+                        </button>
+                    </div>
+                    
+                    <!-- Ações -->
+                    <div class="flex justify-center space-x-1">
+                        <button onclick="showPlayerMenu(${player.id}, '${teamId}')" 
+                                class="w-6 h-6 bg-gray-500 hover:bg-gray-600 text-white rounded text-xs transition-colors">
+                            ⋯
+                        </button>
+                    </div>
+                `;
+                
+                container.appendChild(playerElement);
+            });
+        }
+
+        function updateEventLog() {
+            // Log de eventos agora é exibido apenas no modal
+            // Esta função é mantida para compatibilidade mas não faz nada
+        }
+
+        // Export functions
+        function exportToPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Title
+            doc.setFontSize(20);
+            doc.text('Relatório da Partida', 20, 20);
+            
+            // Match info
+            doc.setFontSize(14);
+            doc.text(`FutPA ${gameState.team1Score} x ${gameState.team2Score} Zona Norte`, 20, 35);
+            
+            const minutes = Math.floor(gameState.timer / 60);
+            const seconds = gameState.timer % 60;
+            doc.text(`Tempo: ${minutes}:${seconds.toString().padStart(2, '0')}`, 20, 45);
+            
+            // Events
+            doc.setFontSize(12);
+            doc.text('Eventos da Partida:', 20, 60);
+            
+            let yPosition = 75;
+            gameState.events.forEach((event, index) => {
+                if (yPosition > 270) {
+                    doc.addPage();
+                    yPosition = 20;
+                }
+                
+                const teamName = event.team === 'team1' ? 'FutPA' : 'Zona Norte';
+                const time = `${Math.floor(event.time / 60)}'${event.time % 60}"`;
+                const eventText = `${time} - ${teamName} - #${event.playerNumber} ${event.playerName} - ${event.type}`;
+                
+                doc.text(eventText, 20, yPosition);
+                yPosition += 10;
+            });
+            
+            doc.save('relatorio-partida.pdf');
+        }
+
+        function exportToExcel() {
+            const wb = XLSX.utils.book_new();
+            
+            // Match summary
+            const summaryData = [
+                ['Relatório da Partida'],
+                [''],
+                ['FutPA', gameState.team1Score],
+                ['Zona Norte', gameState.team2Score],
+                [''],
+                ['Tempo de Jogo', `${Math.floor(gameState.timer / 60)}:${(gameState.timer % 60).toString().padStart(2, '0')}`]
+            ];
+            
+            // Events data
+            const eventsData = [
+                ['Tempo', 'Time', 'Jogador', 'Número', 'Evento'],
+                ...gameState.events.map(event => [
+                    `${Math.floor(event.time / 60)}'${event.time % 60}"`,
+                    event.team === 'team1' ? 'FutPA' : 'Zona Norte',
+                    event.playerName,
+                    event.playerNumber,
+                    event.type
+                ])
+            ];
+            
+            const summaryWs = XLSX.utils.aoa_to_sheet(summaryData);
+            const eventsWs = XLSX.utils.aoa_to_sheet(eventsData);
+            
+            XLSX.utils.book_append_sheet(wb, summaryWs, 'Resumo');
+            XLSX.utils.book_append_sheet(wb, eventsWs, 'Eventos');
+            
+            XLSX.writeFile(wb, 'relatorio-partida.xlsx');
+        }
+
+        // Direct event functions
+        function addDirectEvent(teamId, playerId, eventType) {
+            const players = teamId === 'team1' ? gameState.team1Players : gameState.team2Players;
+            const player = players.find(p => p.id === playerId);
+            
+            const event = {
+                id: Date.now(),
+                playerId,
+                playerName: player.name,
+                playerNumber: player.number,
+                team: teamId,
+                type: eventType,
+                time: gameState.timer,
+                timestamp: new Date()
+            };
+            
+            player.events.push(event);
+            gameState.events.push(event);
+            
+            // Handle scoring for goals and own goals
+            if (eventType === 'goal') {
+                if (teamId === 'team1') {
+                    gameState.team1Score++;
+                    document.getElementById('score1').textContent = gameState.team1Score;
+                } else {
+                    gameState.team2Score++;
+                    document.getElementById('score2').textContent = gameState.team2Score;
+                }
+            } else if (eventType === 'own_goal') {
+                // Own goal counts for the opposing team
+                if (teamId === 'team1') {
+                    gameState.team2Score++;
+                    document.getElementById('score2').textContent = gameState.team2Score;
+                } else {
+                    gameState.team1Score++;
+                    document.getElementById('score1').textContent = gameState.team1Score;
+                }
+            }
+            
+            updatePlayersDisplay();
+            updateEventLog();
+        }
+
+        function showPlayerMenu(playerId, teamId) {
+            const players = teamId === 'team1' ? gameState.team1Players : gameState.team2Players;
+            const player = players.find(p => p.id === playerId);
+            
+            // Create custom modal for player actions
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        #${player.number} ${player.name}
+                    </h3>
+                    <div class="space-y-3">
+                        <button onclick="removeLastEvent(${playerId}, '${teamId}'); this.closest('.fixed').remove()" 
+                                class="w-full px-4 py-2 bg-red-500 text-white hover:bg-red-600 rounded transition-colors">
+                            🗑️ Remover Último Evento
+                        </button>
+                        <button onclick="viewPlayerStats(${playerId}, '${teamId}'); this.closest('.fixed').remove()" 
+                                class="w-full px-4 py-2 bg-blue-500 text-white hover:bg-blue-600 rounded transition-colors">
+                            📊 Ver Estatísticas
+                        </button>
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="w-full px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function removeLastEvent(playerId, teamId) {
+            const players = teamId === 'team1' ? gameState.team1Players : gameState.team2Players;
+            const player = players.find(p => p.id === playerId);
+            
+            if (player.events.length > 0) {
+                const lastEvent = player.events.pop();
+                
+                // Remove from global events
+                const globalEventIndex = gameState.events.findIndex(e => e.id === lastEvent.id);
+                if (globalEventIndex !== -1) {
+                    gameState.events.splice(globalEventIndex, 1);
+                }
+                
+                // Update score if it was a goal
+                if (lastEvent.type === 'goal') {
+                    if (teamId === 'team1') {
+                        gameState.team1Score = Math.max(0, gameState.team1Score - 1);
+                        document.getElementById('score1').textContent = gameState.team1Score;
+                    } else {
+                        gameState.team2Score = Math.max(0, gameState.team2Score - 1);
+                        document.getElementById('score2').textContent = gameState.team2Score;
+                    }
+                }
+                
+                updatePlayersDisplay();
+                updateEventLog();
+                updateFoulCounters();
+            }
+        }
+
+        function viewPlayerStats(playerId, teamId) {
+            const players = teamId === 'team1' ? gameState.team1Players : gameState.team2Players;
+            const player = players.find(p => p.id === playerId);
+            
+            const goals = player.events.filter(e => e.type === 'goal').length;
+            const yellowCards = player.events.filter(e => e.type === 'yellow').length;
+            const redCards = player.events.filter(e => e.type === 'red').length;
+            const substitutions = player.events.filter(e => e.type === 'substitution').length;
+            
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        📊 Estatísticas - #${player.number} ${player.name}
+                    </h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                            <span class="flex items-center space-x-2">
+                                <span>⚽</span>
+                                <span>Gols</span>
+                            </span>
+                            <span class="font-bold text-green-600">${goals}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                            <span class="flex items-center space-x-2">
+                                <span>🟨</span>
+                                <span>Cartões Amarelos</span>
+                            </span>
+                            <span class="font-bold text-yellow-500">${yellowCards}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                            <span class="flex items-center space-x-2">
+                                <span>🟥</span>
+                                <span>Cartões Vermelhos</span>
+                            </span>
+                            <span class="font-bold text-red-500">${redCards}</span>
+                        </div>
+                        <div class="flex justify-between items-center p-3 bg-gray-50 dark:bg-gray-700 rounded">
+                            <span class="flex items-center space-x-2">
+                                <span>🔄</span>
+                                <span>Substituições</span>
+                            </span>
+                            <span class="font-bold text-blue-500">${substitutions}</span>
+                        </div>
+                    </div>
+                    <button onclick="this.closest('.fixed').remove()" 
+                            class="w-full mt-4 px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded transition-colors">
+                        Fechar
+                    </button>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function toggleEventLog() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-4xl w-full mx-4 max-h-[80vh] flex flex-col">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900 dark:text-white">📝 Log de Eventos</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                            ✕
+                        </button>
+                    </div>
+                    <div class="overflow-y-auto flex-1" id="modalEventLog">
+                        <!-- Events will be populated -->
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Populate events in modal
+            const modalLog = document.getElementById('modalEventLog');
+            modalLog.innerHTML = '';
+            
+            if (gameState.events.length === 0) {
+                modalLog.innerHTML = '<p class="text-gray-500 dark:text-gray-400 text-center py-8">Nenhum evento registrado ainda.</p>';
+                return;
+            }
+            
+            gameState.events.slice().reverse().forEach(event => {
+                const eventElement = document.createElement('div');
+                eventElement.className = 'flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg mb-2';
+                
+                let eventIcon = '';
+                let eventColor = '';
+                let eventText = '';
+                
+                switch (event.type) {
+                    case 'goal':
+                        eventIcon = '⚽';
+                        eventColor = 'text-green-600';
+                        eventText = 'GOL!';
+                        break;
+                    case 'own_goal':
+                        eventIcon = '⚽';
+                        eventColor = 'text-red-600';
+                        eventText = 'GOL CONTRA';
+                        break;
+                    case 'yellow':
+                        eventIcon = '🟨';
+                        eventColor = 'text-yellow-500';
+                        eventText = 'Cartão Amarelo';
+                        break;
+                    case 'red':
+                        eventIcon = '🟥';
+                        eventColor = 'text-red-500';
+                        eventText = 'Cartão Vermelho';
+                        break;
+                    case 'substitution':
+                        eventIcon = '🔄';
+                        eventColor = 'text-blue-500';
+                        eventText = 'Substituição';
+                        break;
+                    case 'foul':
+                        eventIcon = '⚠️';
+                        eventColor = 'text-orange-500';
+                        eventText = 'Falta';
+                        break;
+                    case 'timeout':
+                        eventIcon = '⏰';
+                        eventColor = 'text-cyan-500';
+                        eventText = 'Pedido de Tempo';
+                        break;
+                }
+                
+                const teamName = event.team === 'team1' ? 'FutPA' : 'Zona Norte';
+                const time = `${Math.floor(event.time / 60)}'${event.time % 60}"`;
+                
+                // Special handling for substitution events
+                let eventDescription = '';
+                if (event.type === 'substitution' && event.substitutionDetails) {
+                    eventDescription = `
+                        <div class="font-medium text-gray-900 dark:text-white">
+                            ${eventText} - #${event.substitutionDetails.numberOut} ${event.substitutionDetails.playerOut} ➜ #${event.substitutionDetails.numberIn} ${event.substitutionDetails.playerIn}
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            ${teamName} • ${time}
+                        </div>
+                    `;
+                } else {
+                    eventDescription = `
+                        <div class="font-medium text-gray-900 dark:text-white">
+                            ${eventText} - #${event.playerNumber} ${event.playerName}
+                        </div>
+                        <div class="text-sm text-gray-600 dark:text-gray-400">
+                            ${teamName} • ${time}
+                        </div>
+                    `;
+                }
+
+                eventElement.innerHTML = `
+                    <div class="flex items-center space-x-3">
+                        <span class="${eventColor} text-xl">${eventIcon}</span>
+                        <div>
+                            ${eventDescription}
+                        </div>
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                        ${event.timestamp.toLocaleTimeString()}
+                    </div>
+                `;
+                
+                modalLog.appendChild(eventElement);
+            });
+        }
+
+        // Logo change functionality
+        function changeLogo(teamId) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        🏆 Alterar Logo e Nome do Time
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nome do Time</label>
+                            <input type="text" id="teamNameInput" 
+                                   value="${document.getElementById(teamId + 'Name').textContent}"
+                                   class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Iniciais do Logo (1-3 letras)</label>
+                            <input type="text" id="logoTextInput" maxlength="3"
+                                   class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">📷 Anexar Foto do Time</label>
+                            <input type="file" id="logoImageInput" accept="image/*" 
+                                   class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Formatos: JPG, PNG, GIF (máx. 5MB)</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-3">--- OU ---</p>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cor do Logo (apenas com iniciais)</label>
+                            <div class="grid grid-cols-4 gap-2">
+                                <button onclick="selectColor('#1e40af')" class="w-12 h-12 bg-blue-700 rounded hover:scale-110 transition-transform"></button>
+                                <button onclick="selectColor('#dc2626')" class="w-12 h-12 bg-red-600 rounded hover:scale-110 transition-transform"></button>
+                                <button onclick="selectColor('#059669')" class="w-12 h-12 bg-emerald-600 rounded hover:scale-110 transition-transform"></button>
+                                <button onclick="selectColor('#7c3aed')" class="w-12 h-12 bg-violet-600 rounded hover:scale-110 transition-transform"></button>
+                                <button onclick="selectColor('#ea580c')" class="w-12 h-12 bg-orange-600 rounded hover:scale-110 transition-transform"></button>
+                                <button onclick="selectColor('#0891b2')" class="w-12 h-12 bg-cyan-600 rounded hover:scale-110 transition-transform"></button>
+                                <button onclick="selectColor('#be185d')" class="w-12 h-12 bg-pink-600 rounded hover:scale-110 transition-transform"></button>
+                                <button onclick="selectColor('#374151')" class="w-12 h-12 bg-gray-700 rounded hover:scale-110 transition-transform"></button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                            Cancelar
+                        </button>
+                        <button onclick="applyLogoChanges('${teamId}'); this.closest('.fixed').remove()" 
+                                class="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded transition-colors">
+                            Aplicar
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Store selected color
+            window.selectedColor = teamId === 'team1' ? '#1e40af' : '#dc2626';
+        }
+
+        function selectColor(color) {
+            window.selectedColor = color;
+            // Add visual feedback
+            document.querySelectorAll('.fixed button').forEach(btn => {
+                btn.classList.remove('ring-4', 'ring-blue-300');
+            });
+            event.target.classList.add('ring-4', 'ring-blue-300');
+        }
+
+        function applyLogoChanges(teamId) {
+            const teamName = document.getElementById('teamNameInput').value.trim();
+            const logoText = document.getElementById('logoTextInput').value.trim().toUpperCase();
+            const logoImageInput = document.getElementById('logoImageInput');
+            const color = window.selectedColor || (teamId === 'team1' ? '#1e40af' : '#dc2626');
+            
+            // Update team name if provided
+            if (teamName) {
+                document.getElementById(teamId + 'Name').textContent = teamName;
+                // Also update header team name
+                const headerName = document.querySelector(`div.${teamId === 'team1' ? 'bg-blue-600' : 'bg-red-600'} h3`);
+                if (headerName) {
+                    headerName.textContent = teamName;
+                }
+            }
+            
+            // Check if an image was uploaded
+            if (logoImageInput.files && logoImageInput.files[0]) {
+                const file = logoImageInput.files[0];
+                
+                // Validate file size (5MB max)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Arquivo muito grande! Máximo 5MB permitido.');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const imageUrl = e.target.result;
+                    
+                    // Update main logo with image
+                    const mainLogo = document.getElementById(teamId + 'Logo');
+                    mainLogo.innerHTML = `
+                        <img src="${imageUrl}" class="w-full h-full object-cover rounded-full border-2 border-white" alt="Logo ${teamName || teamId}">
+                    `;
+                    
+                    // Update header logo with image
+                    const headerLogo = document.querySelector(`div.${teamId === 'team1' ? 'bg-blue-600' : 'bg-red-600'} .w-8.h-8`);
+                    if (headerLogo) {
+                        headerLogo.innerHTML = `
+                            <img src="${imageUrl}" class="w-full h-full object-cover rounded-full border-2 border-white" alt="Logo ${teamName || teamId}">
+                        `;
+                    }
+                };
+                reader.readAsDataURL(file);
+            } else if (logoText) {
+                // Use text logo if no image uploaded
+                // Update main logo
+                const mainLogo = document.getElementById(teamId + 'Logo');
+                mainLogo.innerHTML = `
+                    <svg viewBox="0 0 100 100" class="w-full h-full">
+                        <circle cx="50" cy="50" r="45" fill="${color}" stroke="#ffffff" stroke-width="4"/>
+                        <text x="50" y="58" text-anchor="middle" fill="white" font-size="${logoText.length > 2 ? '22' : '32'}" font-weight="bold">${logoText}</text>
+                    </svg>
+                `;
+                
+                // Update header logo
+                const headerLogo = document.querySelector(`div.${teamId === 'team1' ? 'bg-blue-600' : 'bg-red-600'} .w-8.h-8`);
+                if (headerLogo) {
+                    headerLogo.innerHTML = `
+                        <svg viewBox="0 0 100 100" class="w-full h-full">
+                            <circle cx="50" cy="50" r="45" fill="#ffffff" stroke="${color}" stroke-width="4"/>
+                            <text x="50" y="58" text-anchor="middle" fill="${color}" font-size="${logoText.length > 2 ? '22' : '32'}" font-weight="bold">${logoText}</text>
+                        </svg>
+                    `;
+                }
+            }
+        }
+
+        // Edit time functionality
+        function editTime() {
+            const currentMinutes = Math.floor(gameState.timer / 60);
+            const currentSeconds = gameState.timer % 60;
+            
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        ⏱️ Alterar Tempo da Partida
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Minutos</label>
+                                <input type="number" id="minutesInput" min="0" max="999" 
+                                       value="${currentMinutes}"
+                                       class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base text-center">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Segundos</label>
+                                <input type="number" id="secondsInput" min="0" max="59" 
+                                       value="${currentSeconds}"
+                                       class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base text-center">
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button onclick="setQuickTime(0)" class="px-3 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors text-sm">
+                                00:00
+                            </button>
+                            <button onclick="setQuickTime(20*60)" class="px-3 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm">
+                                20:00
+                            </button>
+                            <button onclick="setQuickTime(45*60)" class="px-3 py-2 bg-green-500 text-white rounded hover:bg-green-600 transition-colors text-sm">
+                                45:00
+                            </button>
+                        </div>
+                        <div class="mt-4">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Modo do Cronômetro</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="toggleTimerMode(false)" id="progressiveBtn" class="px-4 py-2 ${!gameState.isCountdown ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300'} rounded transition-colors text-sm">
+                                    ⏱️ Progressivo
+                                </button>
+                                <button onclick="toggleTimerMode(true)" id="regressiveBtn" class="px-4 py-2 ${gameState.isCountdown ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300'} rounded transition-colors text-sm">
+                                    ⏰ Regressivo
+                                </button>
+                            </div>
+                            ${gameState.isCountdown ? `
+                                <div class="mt-2">
+                                    <label class="block text-xs text-gray-600 dark:text-gray-400">Tempo máximo (minutos)</label>
+                                    <input type="number" id="maxTimeInput" min="1" max="999" 
+                                           value="${Math.floor(gameState.maxTime / 60)}"
+                                           class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm text-center">
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                            Cancelar
+                        </button>
+                        <button onclick="applyTimeChange(); this.closest('.fixed').remove()" 
+                                class="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded transition-colors">
+                            Aplicar
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function setQuickTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = seconds % 60;
+            document.getElementById('minutesInput').value = minutes;
+            document.getElementById('secondsInput').value = remainingSeconds;
+        }
+
+        function applyTimeChange() {
+            const minutes = parseInt(document.getElementById('minutesInput').value) || 0;
+            const seconds = parseInt(document.getElementById('secondsInput').value) || 0;
+            
+            // Validate seconds range
+            if (seconds < 0 || seconds > 59) {
+                return;
+            }
+            
+            gameState.timer = (minutes * 60) + seconds;
+            
+            // Update display
+            const displayMinutes = Math.floor(gameState.timer / 60);
+            const displaySeconds = gameState.timer % 60;
+            document.getElementById('gameTimer').textContent = 
+                `${displayMinutes.toString().padStart(2, '0')}:${displaySeconds.toString().padStart(2, '0')}`;
+        }
+
+        // Toggle timer mode function
+        function toggleTimerMode(isCountdown) {
+            gameState.isCountdown = isCountdown;
+            
+            if (isCountdown && document.getElementById('maxTimeInput')) {
+                const maxMinutes = parseInt(document.getElementById('maxTimeInput').value) || 90;
+                gameState.maxTime = maxMinutes * 60;
+            }
+            
+            // Update button styles
+            document.getElementById('progressiveBtn').className = 
+                `px-4 py-2 ${!isCountdown ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300'} rounded transition-colors text-sm`;
+            document.getElementById('regressiveBtn').className = 
+                `px-4 py-2 ${isCountdown ? 'bg-primary text-white' : 'bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300'} rounded transition-colors text-sm`;
+        }
+
+        // Load players data functionality
+        function loadPlayersData() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        📥 Carregar Dados dos Jogadores
+                    </h3>
+                    
+                    <div class="tabs mb-4">
+                        <div class="flex space-x-2">
+                            <button onclick="switchTab('file')" id="fileTab" class="px-4 py-2 bg-primary text-white rounded-l transition-colors">
+                                📁 Arquivo JSON
+                            </button>
+                            <button onclick="switchTab('manual')" id="manualTab" class="px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300 rounded-r transition-colors">
+                                ✏️ Manual
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="fileContent" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Carregar arquivo JSON</label>
+                            <input type="file" id="playersFileInput" accept=".json" 
+                                   class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                Formato: {"team1": [{"number": 1, "name": "Nome"}], "team2": [...]}
+                            </p>
+                        </div>
+                        <div>
+                            <button onclick="downloadSampleFile()" class="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors text-sm">
+                                📥 Baixar Exemplo
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="manualContent" class="space-y-4 hidden flex-1 overflow-hidden">
+                        <div class="grid grid-cols-2 gap-4 h-full">
+                            <div class="flex flex-col">
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Time 1</h4>
+                                <textarea id="team1Input" placeholder="1,João Silva&#10;7,Pedro Lima&#10;10,Carlos Costa" 
+                                          class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm resize-none"></textarea>
+                            </div>
+                            <div class="flex flex-col">
+                                <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Time 2</h4>
+                                <textarea id="team2Input" placeholder="1,Ricardo Santos&#10;2,Thiago Barbosa&#10;4,Vinícius Castro" 
+                                          class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm resize-none"></textarea>
+                            </div>
+                        </div>
+                        <p class="text-xs text-gray-500 dark:text-gray-400">
+                            Formato: número,nome (um por linha)
+                        </p>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                            Cancelar
+                        </button>
+                        <button onclick="applyPlayersData(); this.closest('.fixed').remove()" 
+                                class="px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded transition-colors">
+                            Carregar
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function switchTab(tab) {
+            if (tab === 'file') {
+                document.getElementById('fileContent').classList.remove('hidden');
+                document.getElementById('manualContent').classList.add('hidden');
+                document.getElementById('fileTab').className = 'px-4 py-2 bg-primary text-white rounded-l transition-colors';
+                document.getElementById('manualTab').className = 'px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300 rounded-r transition-colors';
+            } else {
+                document.getElementById('fileContent').classList.add('hidden');
+                document.getElementById('manualContent').classList.remove('hidden');
+                document.getElementById('fileTab').className = 'px-4 py-2 bg-gray-200 text-gray-700 dark:bg-gray-600 dark:text-gray-300 rounded-l transition-colors';
+                document.getElementById('manualTab').className = 'px-4 py-2 bg-primary text-white rounded-r transition-colors';
+            }
+        }
+
+        function downloadSampleFile() {
+            const sampleData = {
+                team1: [
+                    { number: 1, name: "Carlos Silva" },
+                    { number: 7, name: "João Santos" },
+                    { number: 10, name: "Pedro Lima" },
+                    { number: 11, name: "Rafael Costa" }
+                ],
+                team2: [
+                    { number: 1, name: "Ricardo Mendes" },
+                    { number: 2, name: "Thiago Barbosa" },
+                    { number: 4, name: "Vinícius Castro" },
+                    { number: 6, name: "Rodrigo Nunes" }
+                ]
+            };
+            
+            const dataStr = JSON.stringify(sampleData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'exemplo-jogadores.json';
+            link.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function applyPlayersData() {
+            if (!document.getElementById('manualContent').classList.contains('hidden')) {
+                // Manual input
+                const team1Text = document.getElementById('team1Input').value.trim();
+                const team2Text = document.getElementById('team2Input').value.trim();
+                
+                if (team1Text) {
+                    const team1Players = team1Text.split('\n').map((line, index) => {
+                        const parts = line.split(',');
+                        return {
+                            id: Date.now() + index + 100,
+                            number: parseInt(parts[0]) || (index + 1),
+                            name: parts[1]?.trim() || `Jogador ${index + 1}`,
+                            events: []
+                        };
+                    });
+                    gameState.team1Players = team1Players;
+                }
+                
+                if (team2Text) {
+                    const team2Players = team2Text.split('\n').map((line, index) => {
+                        const parts = line.split(',');
+                        return {
+                            id: Date.now() + index + 200,
+                            number: parseInt(parts[0]) || (index + 1),
+                            name: parts[1]?.trim() || `Jogador ${index + 1}`,
+                            events: []
+                        };
+                    });
+                    gameState.team2Players = team2Players;
+                }
+            } else {
+                // File input
+                const fileInput = document.getElementById('playersFileInput');
+                if (fileInput.files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        try {
+                            const data = JSON.parse(e.target.result);
+                            
+                            if (data.team1) {
+                                gameState.team1Players = data.team1.map((player, index) => ({
+                                    id: Date.now() + index + 100,
+                                    number: player.number || (index + 1),
+                                    name: player.name || `Jogador ${index + 1}`,
+                                    events: []
+                                }));
+                            }
+                            
+                            if (data.team2) {
+                                gameState.team2Players = data.team2.map((player, index) => ({
+                                    id: Date.now() + index + 200,
+                                    number: player.number || (index + 1),
+                                    name: player.name || `Jogador ${index + 1}`,
+                                    events: []
+                                }));
+                            }
+                            
+                            updatePlayersDisplay();
+                        } catch (error) {
+                            alert('Erro ao carregar arquivo. Verifique o formato JSON.');
+                        }
+                    };
+                    reader.readAsText(fileInput.files[0]);
+                    return; // Don't call updatePlayersDisplay here since it's in the callback
+                }
+            }
+            
+            updatePlayersDisplay();
+        }
+
+        // Fouls functionality
+        function showFoulsMenu() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-lg w-full mx-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        ⚠️ Adicionar Falta
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selecionar Time</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="selectTeamForFoul('team1')" id="foulTeam1Btn" 
+                                        class="px-4 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors">
+                                    ${document.getElementById('team1Name').textContent}
+                                </button>
+                                <button onclick="selectTeamForFoul('team2')" id="foulTeam2Btn" 
+                                        class="px-4 py-3 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                                    ${document.getElementById('team2Name').textContent}
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div id="playerSelectForFoul" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selecionar Jogador</label>
+                            <select id="foulPlayerSelect" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base">
+                                <!-- Options will be populated -->
+                            </select>
+                        </div>
+                        
+                        <div id="foulTypeSelect" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo de Falta</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="addFoulEvent('simple')" class="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 transition-colors">
+                                    ⚠️ Falta Simples
+                                </button>
+                                <button onclick="addFoulEvent('serious')" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                                    🟨 Falta Grave
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        let selectedTeamForFoul = null;
+
+        function selectTeamForFoul(teamId) {
+            selectedTeamForFoul = teamId;
+            const players = teamId === 'team1' ? gameState.team1Players : gameState.team2Players;
+            const playerSelect = document.getElementById('foulPlayerSelect');
+            
+            playerSelect.innerHTML = '';
+            players.forEach(player => {
+                const option = document.createElement('option');
+                option.value = player.id;
+                option.textContent = `#${player.number} ${player.name}`;
+                playerSelect.appendChild(option);
+            });
+            
+            // Update button styles
+            document.getElementById('foulTeam1Btn').className = 
+                teamId === 'team1' ? 'px-4 py-3 bg-blue-600 text-white rounded ring-2 ring-blue-300' : 'px-4 py-3 bg-gray-300 text-gray-700 rounded';
+            document.getElementById('foulTeam2Btn').className = 
+                teamId === 'team2' ? 'px-4 py-3 bg-red-600 text-white rounded ring-2 ring-red-300' : 'px-4 py-3 bg-gray-300 text-gray-700 rounded';
+            
+            // Show player selection
+            document.getElementById('playerSelectForFoul').classList.remove('hidden');
+            document.getElementById('foulTypeSelect').classList.remove('hidden');
+        }
+
+        function addFoulEvent(foulType) {
+            const playerSelect = document.getElementById('foulPlayerSelect');
+            const playerId = parseInt(playerSelect.value);
+            const players = selectedTeamForFoul === 'team1' ? gameState.team1Players : gameState.team2Players;
+            const player = players.find(p => p.id === playerId);
+            
+            if (!player) return;
+            
+            const event = {
+                id: Date.now(),
+                playerId,
+                playerName: player.name,
+                playerNumber: player.number,
+                team: selectedTeamForFoul,
+                type: foulType === 'serious' ? 'yellow' : 'foul',
+                time: gameState.timer,
+                timestamp: new Date()
+            };
+            
+            player.events.push(event);
+            gameState.events.push(event);
+            
+            updatePlayersDisplay();
+            updateEventLog();
+            updateFoulCounters();
+            
+            // Close modal
+            document.querySelector('.fixed').remove();
+        }
+
+        // Timeout functionality
+        function showTimeoutMenu() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        ⏰ Pedido de Tempo
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">Selecionar Time</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="addTimeout('team1')" 
+                                        class="px-4 py-3 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors flex flex-col items-center">
+                                    <div class="w-8 h-8 mb-2">
+                                        ${document.getElementById('team1Logo').innerHTML}
+                                    </div>
+                                    <span>${document.getElementById('team1Name').textContent}</span>
+                                </button>
+                                <button onclick="addTimeout('team2')" 
+                                        class="px-4 py-3 bg-red-500 text-white rounded hover:bg-red-600 transition-colors flex flex-col items-center">
+                                    <div class="w-8 h-8 mb-2">
+                                        ${document.getElementById('team2Logo').innerHTML}
+                                    </div>
+                                    <span>${document.getElementById('team2Name').textContent}</span>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Pedidos de Tempo:</h4>
+                            <div class="space-y-1 text-sm">
+                                <div class="flex justify-between">
+                                    <span>${document.getElementById('team1Name').textContent}:</span>
+                                    <span id="team1Timeouts">${gameState.events.filter(e => e.team === 'team1' && e.type === 'timeout').length}</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span>${document.getElementById('team2Name').textContent}:</span>
+                                    <span id="team2Timeouts">${gameState.events.filter(e => e.team === 'team2' && e.type === 'timeout').length}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                            Fechar
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function addTimeout(teamId) {
+            const teamName = teamId === 'team1' ? document.getElementById('team1Name').textContent : document.getElementById('team2Name').textContent;
+            
+            const event = {
+                id: Date.now(),
+                playerId: null,
+                playerName: 'Equipe',
+                playerNumber: null,
+                team: teamId,
+                type: 'timeout',
+                time: gameState.timer,
+                timestamp: new Date()
+            };
+            
+            gameState.events.push(event);
+            
+            // Update timeout count in modal
+            document.getElementById(`${teamId}Timeouts`).textContent = 
+                gameState.events.filter(e => e.team === teamId && e.type === 'timeout').length;
+            
+            updateEventLog();
+            
+            // Show confirmation
+            const confirmation = document.createElement('div');
+            confirmation.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-60';
+            confirmation.textContent = `Pedido de tempo registrado para ${teamName}`;
+            document.body.appendChild(confirmation);
+            
+            setTimeout(() => {
+                confirmation.remove();
+            }, 3000);
+        }
+
+        // Team-specific functions
+        function showFoulsForTeam(teamId) {
+            const teamName = teamId === 'team1' ? document.getElementById('team1Name').textContent : document.getElementById('team2Name').textContent;
+            const teamColor = teamId === 'team1' ? 'bg-blue-500' : 'bg-red-500';
+            const players = teamId === 'team1' ? gameState.team1Players : gameState.team2Players;
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-lg w-full mx-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        ⚠️ Adicionar Falta - ${teamName}
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Selecionar Jogador</label>
+                            <select id="foulPlayerSelect" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base">
+                                ${players.map(player => `<option value="${player.id}">#${player.number} ${player.name}</option>`).join('')}
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Tipo de Falta</label>
+                            <div class="grid grid-cols-2 gap-3">
+                                <button onclick="addFoulEventForTeam('${teamId}', 'simple')" class="px-4 py-2 bg-orange-400 text-white rounded hover:bg-orange-500 transition-colors">
+                                    ⚠️ Falta Simples
+                                </button>
+                                <button onclick="addFoulEventForTeam('${teamId}', 'serious')" class="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                                    🟨 Falta Grave
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                            Cancelar
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function addFoulEventForTeam(teamId, foulType) {
+            const playerSelect = document.getElementById('foulPlayerSelect');
+            const playerId = parseInt(playerSelect.value);
+            const players = teamId === 'team1' ? gameState.team1Players : gameState.team2Players;
+            const player = players.find(p => p.id === playerId);
+            
+            if (!player) return;
+            
+            const event = {
+                id: Date.now(),
+                playerId,
+                playerName: player.name,
+                playerNumber: player.number,
+                team: teamId,
+                type: foulType === 'serious' ? 'yellow' : 'foul',
+                time: gameState.timer,
+                timestamp: new Date()
+            };
+            
+            player.events.push(event);
+            gameState.events.push(event);
+            
+            updatePlayersDisplay();
+            updateEventLog();
+            updateFoulCounters();
+            
+            // Close modal
+            document.querySelector('.fixed').remove();
+        }
+
+        function showTimeoutForTeam(teamId) {
+            const teamName = teamId === 'team1' ? document.getElementById('team1Name').textContent : document.getElementById('team2Name').textContent;
+            const teamColor = teamId === 'team1' ? 'blue' : 'red';
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        ⏰ Pedido de Tempo - ${teamName}
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="text-center">
+                            <div class="w-16 h-16 mx-auto mb-3">
+                                ${document.getElementById(teamId + 'Logo').innerHTML}
+                            </div>
+                            <h4 class="text-xl font-bold text-gray-900 dark:text-white">${teamName}</h4>
+                        </div>
+                        
+                        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded">
+                            <h5 class="font-semibold text-gray-900 dark:text-white mb-3">⏱️ Definir Tempo do Pedido</h5>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Minutos</label>
+                                    <input type="number" id="timeoutMinutes" min="0" max="10" value="1"
+                                           class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm text-center">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Segundos</label>
+                                    <input type="number" id="timeoutSeconds" min="0" max="59" value="0"
+                                           class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm text-center">
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 mt-3">
+                                <button onclick="setTimeoutQuickTime(30)" class="px-2 py-1 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors text-xs">
+                                    0:30
+                                </button>
+                                <button onclick="setTimeoutQuickTime(60)" class="px-2 py-1 bg-${teamColor}-500 text-white rounded hover:bg-${teamColor}-600 transition-colors text-xs">
+                                    1:00
+                                </button>
+                                <button onclick="setTimeoutQuickTime(120)" class="px-2 py-1 bg-green-500 text-white rounded hover:bg-green-600 transition-colors text-xs">
+                                    2:00
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded">
+                            <h5 class="font-semibold text-gray-900 dark:text-white mb-2">Histórico de Pedidos:</h5>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">
+                                Total: ${gameState.events.filter(e => e.team === teamId && e.type === 'timeout').length} pedidos
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                            Cancelar
+                        </button>
+                        <button onclick="addTimeoutForTeam('${teamId}'); this.closest('.fixed').remove()" 
+                                class="px-4 py-2 bg-${teamColor}-500 text-white hover:bg-${teamColor}-600 rounded transition-colors">
+                            Aplicar Pedido de Tempo
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        function setTimeoutQuickTime(totalSeconds) {
+            const minutes = Math.floor(totalSeconds / 60);
+            const seconds = totalSeconds % 60;
+            document.getElementById('timeoutMinutes').value = minutes;
+            document.getElementById('timeoutSeconds').value = seconds;
+        }
+
+        function addTimeoutForTeam(teamId) {
+            const teamName = teamId === 'team1' ? document.getElementById('team1Name').textContent : document.getElementById('team2Name').textContent;
+            const minutes = parseInt(document.getElementById('timeoutMinutes').value) || 0;
+            const seconds = parseInt(document.getElementById('timeoutSeconds').value) || 0;
+            const totalTimeoutSeconds = (minutes * 60) + seconds;
+            
+            if (totalTimeoutSeconds <= 0) {
+                return;
+            }
+            
+            const event = {
+                id: Date.now(),
+                playerId: null,
+                playerName: 'Equipe',
+                playerNumber: null,
+                team: teamId,
+                type: 'timeout',
+                time: gameState.timer,
+                duration: totalTimeoutSeconds,
+                timestamp: new Date()
+            };
+            
+            gameState.events.push(event);
+            updateEventLog();
+            
+            // Show timeout timer
+            showTimeoutTimer(teamName, totalTimeoutSeconds, teamId);
+        }
+
+        function showTimeoutTimer(teamName, duration, teamId) {
+            let remainingTime = duration;
+            const teamColor = teamId === 'team1' ? 'blue' : 'red';
+            
+            const timerModal = document.createElement('div');
+            timerModal.className = 'fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-60';
+            timerModal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-2xl max-w-sm w-full mx-4 text-center">
+                    <div class="w-20 h-20 mx-auto mb-4">
+                        ${document.getElementById(teamId + 'Logo').innerHTML}
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+                        ${teamName}
+                    </h3>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">Pedido de Tempo</p>
+                    <div class="text-6xl font-mono font-bold text-${teamColor}-500 mb-6" id="timeoutDisplay">
+                        ${Math.floor(remainingTime / 60).toString().padStart(2, '0')}:${(remainingTime % 60).toString().padStart(2, '0')}
+                    </div>
+                    <div class="space-y-2">
+                        <button onclick="pauseTimeoutTimer()" id="pauseTimeoutBtn" class="w-full px-4 py-2 bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors">
+                            ⏸️ Pausar
+                        </button>
+                        <button onclick="stopTimeoutTimer(); this.closest('.fixed').remove()" class="w-full px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors">
+                            ⏹️ Finalizar
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(timerModal);
+            
+            window.timeoutInterval = setInterval(() => {
+                remainingTime--;
+                const minutes = Math.floor(remainingTime / 60);
+                const seconds = remainingTime % 60;
+                document.getElementById('timeoutDisplay').textContent = 
+                    `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                
+                if (remainingTime <= 0) {
+                    clearInterval(window.timeoutInterval);
+                    document.getElementById('timeoutDisplay').textContent = '00:00';
+                    document.getElementById('pauseTimeoutBtn').textContent = '✅ Tempo Finalizado';
+                    document.getElementById('pauseTimeoutBtn').className = 'w-full px-4 py-2 bg-green-500 text-white rounded';
+                    
+                    // Auto-close after 3 seconds
+                    setTimeout(() => {
+                        timerModal.remove();
+                    }, 3000);
+                }
+            }, 1000);
+        }
+
+        function pauseTimeoutTimer() {
+            if (window.timeoutInterval) {
+                clearInterval(window.timeoutInterval);
+                window.timeoutInterval = null;
+                const pauseBtn = document.getElementById('pauseTimeoutBtn');
+                if (pauseBtn) {
+                    pauseBtn.innerHTML = '▶️ Continuar';
+                    pauseBtn.onclick = resumeTimeoutTimer;
+                }
+            }
+        }
+
+        function resumeTimeoutTimer() {
+            // This would need to restart the timer with remaining time
+            // For simplicity, we'll just change the button back
+            const pauseBtn = document.getElementById('pauseTimeoutBtn');
+            if (pauseBtn) {
+                pauseBtn.innerHTML = '⏸️ Pausar';
+                pauseBtn.onclick = pauseTimeoutTimer;
+            }
+        }
+
+        function stopTimeoutTimer() {
+            if (window.timeoutInterval) {
+                clearInterval(window.timeoutInterval);
+                window.timeoutInterval = null;
+            }
+        }
+
+        // Substitution functionality
+        function showSubstitutionModal(teamId, playerId) {
+            const players = teamId === 'team1' ? gameState.team1Players : gameState.team2Players;
+            const player = players.find(p => p.id === playerId);
+            const teamName = teamId === 'team1' ? document.getElementById('team1Name').textContent : document.getElementById('team2Name').textContent;
+
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                        🔄 Substituição - ${teamName}
+                    </h3>
+                    <div class="space-y-4">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded">
+                            <h4 class="font-semibold text-gray-900 dark:text-white mb-2">Jogador que sai:</h4>
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-red-500 text-white rounded-full flex items-center justify-center text-sm font-bold">
+                                    ${player.number}
+                                </div>
+                                <span class="font-medium text-gray-900 dark:text-white">${player.name}</span>
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Jogador que entra:</label>
+                            <select id="newPlayerSelect" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base">
+                                <option value="">-- Selecionar Jogador --</option>
+                                ${players.filter(p => p.id !== playerId).map(p => `<option value="${p.id}">#${p.number} ${p.name}</option>`).join('')}
+                                <option value="new">➕ Novo Jogador (Digitar Nome)</option>
+                            </select>
+                        </div>
+                        
+                        <div id="newPlayerNameDiv" class="hidden">
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Nome do novo jogador:</label>
+                            <input type="text" id="newPlayerName" placeholder="Digite o nome do novo jogador"
+                                   class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Número da camisa:</label>
+                            <input type="number" id="newPlayerNumber" min="1" max="99" value="${player.number}"
+                                   class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base">
+                            <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Número da camisa para o jogador que entra</p>
+                        </div>
+                        
+                        <div class="bg-blue-50 dark:bg-blue-900 p-3 rounded">
+                            <p class="text-sm text-blue-800 dark:text-blue-200">
+                                ℹ️ O nome do jogador será alterado na lista e a substituição será registrada no log de eventos.
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button onclick="this.closest('.fixed').remove()" 
+                                class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded transition-colors">
+                            Cancelar
+                        </button>
+                        <button onclick="processSubstitution('${teamId}', ${playerId}); this.closest('.fixed').remove()" 
+                                class="px-4 py-2 bg-purple-500 text-white hover:bg-purple-600 rounded transition-colors">
+                            🔄 Confirmar Substituição
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            // Add event listener to handle player selection
+            document.getElementById('newPlayerSelect').addEventListener('change', function() {
+                const selectedValue = this.value;
+                const newPlayerNameDiv = document.getElementById('newPlayerNameDiv');
+                const newPlayerNumberInput = document.getElementById('newPlayerNumber');
+                
+                if (selectedValue === 'new') {
+                    // Show text input for new player
+                    newPlayerNameDiv.classList.remove('hidden');
+                    document.getElementById('newPlayerName').focus();
+                } else if (selectedValue === '') {
+                    // No selection
+                    newPlayerNameDiv.classList.add('hidden');
+                } else {
+                    // Existing player selected
+                    newPlayerNameDiv.classList.add('hidden');
+                    const selectedPlayerId = parseInt(selectedValue);
+                    const selectedPlayer = players.find(p => p.id === selectedPlayerId);
+                    if (selectedPlayer) {
+                        newPlayerNumberInput.value = selectedPlayer.number;
+                    }
+                }
+            });
+        }
+
+        function processSubstitution(teamId, playerId) {
+            const newPlayerSelect = document.getElementById('newPlayerSelect');
+            const selectedValue = newPlayerSelect.value;
+            const newPlayerNumber = document.getElementById('newPlayerNumber').value.trim();
+            
+            let newPlayerName = '';
+            
+            if (selectedValue === 'new') {
+                // New player from text input
+                newPlayerName = document.getElementById('newPlayerName').value.trim();
+                if (!newPlayerName) {
+                    return;
+                }
+            } else if (selectedValue === '') {
+                // No selection made
+                return;
+            } else {
+                // Existing player selected
+                const players = teamId === 'team1' ? gameState.team1Players : gameState.team2Players;
+                const selectedPlayer = players.find(p => p.id === parseInt(selectedValue));
+                if (selectedPlayer) {
+                    newPlayerName = selectedPlayer.name;
+                } else {
+                    return;
+                }
+            }
+            
+            const players = teamId === 'team1' ? gameState.team1Players : gameState.team2Players;
+            const player = players.find(p => p.id === playerId);
+            const oldPlayerName = player.name;
+            const oldPlayerNumber = player.number;
+            
+            // Update player data
+            player.originalName = player.originalName || player.name; // Store original name
+            player.name = newPlayerName;
+            
+            if (newPlayerNumber) {
+                player.number = parseInt(newPlayerNumber);
+            }
+            
+            // Create substitution event with detailed information
+            const event = {
+                id: Date.now(),
+                playerId,
+                playerName: newPlayerName,
+                playerNumber: player.number,
+                team: teamId,
+                type: 'substitution',
+                time: gameState.timer,
+                timestamp: new Date(),
+                // Additional substitution details
+                substitutionDetails: {
+                    playerOut: oldPlayerName,
+                    playerIn: newPlayerName,
+                    numberOut: oldPlayerNumber,
+                    numberIn: player.number
+                }
+            };
+            
+            player.events.push(event);
+            gameState.events.push(event);
+            
+            updatePlayersDisplay();
+            updateEventLog();
+            
+            // Show confirmation
+            const confirmation = document.createElement('div');
+            confirmation.className = 'fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg z-60 max-w-sm';
+            confirmation.innerHTML = `
+                <div class="text-sm">
+                    <div class="font-semibold">Substituição realizada!</div>
+                    <div>${oldPlayerName} ➜ ${newPlayerName}</div>
+                </div>
+            `;
+            document.body.appendChild(confirmation);
+            
+            setTimeout(() => {
+                confirmation.remove();
+            }, 4000);
+        }
+
+        // Foul counter functionality
+        function updateFoulCounters() {
+            // Count fouls for team1
+            const team1Fouls = gameState.events.filter(e => 
+                e.team === 'team1' && (e.type === 'foul' || e.type === 'yellow')
+            ).length;
+            
+            // Count fouls for team2
+            const team2Fouls = gameState.events.filter(e => 
+                e.team === 'team2' && (e.type === 'foul' || e.type === 'yellow')
+            ).length;
+            
+            // Update display
+            const team1Counter = document.getElementById('team1FoulCount');
+            const team2Counter = document.getElementById('team2FoulCount');
+            
+            if (team1Counter) {
+                team1Counter.textContent = `${team1Fouls}/5`;
+                // Change color if reaching limit
+                if (team1Fouls >= 5) {
+                    team1Counter.className = 'text-white text-xs font-bold bg-red-600 px-2 py-1 rounded';
+                } else if (team1Fouls >= 4) {
+                    team1Counter.className = 'text-white text-xs font-bold bg-orange-700 px-2 py-1 rounded';
+                } else {
+                    team1Counter.className = 'text-white text-xs font-bold bg-orange-600 px-2 py-1 rounded';
+                }
+            }
+            
+            if (team2Counter) {
+                team2Counter.textContent = `${team2Fouls}/5`;
+                // Change color if reaching limit
+                if (team2Fouls >= 5) {
+                    team2Counter.className = 'text-white text-xs font-bold bg-red-600 px-2 py-1 rounded';
+                } else if (team2Fouls >= 4) {
+                    team2Counter.className = 'text-white text-xs font-bold bg-orange-700 px-2 py-1 rounded';
+                } else {
+                    team2Counter.className = 'text-white text-xs font-bold bg-orange-600 px-2 py-1 rounded';
+                }
+            }
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            updatePlayersDisplay();
+            updateEventLog();
+            updateFoulCounters();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./agr.png?v=2">
+    <title>Melhorador de Imagens</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE'
+                    }
+                }
+            },
+            darkMode: 'class'
+        }
+    </script>
+    <style>
+        .image-container {
+            max-height: 400px;
+            overflow: hidden;
+        }
+        .filter-button {
+            transition: all 0.2s ease;
+        }
+        .filter-button:hover {
+            transform: translateY(-1px);
+        }
+        .filter-button.active {
+            box-shadow: 0 0 0 2px #5D5CDE;
+        }
+        .zoom-modal {
+            backdrop-filter: blur(5px);
+        }
+        .zoom-image {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+            cursor: zoom-out;
+        }
+        .clickable-canvas {
+            cursor: zoom-in;
+        }
+    </style>
+</head>
+<body class="min-h-full bg-white dark:bg-gray-900 text-gray-900 dark:text-white transition-colors">
+    <div class="container mx-auto px-4 py-6 max-w-6xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-primary mb-2">✨ Melhorador de Imagens</h1>
+            <p class="text-gray-600 dark:text-gray-400">Melhore suas fotos diretamente no navegador</p>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+            <div class="text-center">
+                <div id="dropZone" class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-8 hover:border-primary transition-colors cursor-pointer">
+                    <div class="text-4xl mb-4">📸</div>
+                    <p class="text-lg mb-2">Clique para selecionar uma imagem</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">ou arraste e solte aqui</p>
+                    <input type="file" id="imageInput" accept="image/*" class="hidden" style="font-size: 16px;">
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div id="mainContent" class="hidden">
+            <!-- Filter Controls -->
+            <div class="bg-gray-50 dark:bg-gray-800 rounded-xl p-6 mb-6">
+                <h2 class="text-xl font-semibold mb-4">🛠️ Filtros de Melhoria</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                    <button id="autoEnhance" class="filter-button bg-primary text-white px-4 py-3 rounded-lg font-medium">
+                        Auto Melhorar
+                    </button>
+                    <button id="sharpen" class="filter-button bg-gray-200 dark:bg-gray-700 px-4 py-3 rounded-lg font-medium">
+                        Nitidez
+                    </button>
+                    <button id="denoise" class="filter-button bg-gray-200 dark:bg-gray-700 px-4 py-3 rounded-lg font-medium">
+                        Reduzir Ruído
+                    </button>
+                    <button id="grayscale" class="filter-button bg-gray-200 dark:bg-gray-700 px-4 py-3 rounded-lg font-medium">
+                        P&B
+                    </button>
+                    <button id="vibrant" class="filter-button bg-gray-200 dark:bg-gray-700 px-4 py-3 rounded-lg font-medium">
+                        Cores Vivas
+                    </button>
+                </div>
+                
+                <div class="mt-4 flex flex-wrap gap-3">
+                    <button id="reset" class="bg-gray-500 text-white px-4 py-2 rounded-lg font-medium">
+                        ↺ Resetar
+                    </button>
+                    <button id="download" class="bg-green-600 text-white px-4 py-2 rounded-lg font-medium">
+                        ⬇️ Baixar
+                    </button>
+                </div>
+            </div>
+
+            <!-- Image Preview -->
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Original Image -->
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="font-semibold">📷 Original</h3>
+                    </div>
+                    <div class="image-container p-4">
+                        <canvas id="originalCanvas" class="w-full h-auto rounded-lg"></canvas>
+                    </div>
+                </div>
+
+                <!-- Enhanced Image -->
+                <div class="bg-gray-50 dark:bg-gray-800 rounded-xl overflow-hidden">
+                    <div class="p-4 border-b border-gray-200 dark:border-gray-700">
+                        <h3 class="font-semibold">✨ Melhorada</h3>
+                    </div>
+                    <div class="image-container p-4">
+                        <canvas id="enhancedCanvas" class="w-full h-auto rounded-lg clickable-canvas"></canvas>
+                        <p class="text-xs text-gray-500 dark:text-gray-400 mt-2 text-center">👆 Clique para ampliar</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="hidden text-center py-8">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">Processando imagem...</p>
+        </div>
+    </div>
+
+    <!-- Zoom Modal -->
+    <div id="zoomModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 zoom-modal">
+        <div class="relative max-w-full max-h-full p-4">
+            <button id="closeZoom" class="absolute top-2 right-2 bg-black bg-opacity-50 text-white rounded-full w-10 h-10 flex items-center justify-center text-xl hover:bg-opacity-75 z-10">
+                ✕
+            </button>
+            <img id="zoomImage" class="zoom-image rounded-lg" src="" alt="Imagem ampliada">
+            <div class="text-center mt-4">
+                <p class="text-white text-sm">Clique na imagem ou no X para fechar</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        class ImageProcessor {
+            constructor() {
+                this.originalImage = null;
+                this.originalCanvas = document.getElementById('originalCanvas');
+                this.enhancedCanvas = document.getElementById('enhancedCanvas');
+                this.originalCtx = this.originalCanvas.getContext('2d');
+                this.enhancedCtx = this.enhancedCanvas.getContext('2d');
+                this.currentFilter = 'original';
+                this.setupEventListeners();
+            }
+
+            setupEventListeners() {
+                const imageInput = document.getElementById('imageInput');
+                const dropZone = document.getElementById('dropZone');
+
+                // File input
+                imageInput.addEventListener('change', (e) => {
+                    const file = e.target.files[0];
+                    if (file) this.loadImage(file);
+                });
+
+                // Drag and drop
+                dropZone.addEventListener('click', () => imageInput.click());
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('border-primary');
+                });
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.classList.remove('border-primary');
+                });
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-primary');
+                    const file = e.dataTransfer.files[0];
+                    if (file && file.type.startsWith('image/')) {
+                        this.loadImage(file);
+                    }
+                });
+
+                // Filter buttons
+                document.getElementById('autoEnhance').addEventListener('click', () => this.applyFilter('autoEnhance'));
+                document.getElementById('sharpen').addEventListener('click', () => this.applyFilter('sharpen'));
+                document.getElementById('denoise').addEventListener('click', () => this.applyFilter('denoise'));
+                document.getElementById('grayscale').addEventListener('click', () => this.applyFilter('grayscale'));
+                document.getElementById('vibrant').addEventListener('click', () => this.applyFilter('vibrant'));
+                document.getElementById('reset').addEventListener('click', () => this.resetImage());
+                document.getElementById('download').addEventListener('click', () => this.downloadImage());
+
+                // Zoom functionality
+                this.enhancedCanvas.addEventListener('click', () => this.openZoom());
+                document.getElementById('closeZoom').addEventListener('click', () => this.closeZoom());
+                document.getElementById('zoomImage').addEventListener('click', () => this.closeZoom());
+                document.getElementById('zoomModal').addEventListener('click', (e) => {
+                    if (e.target === document.getElementById('zoomModal')) {
+                        this.closeZoom();
+                    }
+                });
+            }
+
+            loadImage(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        this.originalImage = img;
+                        this.setupCanvases();
+                        this.resetImage();
+                        document.getElementById('mainContent').classList.remove('hidden');
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            setupCanvases() {
+                const maxWidth = 500;
+                const maxHeight = 400;
+                
+                let { width, height } = this.originalImage;
+                
+                // Scale down if too large
+                if (width > maxWidth || height > maxHeight) {
+                    const scale = Math.min(maxWidth / width, maxHeight / height);
+                    width *= scale;
+                    height *= scale;
+                }
+
+                this.originalCanvas.width = width;
+                this.originalCanvas.height = height;
+                this.enhancedCanvas.width = width;
+                this.enhancedCanvas.height = height;
+            }
+
+            resetImage() {
+                if (!this.originalImage) return;
+                
+                this.originalCtx.drawImage(this.originalImage, 0, 0, this.originalCanvas.width, this.originalCanvas.height);
+                this.enhancedCtx.drawImage(this.originalImage, 0, 0, this.enhancedCanvas.width, this.enhancedCanvas.height);
+                
+                this.currentFilter = 'original';
+                this.updateFilterButtons();
+            }
+
+            applyFilter(filterType) {
+                if (!this.originalImage) return;
+
+                this.showLoading(true);
+                this.currentFilter = filterType;
+
+                // Small delay to show loading
+                setTimeout(() => {
+                    const imageData = this.originalCtx.getImageData(0, 0, this.originalCanvas.width, this.originalCanvas.height);
+                    const filteredData = this.processImageData(imageData, filterType);
+                    this.enhancedCtx.putImageData(filteredData, 0, 0);
+                    this.updateFilterButtons();
+                    this.showLoading(false);
+                }, 100);
+            }
+
+            processImageData(imageData, filterType) {
+                const data = new Uint8ClampedArray(imageData.data);
+                
+                switch (filterType) {
+                    case 'autoEnhance':
+                        this.autoEnhance(data);
+                        break;
+                    case 'sharpen':
+                        return this.applySharpen(imageData);
+                    case 'denoise':
+                        this.applyDenoise(data);
+                        break;
+                    case 'grayscale':
+                        this.applyGrayscale(data);
+                        break;
+                    case 'vibrant':
+                        this.applyVibrant(data);
+                        break;
+                }
+
+                return new ImageData(data, imageData.width, imageData.height);
+            }
+
+            autoEnhance(data) {
+                // Auto contrast and brightness
+                let min = 255, max = 0;
+                for (let i = 0; i < data.length; i += 4) {
+                    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                    min = Math.min(min, gray);
+                    max = Math.max(max, gray);
+                }
+
+                const range = max - min;
+                if (range > 0) {
+                    for (let i = 0; i < data.length; i += 4) {
+                        data[i] = ((data[i] - min) / range) * 255;
+                        data[i + 1] = ((data[i + 1] - min) / range) * 255;
+                        data[i + 2] = ((data[i + 2] - min) / range) * 255;
+                    }
+                }
+            }
+
+            applySharpen(imageData) {
+                const kernel = [
+                    0, -1, 0,
+                    -1, 5, -1,
+                    0, -1, 0
+                ];
+                return this.applyConvolution(imageData, kernel);
+            }
+
+            applyDenoise(data) {
+                // Simple blur for noise reduction
+                for (let i = 0; i < data.length; i += 4) {
+                    if (i >= 4 && i < data.length - 4) {
+                        for (let c = 0; c < 3; c++) {
+                            data[i + c] = (data[i + c] + data[i - 4 + c] + data[i + 4 + c]) / 3;
+                        }
+                    }
+                }
+            }
+
+            applyGrayscale(data) {
+                for (let i = 0; i < data.length; i += 4) {
+                    const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+                    data[i] = gray;
+                    data[i + 1] = gray;
+                    data[i + 2] = gray;
+                }
+            }
+
+            applyVibrant(data) {
+                for (let i = 0; i < data.length; i += 4) {
+                    data[i] = Math.min(255, data[i] * 1.3);     // Red
+                    data[i + 1] = Math.min(255, data[i + 1] * 1.3); // Green
+                    data[i + 2] = Math.min(255, data[i + 2] * 1.3); // Blue
+                }
+            }
+
+            applyConvolution(imageData, kernel) {
+                const data = imageData.data;
+                const width = imageData.width;
+                const height = imageData.height;
+                const output = new Uint8ClampedArray(data);
+
+                for (let y = 1; y < height - 1; y++) {
+                    for (let x = 1; x < width - 1; x++) {
+                        for (let c = 0; c < 3; c++) {
+                            let sum = 0;
+                            for (let ky = -1; ky <= 1; ky++) {
+                                for (let kx = -1; kx <= 1; kx++) {
+                                    const pos = ((y + ky) * width + (x + kx)) * 4 + c;
+                                    sum += data[pos] * kernel[(ky + 1) * 3 + (kx + 1)];
+                                }
+                            }
+                            const pos = (y * width + x) * 4 + c;
+                            output[pos] = Math.max(0, Math.min(255, sum));
+                        }
+                    }
+                }
+
+                return new ImageData(output, width, height);
+            }
+
+            updateFilterButtons() {
+                const buttons = document.querySelectorAll('.filter-button');
+                buttons.forEach(btn => {
+                    btn.classList.remove('active', 'bg-primary', 'text-white');
+                    btn.classList.add('bg-gray-200', 'dark:bg-gray-700');
+                });
+
+                const activeButton = document.getElementById(this.currentFilter);
+                if (activeButton) {
+                    activeButton.classList.add('active', 'bg-primary', 'text-white');
+                    activeButton.classList.remove('bg-gray-200', 'dark:bg-gray-700');
+                }
+            }
+
+            showLoading(show) {
+                document.getElementById('loading').classList.toggle('hidden', !show);
+            }
+
+            openZoom() {
+                if (!this.enhancedCanvas) return;
+                
+                const zoomModal = document.getElementById('zoomModal');
+                const zoomImage = document.getElementById('zoomImage');
+                
+                // Convert canvas to image URL
+                const imageUrl = this.enhancedCanvas.toDataURL();
+                zoomImage.src = imageUrl;
+                
+                // Show modal
+                zoomModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden'; // Prevent background scrolling
+            }
+
+            closeZoom() {
+                const zoomModal = document.getElementById('zoomModal');
+                zoomModal.classList.add('hidden');
+                document.body.style.overflow = ''; // Restore scrolling
+            }
+
+            downloadImage() {
+                if (!this.enhancedCanvas) return;
+
+                const link = document.createElement('a');
+                link.download = `imagem-melhorada-${Date.now()}.png`;
+                link.href = this.enhancedCanvas.toDataURL();
+                link.click();
+            }
+        }
+
+        // Initialize the application
+        new ImageProcessor();
+    </script>
+</body>
+</html>

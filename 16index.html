@@ -1,0 +1,2827 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="./agr.png?v=2">
+    <title>Simulador de Tela Inicial de Celular</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .phone-screen {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transition: all 0.3s ease;
+        }
+        
+        .wallpaper-1 { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.1);
+        }
+        .wallpaper-2 { 
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.1);
+        }
+        .wallpaper-3 { 
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.1);
+        }
+        .wallpaper-4 { 
+            background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+            box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.1);
+        }
+        .wallpaper-5 { 
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+            box-shadow: inset 0 0 100px rgba(255, 255, 255, 0.1);
+        }
+        
+        .app-icon {
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        
+        .app-icon:hover {
+            transform: scale(1.1);
+        }
+        
+        .app-icon:active {
+            transform: scale(0.95);
+        }
+        
+        .ios-dock {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .android-nav {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        
+        .dragging {
+            opacity: 0.5;
+            transform: rotate(5deg);
+        }
+        
+        .drop-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
+        .modal-overlay {
+            backdrop-filter: blur(10px);
+        }
+        
+        /* iOS specific styles */
+        .ios-notch {
+            background: linear-gradient(90deg, transparent 0%, rgba(0,0,0,0.1) 40%, rgba(0,0,0,0.1) 60%, transparent 100%);
+            border-radius: 0 0 20px 20px;
+            margin: 0 auto;
+            width: 60%;
+            height: 30px;
+            position: relative;
+        }
+        
+        .ios-notch::before {
+            content: '';
+            position: absolute;
+            top: 8px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 4px;
+            background: rgba(0,0,0,0.3);
+            border-radius: 2px;
+        }
+        
+        .ios-screen {
+            position: relative;
+        }
+        
+        .ios-widget {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .ios-folder {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(40px);
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                    <i class="fas fa-mobile-alt mr-2 text-indigo-600"></i>
+                    Simulador Mobile
+                </h1>
+                <div class="flex items-center space-x-4">
+                    <select id="systemSelector" class="bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-indigo-500 text-gray-900 dark:text-white">
+                        <option value="android">Android</option>
+                        <option value="ios">iOS</option>
+                    </select>
+                    <button id="settingsBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors">
+                        <i class="fas fa-cog mr-2"></i>Configurações
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="flex justify-center">
+            <!-- Phone Container -->
+            <div class="relative">
+                <!-- Phone Frame -->
+                <div class="w-[400px] h-[800px] bg-black rounded-[3rem] p-3 shadow-2xl">
+                    <!-- Screen -->
+                    <div id="phoneScreen" class="w-full h-full phone-screen wallpaper-1 rounded-[2.5rem] relative overflow-hidden">
+                        <!-- Status Bar -->
+                        <div id="statusBar" class="flex justify-between items-center px-6 pt-4 pb-2 text-white text-sm font-medium">
+                            <!-- Left side - empty for Android, indicators for iOS will be handled by CSS -->
+                            <div id="statusLeft" class="flex items-center space-x-1">
+                                <span id="currentTime" class="android-time">12:34</span>
+                            </div>
+                            
+                            <!-- Center - Time for iOS -->
+                            <div id="statusCenter" class="absolute left-1/2 transform -translate-x-1/2 hidden">
+                                <span id="currentTimeIOS" class="font-medium">12:34</span>
+                            </div>
+                            
+                            <!-- Right side - All indicators -->
+                            <div id="statusRight" class="flex items-center space-x-1">
+                                <i class="fas fa-signal text-xs"></i>
+                                <i class="fas fa-wifi text-xs"></i>
+                                <div class="flex items-center">
+                                    <i class="fas fa-battery-three-quarters text-xs"></i>
+                                    <span class="text-xs ml-1">85%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- App Grid -->
+                        <div id="appGrid" class="px-6 py-4 grid grid-cols-4 gap-4 h-[580px] overflow-y-auto">
+                            <!-- Apps will be dynamically added here -->
+                        </div>
+
+                        <!-- Navigation/Dock -->
+                        <div id="navigation" class="absolute bottom-0 left-0 right-0 h-20">
+                            <!-- Android Navigation -->
+                            <div id="androidNav" class="h-full flex justify-center items-center space-x-16 text-white hidden" style="background: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.3) 100%);">
+                                <!-- Back Button - Triangle -->
+                                <div class="flex items-center justify-center w-12 h-12 rounded-full hover:bg-white hover:bg-opacity-20 transition-all active:scale-90">
+                                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                        <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" fill="currentColor"/>
+                                    </svg>
+                                </div>
+                                
+                                <!-- Home Button - Circle -->
+                                <div class="flex items-center justify-center w-12 h-12 rounded-full hover:bg-white hover:bg-opacity-20 transition-all active:scale-90">
+                                    <div class="w-5 h-5 rounded-full border-2 border-current"></div>
+                                </div>
+                                
+                                <!-- Recent Apps - Square -->
+                                <div class="flex items-center justify-center w-12 h-12 rounded-full hover:bg-white hover:bg-opacity-20 transition-all active:scale-90">
+                                    <div class="w-5 h-5 border-2 border-current"></div>
+                                </div>
+                            </div>
+                            
+                            <!-- iOS Dock -->
+                            <div id="iosDock" class="ios-dock mx-4 mb-4 rounded-2xl h-16 flex justify-center items-center space-x-4 hidden" style="background: rgba(255, 255, 255, 0.25); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.15);">
+                                <!-- Dock apps will be added here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 z-50 hidden modal-overlay bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full max-h-[80vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-xl font-bold text-gray-900 dark:text-white">Configurações</h2>
+                    <button id="closeModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+
+                <!-- Wallpapers -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Papel de Parede</h3>
+                    <div class="grid grid-cols-3 gap-3">
+                        <div class="wallpaper-option wallpaper-1 w-16 h-16 rounded-lg cursor-pointer border-2 border-transparent hover:border-indigo-500" data-wallpaper="wallpaper-1"></div>
+                        <div class="wallpaper-option wallpaper-2 w-16 h-16 rounded-lg cursor-pointer border-2 border-transparent hover:border-indigo-500" data-wallpaper="wallpaper-2"></div>
+                        <div class="wallpaper-option wallpaper-3 w-16 h-16 rounded-lg cursor-pointer border-2 border-transparent hover:border-indigo-500" data-wallpaper="wallpaper-3"></div>
+                        <div class="wallpaper-option wallpaper-4 w-16 h-16 rounded-lg cursor-pointer border-2 border-transparent hover:border-indigo-500" data-wallpaper="wallpaper-4"></div>
+                        <div class="wallpaper-option wallpaper-5 w-16 h-16 rounded-lg cursor-pointer border-2 border-transparent hover:border-indigo-500" data-wallpaper="wallpaper-5"></div>
+                    </div>
+                </div>
+
+                <!-- App Management -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Gerenciar Apps</h3>
+                    <div class="space-y-2">
+                        <button id="addCustomAppBtn" class="w-full bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Criar App Personalizado
+                        </button>
+                        <button id="addPresetAppBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-download mr-2"></i>Adicionar App Predefinido
+                        </button>
+                        <button id="resetAppsBtn" class="w-full bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg transition-colors">
+                            <i class="fas fa-refresh mr-2"></i>Resetar Apps
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- App Modal -->
+    <div id="appModal" class="fixed inset-0 z-50 hidden modal-overlay bg-black bg-opacity-50 flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-hidden">
+            <!-- App Header -->
+            <div class="bg-gray-50 dark:bg-gray-700 px-6 py-4 border-b border-gray-200 dark:border-gray-600 flex items-center justify-between">
+                <div class="flex items-center">
+                    <div id="appModalIcon" class="text-2xl mr-3"></div>
+                    <h3 id="appModalTitle" class="text-lg font-bold text-gray-900 dark:text-white"></h3>
+                </div>
+                <button id="closeAppModal" class="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <!-- App Content -->
+            <div id="appContent" class="p-6 max-h-[70vh] overflow-y-auto">
+                <!-- Content will be dynamically loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="notificationToast" class="fixed top-4 right-4 z-60 hidden">
+        <div class="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg p-4 max-w-sm">
+            <div class="flex items-center">
+                <div id="toastIcon" class="text-xl mr-3"></div>
+                <div>
+                    <div id="toastTitle" class="font-semibold text-gray-900 dark:text-white"></div>
+                    <div id="toastMessage" class="text-sm text-gray-600 dark:text-gray-400"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Dark mode detection
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
+
+        // App data with enhanced functionality
+        const defaultApps = [
+            { name: 'Telefone', icon: 'fas fa-phone', color: 'bg-green-500', type: 'phone', notifications: 0 },
+            { name: 'Mensagens', icon: 'fas fa-comment', color: 'bg-blue-500', type: 'messages', notifications: 3 },
+            { name: 'Câmera', icon: 'fas fa-camera', color: 'bg-gray-700', type: 'camera', notifications: 0 },
+            { name: 'Galeria', icon: 'fas fa-images', color: 'bg-purple-500', type: 'gallery', notifications: 0 },
+            { name: 'Configurações', icon: 'fas fa-cog', color: 'bg-gray-600', type: 'settings', notifications: 0 },
+            { name: 'Maps', icon: 'fas fa-map-marker-alt', color: 'bg-red-500', type: 'maps', notifications: 0 },
+            { name: 'Música', icon: 'fas fa-music', color: 'bg-orange-500', type: 'music', notifications: 0 },
+            { name: 'Calculadora', icon: 'fas fa-calculator', color: 'bg-indigo-500', type: 'calculator', notifications: 0 },
+            { name: 'Email', icon: 'fas fa-envelope', color: 'bg-blue-600', type: 'email', notifications: 5 },
+            { name: 'Agenda', icon: 'fas fa-calendar', color: 'bg-red-600', type: 'calendar', notifications: 1 },
+            { name: 'Tempo', icon: 'fas fa-cloud-sun', color: 'bg-yellow-500', type: 'weather', notifications: 0 },
+            { name: 'Notas', icon: 'fas fa-sticky-note', color: 'bg-yellow-600', type: 'notes', notifications: 0 }
+        ];
+
+        let currentSystem = 'android';
+        let apps = [...defaultApps];
+        let currentWallpaper = 'wallpaper-1';
+
+        // DOM elements
+        const systemSelector = document.getElementById('systemSelector');
+        const phoneScreen = document.getElementById('phoneScreen');
+        const appGrid = document.getElementById('appGrid');
+        const androidNav = document.getElementById('androidNav');
+        const iosDock = document.getElementById('iosDock');
+        const settingsModal = document.getElementById('settingsModal');
+        const appModal = document.getElementById('appModal');
+
+        // Update current time
+        function updateTime() {
+            const now = new Date();
+            const timeString = now.toLocaleTimeString('pt-BR', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+            });
+            
+            // Update time for both Android and iOS
+            if (document.getElementById('currentTime')) {
+                document.getElementById('currentTime').textContent = timeString;
+            }
+            if (document.getElementById('currentTimeIOS')) {
+                document.getElementById('currentTimeIOS').textContent = timeString;
+            }
+        }
+
+        // Render apps
+        function renderApps() {
+            appGrid.innerHTML = '';
+            iosDock.innerHTML = '';
+
+            // Add iOS widgets at the top
+            if (currentSystem === 'ios') {
+                renderIOSWidgets();
+            }
+
+            const startIndex = currentSystem === 'ios' ? 1 : 0; // Skip first row for widgets in iOS
+            const gridStartClass = currentSystem === 'ios' ? 'mt-4' : '';
+            
+            apps.forEach((app, index) => {
+                const appElement = document.createElement('div');
+                appElement.className = 'app-icon flex flex-col items-center text-center';
+                appElement.draggable = true;
+                appElement.dataset.appIndex = index;
+
+                const iconStyle = currentSystem === 'ios' ? 'rounded-2xl' : 'rounded-xl';
+                
+                appElement.innerHTML = `
+                    <div class="relative w-14 h-14 ${app.color} ${iconStyle} flex items-center justify-center text-white text-xl shadow-lg mb-1">
+                        <i class="${app.icon}"></i>
+                        ${app.notifications > 0 ? `
+                            <div class="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
+                                ${app.notifications > 9 ? '9+' : app.notifications}
+                            </div>
+                        ` : ''}
+                    </div>
+                    <span class="text-white text-xs font-medium leading-tight">${app.name}</span>
+                `;
+
+                // Add event listeners
+                appElement.addEventListener('click', () => openApp(app));
+                appElement.addEventListener('dragstart', handleDragStart);
+                appElement.addEventListener('dragend', handleDragEnd);
+
+                if (currentSystem === 'ios' && index < 4) {
+                    iosDock.appendChild(appElement.cloneNode(true));
+                    if (index >= 4) {
+                        appGrid.appendChild(appElement);
+                    }
+                } else {
+                    appGrid.appendChild(appElement);
+                }
+            });
+
+            // Add iOS folders
+            if (currentSystem === 'ios') {
+                renderIOSFolders();
+            }
+
+            // Add event listeners to cloned dock elements
+            if (currentSystem === 'ios') {
+                iosDock.querySelectorAll('.app-icon').forEach(el => {
+                    el.addEventListener('click', () => {
+                        const index = parseInt(el.dataset.appIndex);
+                        openApp(apps[index]);
+                    });
+                });
+            }
+        }
+
+        // Render iOS widgets
+        function renderIOSWidgets() {
+            const today = new Date();
+            const weekday = today.toLocaleDateString('pt-BR', { weekday: 'short' });
+            const day = today.getDate();
+            const month = today.toLocaleDateString('pt-BR', { month: 'short' });
+            
+            // Create widgets container
+            const widgetsContainer = document.createElement('div');
+            widgetsContainer.className = 'col-span-4 mb-4';
+            widgetsContainer.innerHTML = `
+                <div class="grid grid-cols-4 gap-3">
+                    <!-- Calendar Widget -->
+                    <div class="ios-widget col-span-2 p-3 text-white">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-xs font-medium opacity-80">${weekday.toUpperCase()}</span>
+                            <i class="fas fa-calendar text-xs opacity-60"></i>
+                        </div>
+                        <div class="text-2xl font-bold">${day}</div>
+                        <div class="text-xs opacity-80">${month}</div>
+                        <div class="text-xs mt-1 opacity-60">Reunião 14:00</div>
+                    </div>
+                    
+                    <!-- Weather Widget -->
+                    <div class="ios-widget p-3 text-white text-center">
+                        <div class="text-lg mb-1">☀️</div>
+                        <div class="text-sm font-semibold">23°</div>
+                        <div class="text-xs opacity-60">São Paulo</div>
+                    </div>
+                    
+                    <!-- Battery Widget -->
+                    <div class="ios-widget p-3 text-white text-center">
+                        <div class="text-green-400 text-lg mb-1">
+                            <i class="fas fa-battery-three-quarters"></i>
+                        </div>
+                        <div class="text-sm font-semibold">85%</div>
+                        <div class="text-xs opacity-60">Bateria</div>
+                    </div>
+                </div>
+            `;
+            
+            appGrid.appendChild(widgetsContainer);
+        }
+
+        // Render iOS folders
+        function renderIOSFolders() {
+            // Add a "Contatos" folder like in the image
+            const foldersContainer = document.createElement('div');
+            foldersContainer.className = 'col-span-4 mt-4';
+            foldersContainer.innerHTML = `
+                <div class="grid grid-cols-4 gap-4">
+                    <!-- Contacts Folder -->
+                    <div class="flex flex-col items-center text-center cursor-pointer" onclick="openIOSFolder('Contatos')">
+                        <div class="relative w-14 h-14 ios-folder rounded-2xl flex items-center justify-center text-white text-xl shadow-lg mb-1 p-1">
+                            <div class="grid grid-cols-2 gap-0.5 w-full h-full">
+                                <div class="bg-blue-500 rounded-sm flex items-center justify-center">
+                                    <i class="fas fa-user text-xs"></i>
+                                </div>
+                                <div class="bg-green-500 rounded-sm flex items-center justify-center">
+                                    <i class="fas fa-phone text-xs"></i>
+                                </div>
+                                <div class="bg-purple-500 rounded-sm flex items-center justify-center">
+                                    <i class="fas fa-envelope text-xs"></i>
+                                </div>
+                                <div class="bg-orange-500 rounded-sm flex items-center justify-center">
+                                    <i class="fas fa-address-book text-xs"></i>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="text-white text-xs font-medium leading-tight">Contatos</span>
+                    </div>
+                </div>
+            `;
+            
+            appGrid.appendChild(foldersContainer);
+        }
+
+        // Open iOS folder
+        function openIOSFolder(folderName) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-90 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-transparent w-[350px] h-[600px] p-6">
+                    <div class="text-center mb-6">
+                        <h2 class="text-white text-xl font-semibold">${folderName}</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-3 gap-6 mb-8">
+                        <!-- Folder Apps -->
+                        <div class="flex flex-col items-center text-center">
+                            <div class="w-16 h-16 bg-blue-500 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg mb-2">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <span class="text-white text-xs font-medium">Contatos</span>
+                        </div>
+                        <div class="flex flex-col items-center text-center">
+                            <div class="w-16 h-16 bg-green-500 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg mb-2">
+                                <i class="fas fa-phone"></i>
+                            </div>
+                            <span class="text-white text-xs font-medium">Telefone</span>
+                        </div>
+                        <div class="flex flex-col items-center text-center">
+                            <div class="w-16 h-16 bg-red-500 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg mb-2">
+                                <i class="fas fa-video"></i>
+                            </div>
+                            <span class="text-white text-xs font-medium">FaceTime</span>
+                        </div>
+                        <div class="flex flex-col items-center text-center">
+                            <div class="w-16 h-16 bg-purple-500 rounded-2xl flex items-center justify-center text-white text-xl shadow-lg mb-2">
+                                <i class="fas fa-envelope"></i>
+                            </div>
+                            <span class="text-white text-xs font-medium">Mail</span>
+                        </div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <button onclick="this.closest('.fixed').remove()" class="text-white text-lg">
+                            <i class="fas fa-times-circle"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Close on background click
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        // Switch system
+        function switchSystem(system) {
+            currentSystem = system;
+            
+            const statusLeft = document.getElementById('statusLeft');
+            const statusCenter = document.getElementById('statusCenter');
+            
+            if (system === 'android') {
+                androidNav.classList.remove('hidden');
+                iosDock.classList.add('hidden');
+                // Remove iOS specific elements
+                document.getElementById('statusBar').classList.remove('ios-notch');
+                document.getElementById('phoneScreen').classList.remove('ios-screen');
+                
+                // Android layout: time on left, indicators on right
+                statusLeft.classList.remove('invisible');
+                statusCenter.classList.add('hidden');
+            } else {
+                androidNav.classList.add('hidden');
+                iosDock.classList.remove('hidden');
+                // Add iOS specific elements
+                document.getElementById('statusBar').classList.add('ios-notch');
+                document.getElementById('phoneScreen').classList.add('ios-screen');
+                
+                // iOS layout: time centered, indicators on right, left empty
+                statusLeft.classList.add('invisible'); // Keep space but hide content
+                statusCenter.classList.remove('hidden');
+            }
+            
+            renderApps();
+        }
+
+        // App Functions
+        const appFunctions = {
+            calculator: () => `
+                <div class="grid grid-cols-4 gap-3 max-w-xs mx-auto">
+                    <div id="calculatorDisplay" class="col-span-4 bg-gray-100 dark:bg-gray-700 p-4 rounded-lg text-right text-2xl font-mono mb-4">0</div>
+                    <button class="calc-btn bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 p-4 rounded-lg font-semibold" data-action="clear">C</button>
+                    <button class="calc-btn bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 p-4 rounded-lg font-semibold" data-action="sign">±</button>
+                    <button class="calc-btn bg-gray-300 dark:bg-gray-600 hover:bg-gray-400 dark:hover:bg-gray-500 p-4 rounded-lg font-semibold" data-action="percent">%</button>
+                    <button class="calc-btn bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-lg font-semibold" data-action="divide">÷</button>
+                    
+                    <button class="calc-btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-4 rounded-lg font-semibold" data-number="7">7</button>
+                    <button class="calc-btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-4 rounded-lg font-semibold" data-number="8">8</button>
+                    <button class="calc-btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-4 rounded-lg font-semibold" data-number="9">9</button>
+                    <button class="calc-btn bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-lg font-semibold" data-action="multiply">×</button>
+                    
+                    <button class="calc-btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-4 rounded-lg font-semibold" data-number="4">4</button>
+                    <button class="calc-btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-4 rounded-lg font-semibold" data-number="5">5</button>
+                    <button class="calc-btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-4 rounded-lg font-semibold" data-number="6">6</button>
+                    <button class="calc-btn bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-lg font-semibold" data-action="subtract">−</button>
+                    
+                    <button class="calc-btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-4 rounded-lg font-semibold" data-number="1">1</button>
+                    <button class="calc-btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-4 rounded-lg font-semibold" data-number="2">2</button>
+                    <button class="calc-btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-4 rounded-lg font-semibold" data-number="3">3</button>
+                    <button class="calc-btn bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-lg font-semibold" data-action="add">+</button>
+                    
+                    <button class="calc-btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-4 rounded-lg font-semibold col-span-2" data-number="0">0</button>
+                    <button class="calc-btn bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 p-4 rounded-lg font-semibold" data-action="decimal">.</button>
+                    <button class="calc-btn bg-orange-500 hover:bg-orange-600 text-white p-4 rounded-lg font-semibold" data-action="equals">=</button>
+                </div>
+            `,
+            
+            weather: () => `
+                <div class="text-center">
+                    <div class="text-6xl mb-4">🌤️</div>
+                    <div class="text-3xl font-bold text-gray-900 dark:text-white mb-2">23°C</div>
+                    <div class="text-lg text-gray-600 dark:text-gray-400 mb-4">Parcialmente nublado</div>
+                    <div class="bg-gray-100 dark:bg-gray-700 rounded-lg p-4">
+                        <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">São Paulo, SP</div>
+                        <div class="flex justify-between text-sm">
+                            <span>Máx: 28°</span>
+                            <span>Mín: 18°</span>
+                        </div>
+                    </div>
+                    <div class="mt-4 space-y-2">
+                        <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                            <span class="text-sm">Umidade</span>
+                            <span class="text-sm font-semibold">65%</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                            <span class="text-sm">Vento</span>
+                            <span class="text-sm font-semibold">15 km/h</span>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            notes: () => `
+                <div>
+                    <div class="mb-4">
+                        <input type="text" id="noteTitle" placeholder="Título da nota" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="mb-4">
+                        <textarea id="noteContent" placeholder="Escreva sua nota aqui..." rows="8" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base focus:ring-2 focus:ring-indigo-500"></textarea>
+                    </div>
+                    <button id="saveNote" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 rounded-lg font-semibold">
+                        <i class="fas fa-save mr-2"></i>Salvar Nota
+                    </button>
+                    <div id="savedNotes" class="mt-6 space-y-3">
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                            <div class="font-semibold text-gray-900 dark:text-white">Lista de compras</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">Leite, pão, ovos...</div>
+                        </div>
+                        <div class="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                            <div class="font-semibold text-gray-900 dark:text-white">Reunião amanhã</div>
+                            <div class="text-sm text-gray-600 dark:text-gray-400">Lembrar de preparar apresentação</div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            calendar: () => {
+                const today = new Date();
+                const month = today.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+                return `
+                    <div>
+                        <div class="text-center mb-4">
+                            <h3 class="text-xl font-bold text-gray-900 dark:text-white capitalize">${month}</h3>
+                        </div>
+                        <div class="grid grid-cols-7 gap-1 text-center text-sm mb-2">
+                            <div class="font-semibold p-2">Dom</div>
+                            <div class="font-semibold p-2">Seg</div>
+                            <div class="font-semibold p-2">Ter</div>
+                            <div class="font-semibold p-2">Qua</div>
+                            <div class="font-semibold p-2">Qui</div>
+                            <div class="font-semibold p-2">Sex</div>
+                            <div class="font-semibold p-2">Sáb</div>
+                        </div>
+                        <div class="grid grid-cols-7 gap-1 text-center text-sm">
+                            ${Array.from({length: 35}, (_, i) => {
+                                const day = i - 2; // Adjust for month start
+                                const isToday = day === today.getDate();
+                                const hasEvent = [15, 22, 28].includes(day);
+                                if (day < 1 || day > 31) return '<div class="p-2"></div>';
+                                return `<div class="p-2 ${isToday ? 'bg-indigo-600 text-white rounded-full' : ''} ${hasEvent ? 'bg-red-100 dark:bg-red-900 rounded' : ''}">${day}</div>`;
+                            }).join('')}
+                        </div>
+                        <div class="mt-4 space-y-2">
+                            <div class="bg-yellow-100 dark:bg-yellow-900 p-3 rounded-lg">
+                                <div class="font-semibold text-yellow-800 dark:text-yellow-200">Hoje - Reunião importante</div>
+                                <div class="text-sm text-yellow-600 dark:text-yellow-300">14:00 - 15:30</div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            },
+            
+            messages: () => `
+                <div>
+                    <div class="space-y-3 mb-4 max-h-64 overflow-y-auto">
+                        <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">M</div>
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900 dark:text-white">Maria Silva</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Oi! Como você está?</div>
+                            </div>
+                            <div class="text-xs text-gray-500">10:30</div>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">J</div>
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900 dark:text-white">João Santos</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Vamos almoçar hoje?</div>
+                            </div>
+                            <div class="text-xs text-gray-500">09:45</div>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 bg-blue-50 dark:bg-blue-900 rounded-lg">
+                            <div class="w-10 h-10 bg-purple-500 rounded-full flex items-center justify-center text-white font-semibold">A</div>
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900 dark:text-white">Ana Costa</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Obrigada pela ajuda!</div>
+                            </div>
+                            <div class="text-xs text-gray-500">Ontem</div>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <input type="text" placeholder="Digite uma mensagem..." class="flex-1 p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base focus:ring-2 focus:ring-indigo-500">
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg">
+                            <i class="fas fa-paper-plane"></i>
+                        </button>
+                    </div>
+                </div>
+            `,
+            
+            music: () => `
+                <div class="text-center">
+                    <div class="bg-gradient-to-br from-purple-400 to-pink-400 w-48 h-48 mx-auto rounded-2xl mb-6 flex items-center justify-center">
+                        <i class="fas fa-music text-white text-6xl"></i>
+                    </div>
+                    <div class="mb-4">
+                        <h3 class="text-xl font-bold text-gray-900 dark:text-white">Música Atual</h3>
+                        <p class="text-gray-600 dark:text-gray-400">Artista Exemplo</p>
+                    </div>
+                    <div class="mb-6">
+                        <div class="bg-gray-200 dark:bg-gray-700 h-2 rounded-full mb-2">
+                            <div class="bg-indigo-600 h-2 rounded-full" style="width: 35%"></div>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-600 dark:text-gray-400">
+                            <span>1:23</span>
+                            <span>3:45</span>
+                        </div>
+                    </div>
+                    <div class="flex justify-center items-center space-x-6">
+                        <button class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                            <i class="fas fa-backward text-xl"></i>
+                        </button>
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white w-12 h-12 rounded-full flex items-center justify-center">
+                            <i class="fas fa-play"></i>
+                        </button>
+                        <button class="text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white">
+                            <i class="fas fa-forward text-xl"></i>
+                        </button>
+                    </div>
+                </div>
+            `,
+            
+            camera: () => `
+                <div class="text-center">
+                    <div class="relative w-full h-64 bg-black rounded-lg mb-4 overflow-hidden">
+                        <video id="cameraVideo" class="w-full h-full object-cover hidden" autoplay muted playsinline></video>
+                        <canvas id="cameraCanvas" class="w-full h-full object-cover hidden"></canvas>
+                        <div id="cameraPlaceholder" class="w-full h-full flex items-center justify-center text-white">
+                            <div class="text-center">
+                                <i class="fas fa-camera text-4xl mb-2"></i>
+                                <p>Clique para abrir a câmera</p>
+                                <button id="startCamera" class="mt-3 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                                    <i class="fas fa-video mr-2"></i>Iniciar Câmera
+                                </button>
+                            </div>
+                        </div>
+                        <div id="cameraError" class="w-full h-full hidden flex items-center justify-center text-white">
+                            <div class="text-center">
+                                <i class="fas fa-exclamation-triangle text-4xl mb-2 text-red-400"></i>
+                                <p>Câmera não disponível</p>
+                                <p class="text-sm text-gray-400">Permissão negada ou câmera em uso</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Camera Controls -->
+                    <div id="cameraControls" class="hidden">
+                        <div class="flex justify-center space-x-4 mb-4">
+                            <button id="capturePhoto" class="bg-white dark:bg-gray-700 border-4 border-gray-300 dark:border-gray-600 w-16 h-16 rounded-full flex items-center justify-center hover:bg-gray-50 dark:hover:bg-gray-600 transition-all active:scale-95">
+                                <div class="w-12 h-12 bg-white dark:bg-gray-300 rounded-full border-2 border-gray-400"></div>
+                            </button>
+                        </div>
+                        
+                        <div class="flex justify-center space-x-3">
+                            <button id="switchCamera" class="bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600 w-12 h-12 rounded-full flex items-center justify-center">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                            <button id="stopCamera" class="bg-red-500 hover:bg-red-600 text-white w-12 h-12 rounded-full flex items-center justify-center">
+                                <i class="fas fa-stop"></i>
+                            </button>
+                            <button id="downloadPhoto" class="bg-green-500 hover:bg-green-600 text-white w-12 h-12 rounded-full flex items-center justify-center hidden">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Photo Preview -->
+                        <div id="photoPreview" class="hidden mt-4">
+                            <img id="capturedPhoto" class="w-full h-48 object-cover rounded-lg border-2 border-gray-300 dark:border-gray-600">
+                            <div class="flex justify-center space-x-3 mt-3">
+                                <button id="retakePhoto" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                                    <i class="fas fa-redo mr-2"></i>Nova Foto
+                                </button>
+                                <button id="savePhoto" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                                    <i class="fas fa-save mr-2"></i>Salvar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Initial Controls -->
+                    <div id="initialControls" class="flex justify-center space-x-4">
+                        <button class="bg-gray-200 dark:bg-gray-700 w-12 h-12 rounded-full flex items-center justify-center opacity-50 cursor-not-allowed">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="bg-gray-200 dark:bg-gray-700 w-12 h-12 rounded-full flex items-center justify-center opacity-50 cursor-not-allowed">
+                            <i class="fas fa-images"></i>
+                        </button>
+                    </div>
+                </div>
+            `,
+            
+            phone: () => `
+                <div class="text-center">
+                    <div class="space-y-3 mb-6">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">M</div>
+                                <div>
+                                    <div class="font-semibold text-gray-900 dark:text-white">Maria Silva</div>
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">+55 11 99999-9999</div>
+                                </div>
+                            </div>
+                            <button class="text-green-600 hover:text-green-700">
+                                <i class="fas fa-phone text-xl"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">J</div>
+                                <div>
+                                    <div class="font-semibold text-gray-900 dark:text-white">João Santos</div>
+                                    <div class="text-sm text-gray-600 dark:text-gray-400">+55 11 88888-8888</div>
+                                </div>
+                            </div>
+                            <button class="text-green-600 hover:text-green-700">
+                                <i class="fas fa-phone text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-3 gap-3 max-w-xs mx-auto">
+                        ${[1,2,3,4,5,6,7,8,9,'*',0,'#'].map(key => 
+                            `<button class="bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 p-4 rounded-lg font-semibold text-xl">${key}</button>`
+                        ).join('')}
+                    </div>
+                    <button class="mt-4 bg-green-600 hover:bg-green-700 text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto">
+                        <i class="fas fa-phone text-xl"></i>
+                    </button>
+                </div>
+            `,
+            
+            default: () => `
+                <div class="text-center py-8">
+                    <i class="fas fa-cog text-4xl text-gray-400 mb-4"></i>
+                    <p class="text-gray-600 dark:text-gray-400 mb-4">App em desenvolvimento</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-500">Esta funcionalidade será implementada em breve.</p>
+                </div>
+            `
+        };
+
+        // Calculator logic
+        let calculatorState = {
+            display: '0',
+            previousValue: null,
+            operation: null,
+            waitingForOperand: false
+        };
+
+        function updateCalculatorDisplay() {
+            document.getElementById('calculatorDisplay').textContent = calculatorState.display;
+        }
+
+        function inputNumber(number) {
+            if (calculatorState.waitingForOperand) {
+                calculatorState.display = String(number);
+                calculatorState.waitingForOperand = false;
+            } else {
+                calculatorState.display = calculatorState.display === '0' ? String(number) : calculatorState.display + number;
+            }
+        }
+
+        function performOperation(nextOperation) {
+            const inputValue = parseFloat(calculatorState.display);
+
+            if (calculatorState.previousValue === null) {
+                calculatorState.previousValue = inputValue;
+            } else if (calculatorState.operation) {
+                const currentValue = calculatorState.previousValue || 0;
+                const newValue = {
+                    add: () => currentValue + inputValue,
+                    subtract: () => currentValue - inputValue,
+                    multiply: () => currentValue * inputValue,
+                    divide: () => currentValue / inputValue,
+                    equals: () => inputValue
+                }[calculatorState.operation]();
+
+                calculatorState.display = String(newValue);
+                calculatorState.previousValue = newValue;
+            }
+
+            calculatorState.waitingForOperand = true;
+            calculatorState.operation = nextOperation;
+        }
+
+        // Show notification
+        function showNotification(title, message, icon) {
+            const toast = document.getElementById('notificationToast');
+            document.getElementById('toastIcon').innerHTML = `<i class="${icon} text-indigo-600"></i>`;
+            document.getElementById('toastTitle').textContent = title;
+            document.getElementById('toastMessage').textContent = message;
+            
+            toast.classList.remove('hidden');
+            setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3000);
+        }
+
+        // Enhanced open app function
+        function openApp(app) {
+            // Check if app has URL and should load in integrated browser
+            if (app.url) {
+                // Clear notifications when opening real app
+                if (app.notifications > 0) {
+                    app.notifications = 0;
+                    renderApps();
+                    showNotification(app.name, 'Carregando ' + app.name + '...', app.icon);
+                }
+                
+                // Load app in integrated browser
+                loadAppInBrowser(app);
+                return;
+            }
+            
+            document.getElementById('appModalIcon').innerHTML = `<i class="${app.icon} text-indigo-600"></i>`;
+            document.getElementById('appModalTitle').textContent = app.name;
+            
+            // Clear notifications when opening app
+            if (app.notifications > 0) {
+                app.notifications = 0;
+                renderApps();
+                showNotification(app.name, 'Todas as notificações foram lidas', app.icon);
+            }
+            
+            // Load app content
+            const content = appFunctions[app.type] ? appFunctions[app.type]() : appFunctions.default();
+            document.getElementById('appContent').innerHTML = content;
+            
+            // Add specific event listeners
+            if (app.type === 'calculator') {
+                document.querySelectorAll('.calc-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        const target = e.target;
+                        
+                        if (target.dataset.number) {
+                            inputNumber(target.dataset.number);
+                            updateCalculatorDisplay();
+                        } else if (target.dataset.action) {
+                            switch (target.dataset.action) {
+                                case 'clear':
+                                    calculatorState = { display: '0', previousValue: null, operation: null, waitingForOperand: false };
+                                    break;
+                                case 'equals':
+                                    performOperation(null);
+                                    calculatorState.operation = null;
+                                    calculatorState.previousValue = null;
+                                    calculatorState.waitingForOperand = true;
+                                    break;
+                                case 'decimal':
+                                    if (calculatorState.display.indexOf('.') === -1) {
+                                        inputNumber('.');
+                                    }
+                                    break;
+                                default:
+                                    performOperation(target.dataset.action);
+                                    break;
+                            }
+                            updateCalculatorDisplay();
+                        }
+                    });
+                });
+            } else if (app.type === 'notes') {
+                document.getElementById('saveNote')?.addEventListener('click', () => {
+                    const title = document.getElementById('noteTitle').value;
+                    const content = document.getElementById('noteContent').value;
+                    if (title && content) {
+                        showNotification('Notas', 'Nota salva com sucesso!', 'fas fa-check');
+                        document.getElementById('noteTitle').value = '';
+                        document.getElementById('noteContent').value = '';
+                    }
+                });
+            } else if (app.type === 'camera') {
+                initializeCameraApp();
+            } else if (app.type === 'browser') {
+                initializeBrowserApp();
+            }
+            
+            appModal.classList.remove('hidden');
+        }
+
+        // Drag and drop
+        let draggedElement = null;
+
+        function handleDragStart(e) {
+            draggedElement = e.target.closest('.app-icon');
+            draggedElement.classList.add('dragging');
+        }
+
+        function handleDragEnd(e) {
+            if (draggedElement) {
+                draggedElement.classList.remove('dragging');
+                draggedElement = null;
+            }
+        }
+
+        // Allow drop
+        appGrid.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            appGrid.classList.add('drop-zone');
+        });
+
+        appGrid.addEventListener('dragleave', () => {
+            appGrid.classList.remove('drop-zone');
+        });
+
+        appGrid.addEventListener('drop', (e) => {
+            e.preventDefault();
+            appGrid.classList.remove('drop-zone');
+            
+            if (draggedElement) {
+                const draggedIndex = parseInt(draggedElement.dataset.appIndex);
+                const rect = appGrid.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Simple reorder logic
+                const children = Array.from(appGrid.children);
+                const targetIndex = Math.floor(y / 80) * 4 + Math.floor(x / 80);
+                
+                if (targetIndex >= 0 && targetIndex < apps.length && targetIndex !== draggedIndex) {
+                    // Swap apps
+                    [apps[draggedIndex], apps[targetIndex]] = [apps[targetIndex], apps[draggedIndex]];
+                    renderApps();
+                }
+            }
+        });
+
+        // Event listeners
+        systemSelector.addEventListener('change', (e) => {
+            switchSystem(e.target.value);
+        });
+
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            settingsModal.classList.remove('hidden');
+        });
+
+        document.getElementById('closeModal').addEventListener('click', () => {
+            settingsModal.classList.add('hidden');
+        });
+
+        document.getElementById('closeAppModal').addEventListener('click', () => {
+            appModal.classList.add('hidden');
+        });
+
+        // Wallpaper selection
+        document.querySelectorAll('.wallpaper-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const wallpaper = option.dataset.wallpaper;
+                phoneScreen.className = phoneScreen.className.replace(/wallpaper-\d+/, wallpaper);
+                currentWallpaper = wallpaper;
+                
+                // Update selection
+                document.querySelectorAll('.wallpaper-option').forEach(opt => {
+                    opt.classList.remove('border-indigo-500');
+                    opt.classList.add('border-transparent');
+                });
+                option.classList.remove('border-transparent');
+                option.classList.add('border-indigo-500');
+            });
+        });
+
+        // Custom modal functions
+        function showCustomModal(title, content, onConfirm) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">${title}</h3>
+                    <div class="text-gray-700 dark:text-gray-300 mb-4">${content}</div>
+                    <div class="flex justify-end space-x-3">
+                        <button class="cancel-btn px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                        <button class="confirm-btn px-4 py-2 bg-indigo-500 text-white hover:bg-indigo-600 rounded">Confirmar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            modal.querySelector('.cancel-btn').onclick = () => modal.remove();
+            modal.querySelector('.confirm-btn').onclick = () => {
+                modal.remove();
+                onConfirm();
+            };
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+        }
+
+        function showInputModal(title, placeholder, onConfirm) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">${title}</h3>
+                    <input type="text" class="input-field w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base focus:ring-2 focus:ring-indigo-500 mb-4" placeholder="${placeholder}">
+                    <div class="flex justify-end space-x-3">
+                        <button class="cancel-btn px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                        <button class="confirm-btn px-4 py-2 bg-indigo-500 text-white hover:bg-indigo-600 rounded">Adicionar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            const input = modal.querySelector('.input-field');
+            input.focus();
+            
+            modal.querySelector('.cancel-btn').onclick = () => modal.remove();
+            modal.querySelector('.confirm-btn').onclick = () => {
+                const value = input.value.trim();
+                if (value) {
+                    modal.remove();
+                    onConfirm(value);
+                }
+            };
+            
+            input.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    const value = input.value.trim();
+                    if (value) {
+                        modal.remove();
+                        onConfirm(value);
+                    }
+                }
+            });
+            
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+        }
+
+        // Available preset apps with mobile-friendly URLs
+        const presetApps = [
+            { 
+                name: 'YouTube', 
+                icon: 'fab fa-youtube', 
+                color: 'bg-red-600', 
+                type: 'video', 
+                notifications: 0, 
+                url: 'https://m.youtube.com',
+                fallbackUrl: 'https://www.youtube.com',
+                embedFriendly: true
+            },
+            { 
+                name: 'Instagram', 
+                icon: 'fab fa-instagram', 
+                color: 'bg-gradient-to-br from-purple-600 to-pink-500', 
+                type: 'social', 
+                notifications: 2, 
+                url: 'https://www.instagram.com',
+                fallbackUrl: 'https://www.instagram.com',
+                embedFriendly: false,
+                mockup: true
+            },
+            { 
+                name: 'WhatsApp', 
+                icon: 'fab fa-whatsapp', 
+                color: 'bg-green-600', 
+                type: 'messaging', 
+                notifications: 8, 
+                url: 'https://web.whatsapp.com',
+                fallbackUrl: 'https://web.whatsapp.com',
+                embedFriendly: false,
+                mockup: true
+            },
+            { 
+                name: 'Netflix', 
+                icon: 'fas fa-play', 
+                color: 'bg-red-700', 
+                type: 'streaming', 
+                notifications: 0, 
+                url: 'https://www.netflix.com',
+                fallbackUrl: 'https://www.netflix.com',
+                embedFriendly: false,
+                mockup: true
+            },
+            { 
+                name: 'Spotify', 
+                icon: 'fab fa-spotify', 
+                color: 'bg-green-500', 
+                type: 'music', 
+                notifications: 0, 
+                url: 'https://open.spotify.com',
+                fallbackUrl: 'https://open.spotify.com',
+                embedFriendly: true
+            },
+            { 
+                name: 'Twitter', 
+                icon: 'fab fa-twitter', 
+                color: 'bg-blue-400', 
+                type: 'social', 
+                notifications: 12, 
+                url: 'https://mobile.twitter.com',
+                fallbackUrl: 'https://twitter.com',
+                embedFriendly: false,
+                mockup: true
+            },
+            { 
+                name: 'Facebook', 
+                icon: 'fab fa-facebook', 
+                color: 'bg-blue-600', 
+                type: 'social', 
+                notifications: 5, 
+                url: 'https://m.facebook.com',
+                fallbackUrl: 'https://www.facebook.com',
+                embedFriendly: false,
+                mockup: true
+            },
+            { 
+                name: 'TikTok', 
+                icon: 'fab fa-tiktok', 
+                color: 'bg-black', 
+                type: 'video', 
+                notifications: 3, 
+                url: 'https://www.tiktok.com',
+                fallbackUrl: 'https://www.tiktok.com',
+                embedFriendly: false,
+                mockup: true
+            },
+            { 
+                name: 'Uber', 
+                icon: 'fas fa-car', 
+                color: 'bg-black', 
+                type: 'transport', 
+                notifications: 0, 
+                url: 'https://m.uber.com',
+                fallbackUrl: 'https://www.uber.com',
+                embedFriendly: false,
+                mockup: true
+            },
+            { 
+                name: 'Maps', 
+                icon: 'fas fa-map', 
+                color: 'bg-green-600', 
+                type: 'navigation', 
+                notifications: 0, 
+                url: 'https://maps.google.com/maps?output=embed',
+                fallbackUrl: 'https://maps.google.com',
+                embedFriendly: true
+            },
+            { 
+                name: 'Amazon', 
+                icon: 'fab fa-amazon', 
+                color: 'bg-orange-500', 
+                type: 'shopping', 
+                notifications: 1, 
+                url: 'https://www.amazon.com.br',
+                fallbackUrl: 'https://www.amazon.com.br',
+                embedFriendly: false,
+                mockup: true
+            },
+            { 
+                name: 'GitHub', 
+                icon: 'fab fa-github', 
+                color: 'bg-gray-800', 
+                type: 'development', 
+                notifications: 0, 
+                url: 'https://github.com',
+                fallbackUrl: 'https://github.com',
+                embedFriendly: true
+            },
+            { 
+                name: 'LinkedIn', 
+                icon: 'fab fa-linkedin', 
+                color: 'bg-blue-700', 
+                type: 'professional', 
+                notifications: 4, 
+                url: 'https://www.linkedin.com',
+                fallbackUrl: 'https://www.linkedin.com',
+                embedFriendly: false,
+                mockup: true
+            },
+            { 
+                name: 'Discord', 
+                icon: 'fab fa-discord', 
+                color: 'bg-indigo-600', 
+                type: 'gaming', 
+                notifications: 0, 
+                url: 'https://discord.com/app',
+                fallbackUrl: 'https://discord.com',
+                embedFriendly: false,
+                mockup: true
+            },
+            { 
+                name: 'Chrome', 
+                icon: 'fab fa-chrome', 
+                color: 'bg-gradient-to-br from-blue-500 to-green-500', 
+                type: 'browser', 
+                notifications: 0
+            },
+            { name: 'Games', icon: 'fas fa-gamepad', color: 'bg-purple-600', type: 'gaming', notifications: 0 },
+            { name: 'Fitness', icon: 'fas fa-dumbbell', color: 'bg-red-500', type: 'health', notifications: 0 },
+            { name: 'News', icon: 'fas fa-newspaper', color: 'bg-blue-700', type: 'news', notifications: 7 },
+            { name: 'Banking', icon: 'fas fa-university', color: 'bg-green-700', type: 'finance', notifications: 0 },
+            { name: 'Food', icon: 'fas fa-utensils', color: 'bg-orange-600', type: 'food', notifications: 0 },
+            { name: 'Travel', icon: 'fas fa-plane', color: 'bg-blue-500', type: 'travel', notifications: 0 }
+        ];
+
+        // Enhanced app functions for preset apps
+        const enhancedAppFunctions = {
+            ...appFunctions,
+            
+            video: () => `
+                <div class="text-center">
+                    <div class="bg-black w-full h-40 rounded-lg mb-4 flex items-center justify-center">
+                        <div class="text-white">
+                            <i class="fas fa-play text-4xl mb-2"></i>
+                            <p>Player de Vídeo</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div class="w-16 h-12 bg-red-500 rounded flex items-center justify-center">
+                                <i class="fas fa-play text-white"></i>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <div class="font-semibold text-gray-900 dark:text-white">Tutorial de JavaScript</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">CodeAcademy • 1.2M views</div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div class="w-16 h-12 bg-blue-500 rounded flex items-center justify-center">
+                                <i class="fas fa-play text-white"></i>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <div class="font-semibold text-gray-900 dark:text-white">Música Relaxante</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">ChillMusic • 850K views</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            social: () => `
+                <div>
+                    <div class="space-y-4">
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white font-semibold">A</div>
+                                <div>
+                                    <div class="font-semibold text-gray-900 dark:text-white">Ana Costa</div>
+                                    <div class="text-sm text-gray-500">2 horas atrás</div>
+                                </div>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300 mb-3">Que dia lindo! ☀️ #bomdia</p>
+                            <div class="flex space-x-4 text-gray-500">
+                                <button class="flex items-center space-x-1 hover:text-red-500">
+                                    <i class="fas fa-heart"></i>
+                                    <span>24</span>
+                                </button>
+                                <button class="flex items-center space-x-1 hover:text-blue-500">
+                                    <i class="fas fa-comment"></i>
+                                    <span>5</span>
+                                </button>
+                                <button class="flex items-center space-x-1 hover:text-green-500">
+                                    <i class="fas fa-share"></i>
+                                    <span>2</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="border-b border-gray-200 dark:border-gray-700 pb-4">
+                            <div class="flex items-center space-x-3 mb-3">
+                                <div class="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center text-white font-semibold">J</div>
+                                <div>
+                                    <div class="font-semibold text-gray-900 dark:text-white">João Silva</div>
+                                    <div class="text-sm text-gray-500">4 horas atrás</div>
+                                </div>
+                            </div>
+                            <p class="text-gray-700 dark:text-gray-300 mb-3">Novo projeto no ar! 🚀 #developer #coding</p>
+                            <div class="flex space-x-4 text-gray-500">
+                                <button class="flex items-center space-x-1 hover:text-red-500">
+                                    <i class="fas fa-heart"></i>
+                                    <span>18</span>
+                                </button>
+                                <button class="flex items-center space-x-1 hover:text-blue-500">
+                                    <i class="fas fa-comment"></i>
+                                    <span>3</span>
+                                </button>
+                                <button class="flex items-center space-x-1 hover:text-green-500">
+                                    <i class="fas fa-share"></i>
+                                    <span>1</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <textarea placeholder="O que você está pensando?" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base focus:ring-2 focus:ring-indigo-500" rows="3"></textarea>
+                        <button class="mt-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">Publicar</button>
+                    </div>
+                </div>
+            `,
+            
+            gaming: () => `
+                <div class="text-center">
+                    <div class="grid grid-cols-2 gap-4 mb-6">
+                        <div class="bg-gradient-to-br from-purple-500 to-pink-500 p-4 rounded-lg text-white">
+                            <i class="fas fa-trophy text-2xl mb-2"></i>
+                            <div class="font-semibold">Pontuação</div>
+                            <div class="text-2xl">1,247</div>
+                        </div>
+                        <div class="bg-gradient-to-br from-blue-500 to-teal-500 p-4 rounded-lg text-white">
+                            <i class="fas fa-star text-2xl mb-2"></i>
+                            <div class="font-semibold">Nível</div>
+                            <div class="text-2xl">15</div>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <button class="w-full bg-green-600 hover:bg-green-700 text-white p-4 rounded-lg font-semibold">
+                            <i class="fas fa-play mr-2"></i>Jogar Agora
+                        </button>
+                        <button class="w-full bg-blue-600 hover:bg-blue-700 text-white p-4 rounded-lg font-semibold">
+                            <i class="fas fa-users mr-2"></i>Multijogador
+                        </button>
+                        <button class="w-full bg-purple-600 hover:bg-purple-700 text-white p-4 rounded-lg font-semibold">
+                            <i class="fas fa-cog mr-2"></i>Configurações
+                        </button>
+                    </div>
+                </div>
+            `,
+            
+            shopping: () => `
+                <div>
+                    <div class="mb-4">
+                        <input type="text" placeholder="Buscar produtos..." class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div class="w-16 h-16 bg-blue-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-laptop text-white text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900 dark:text-white">Notebook Gamer</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">Intel i7, 16GB RAM</div>
+                                <div class="text-lg font-bold text-green-600">R$ 2.999,00</div>
+                            </div>
+                            <button class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded">
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                            <div class="w-16 h-16 bg-red-500 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-mobile-alt text-white text-xl"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="font-semibold text-gray-900 dark:text-white">Smartphone Pro</div>
+                                <div class="text-sm text-gray-600 dark:text-gray-400">128GB, Câmera 108MP</div>
+                                <div class="text-lg font-bold text-green-600">R$ 1.299,00</div>
+                            </div>
+                            <button class="bg-orange-500 hover:bg-orange-600 text-white px-3 py-2 rounded">
+                                <i class="fas fa-cart-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `,
+            
+            browser: () => `
+                <div class="flex-1 flex flex-col h-[520px]">
+                    <!-- Browser Address Bar -->
+                    <div class="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                        <div class="flex-1 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 text-sm flex items-center">
+                            <span class="text-green-600 mr-2">🔒</span>
+                            <input 
+                                type="text" 
+                                id="chromeUrlInput" 
+                                value="https://www.google.com" 
+                                class="flex-1 bg-transparent text-gray-600 dark:text-gray-400 focus:text-gray-900 dark:focus:text-white outline-none text-sm"
+                                placeholder="Pesquisar no Google ou digite uma URL"
+                            >
+                        </div>
+                        <button id="chromeGo" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Quick Access -->
+                    <div class="p-4 bg-white dark:bg-gray-800">
+                        <h3 class="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">Acesso Rápido</h3>
+                        <div class="grid grid-cols-4 gap-3">
+                            <button class="quick-site flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" data-url="https://www.google.com">
+                                <div class="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center mb-1">
+                                    <i class="fab fa-google text-white text-sm"></i>
+                                </div>
+                                <span class="text-xs text-gray-600 dark:text-gray-400">Google</span>
+                            </button>
+                            <button class="quick-site flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" data-url="https://github.com">
+                                <div class="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center mb-1">
+                                    <i class="fab fa-github text-white text-sm"></i>
+                                </div>
+                                <span class="text-xs text-gray-600 dark:text-gray-400">GitHub</span>
+                            </button>
+                            <button class="quick-site flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" data-url="https://stackoverflow.com">
+                                <div class="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center mb-1">
+                                    <i class="fab fa-stack-overflow text-white text-sm"></i>
+                                </div>
+                                <span class="text-xs text-gray-600 dark:text-gray-400">Stack</span>
+                            </button>
+                            <button class="quick-site flex flex-col items-center p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" data-url="https://developer.mozilla.org">
+                                <div class="w-8 h-8 bg-black rounded-full flex items-center justify-center mb-1">
+                                    <i class="fab fa-firefox text-orange-500 text-sm"></i>
+                                </div>
+                                <span class="text-xs text-gray-600 dark:text-gray-400">MDN</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Browser Iframe -->
+                    <div class="flex-1 bg-gray-100 dark:bg-gray-900 relative">
+                        <div id="chromePlaceholder" class="w-full h-full flex items-center justify-center">
+                            <div class="text-center">
+                                <i class="fab fa-chrome text-6xl text-blue-500 mb-4"></i>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Chrome Browser</h3>
+                                <p class="text-gray-600 dark:text-gray-400 mb-4">Digite uma URL ou clique em um site de acesso rápido</p>
+                                <div class="text-sm text-gray-500 dark:text-gray-500">
+                                    <p class="mb-1">✅ Sites compatíveis: Google, GitHub, Stack Overflow</p>
+                                    <p>⚠️ Alguns sites podem bloquear iframe por segurança</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <iframe 
+                            id="chromeIframe" 
+                            class="w-full h-full hidden"
+                            frameborder="0"
+                            sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox"
+                        ></iframe>
+                        
+                        <div id="chromeLoading" class="hidden absolute inset-0 bg-white dark:bg-gray-800 flex items-center justify-center">
+                            <div class="text-center">
+                                <div class="animate-spin rounded-full h-8 w-8 border-2 border-blue-500 border-t-transparent mx-auto mb-3"></div>
+                                <p class="text-gray-600 dark:text-gray-400">Carregando...</p>
+                            </div>
+                        </div>
+                        
+                        <div id="chromeError" class="hidden absolute inset-0 bg-white dark:bg-gray-800 flex items-center justify-center">
+                            <div class="text-center p-6">
+                                <i class="fas fa-exclamation-triangle text-4xl text-yellow-500 mb-4"></i>
+                                <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Não foi possível carregar</h3>
+                                <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">Este site bloqueia carregamento em iframe.</p>
+                                <button id="chromeOpenExternal" class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-lg">
+                                    <i class="fas fa-external-link-alt mr-2"></i>Abrir em Nova Aba
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `
+        };
+
+        // Custom app creation modal
+        function showCustomAppModal() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Criar App Personalizado</h3>
+                    
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Nome do App</label>
+                            <input type="text" id="customAppName" placeholder="Ex: Meu App" class="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-base focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Ícone</label>
+                            <div class="grid grid-cols-6 gap-2" id="iconSelector">
+                                ${['fas fa-star', 'fas fa-heart', 'fas fa-bookmark', 'fas fa-bell', 'fas fa-gift', 'fas fa-gamepad', 'fas fa-shopping-cart', 'fas fa-car', 'fas fa-plane', 'fas fa-coffee', 'fas fa-camera', 'fas fa-music', 'fas fa-book', 'fas fa-tools', 'fas fa-leaf', 'fas fa-fire', 'fas fa-snowflake', 'fas fa-sun'].map(icon => 
+                                    `<button type="button" class="icon-option w-10 h-10 bg-gray-200 dark:bg-gray-600 rounded-lg flex items-center justify-center hover:bg-indigo-500 hover:text-white border-2 border-transparent" data-icon="${icon}">
+                                        <i class="${icon}"></i>
+                                    </button>`
+                                ).join('')}
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">Cor</label>
+                            <div class="grid grid-cols-5 gap-2" id="colorSelector">
+                                ${['bg-red-500', 'bg-blue-500', 'bg-green-500', 'bg-yellow-500', 'bg-purple-500', 'bg-pink-500', 'bg-indigo-500', 'bg-gray-500', 'bg-orange-500', 'bg-teal-500'].map(color => 
+                                    `<button type="button" class="color-option w-10 h-10 ${color} rounded-lg border-2 border-transparent hover:border-gray-400" data-color="${color}"></button>`
+                                ).join('')}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button class="cancel-btn px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                        <button class="create-btn px-4 py-2 bg-indigo-500 text-white hover:bg-indigo-600 rounded">Criar App</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            let selectedIcon = 'fas fa-star';
+            let selectedColor = 'bg-indigo-500';
+            
+            // Icon selection
+            modal.querySelectorAll('.icon-option').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modal.querySelectorAll('.icon-option').forEach(b => {
+                        b.classList.remove('bg-indigo-500', 'text-white', 'border-indigo-500');
+                        b.classList.add('border-transparent');
+                    });
+                    btn.classList.add('bg-indigo-500', 'text-white', 'border-indigo-500');
+                    btn.classList.remove('border-transparent');
+                    selectedIcon = btn.dataset.icon;
+                });
+            });
+            
+            // Color selection
+            modal.querySelectorAll('.color-option').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modal.querySelectorAll('.color-option').forEach(b => {
+                        b.classList.remove('border-gray-400');
+                        b.classList.add('border-transparent');
+                    });
+                    btn.classList.add('border-gray-400');
+                    btn.classList.remove('border-transparent');
+                    selectedColor = btn.dataset.color;
+                });
+            });
+            
+            // Set initial selections
+            modal.querySelector('.icon-option').classList.add('bg-indigo-500', 'text-white', 'border-indigo-500');
+            modal.querySelector('.color-option').classList.add('border-gray-400');
+            
+            modal.querySelector('.cancel-btn').onclick = () => modal.remove();
+            modal.querySelector('.create-btn').onclick = () => {
+                const name = modal.querySelector('#customAppName').value.trim();
+                if (name) {
+                    const newApp = {
+                        name: name.substring(0, 10),
+                        icon: selectedIcon,
+                        color: selectedColor,
+                        type: 'custom',
+                        notifications: 0
+                    };
+                    
+                    apps.push(newApp);
+                    renderApps();
+                    showNotification('Sucesso', 'App criado com sucesso!', 'fas fa-check');
+                    modal.remove();
+                }
+            };
+            
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+        }
+
+        // Preset app selection modal
+        function showPresetAppModal() {
+            const availablePresets = presetApps.filter(preset => 
+                !apps.find(app => app.name === preset.name)
+            );
+            
+            if (availablePresets.length === 0) {
+                showNotification('Info', 'Todos os apps predefinidos já foram adicionados!', 'fas fa-info-circle');
+                return;
+            }
+            
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-md w-full mx-4 max-h-[80vh] overflow-y-auto">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Adicionar App Predefinido</h3>
+                    
+                    <div class="space-y-2 max-h-96 overflow-y-auto">
+                        ${availablePresets.map(app => `
+                            <button class="preset-app-option w-full flex items-center space-x-3 p-3 bg-gray-50 dark:bg-gray-700 hover:bg-gray-100 dark:hover:bg-gray-600 rounded-lg transition-colors" data-app='${JSON.stringify(app)}'>
+                                <div class="w-12 h-12 ${app.color} rounded-lg flex items-center justify-center text-white">
+                                    <i class="${app.icon}"></i>
+                                </div>
+                                <div class="text-left">
+                                    <div class="font-semibold text-gray-900 dark:text-white">${app.name}</div>
+                                    <div class="text-sm text-gray-600 dark:text-gray-400 capitalize">${app.type}</div>
+                                </div>
+                            </button>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="flex justify-end space-x-3 mt-6">
+                        <button class="cancel-btn px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Cancelar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            modal.querySelectorAll('.preset-app-option').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const appData = JSON.parse(btn.dataset.app);
+                    apps.push(appData);
+                    renderApps();
+                    showNotification('Sucesso', `${appData.name} adicionado com sucesso!`, 'fas fa-check');
+                    modal.remove();
+                });
+            });
+            
+            modal.querySelector('.cancel-btn').onclick = () => modal.remove();
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+        }
+
+        // Update app functions to include enhanced functions
+        Object.assign(appFunctions, enhancedAppFunctions);
+
+        // Add custom app button
+        document.getElementById('addCustomAppBtn').addEventListener('click', showCustomAppModal);
+
+        // Add preset app button
+        document.getElementById('addPresetAppBtn').addEventListener('click', showPresetAppModal);
+
+        // Reset apps
+        document.getElementById('resetAppsBtn').addEventListener('click', () => {
+            showCustomModal(
+                'Resetar Apps',
+                'Tem certeza que deseja resetar todos os apps para o padrão?',
+                () => {
+                    apps = [...defaultApps];
+                    renderApps();
+                    showNotification('Sucesso', 'Apps resetados com sucesso!', 'fas fa-refresh');
+                }
+            );
+        });
+
+        // Close modals on outside click
+        settingsModal.addEventListener('click', (e) => {
+            if (e.target === settingsModal) {
+                settingsModal.classList.add('hidden');
+            }
+        });
+
+        appModal.addEventListener('click', (e) => {
+            if (e.target === appModal) {
+                appModal.classList.add('hidden');
+            }
+        });
+
+        // Initialize
+        updateTime();
+        setInterval(updateTime, 1000);
+        switchSystem('android');
+
+        // Set initial wallpaper selection
+        document.querySelector(`[data-wallpaper="${currentWallpaper}"]`).classList.add('border-indigo-500');
+
+        // Camera functionality
+        let cameraStream = null;
+        let currentCamera = 'user'; // 'user' for front camera, 'environment' for back camera
+        let photoCount = 0;
+
+        function initializeCameraApp() {
+            const startCameraBtn = document.getElementById('startCamera');
+            const switchCameraBtn = document.getElementById('switchCamera');
+            const capturePhotoBtn = document.getElementById('capturePhoto');
+            const stopCameraBtn = document.getElementById('stopCamera');
+            const retakePhotoBtn = document.getElementById('retakePhoto');
+            const savePhotoBtn = document.getElementById('savePhoto');
+            const downloadPhotoBtn = document.getElementById('downloadPhoto');
+
+            if (startCameraBtn) {
+                startCameraBtn.addEventListener('click', startCamera);
+            }
+            if (switchCameraBtn) {
+                switchCameraBtn.addEventListener('click', switchCamera);
+            }
+            if (capturePhotoBtn) {
+                capturePhotoBtn.addEventListener('click', capturePhoto);
+            }
+            if (stopCameraBtn) {
+                stopCameraBtn.addEventListener('click', stopCamera);
+            }
+            if (retakePhotoBtn) {
+                retakePhotoBtn.addEventListener('click', retakePhoto);
+            }
+            if (savePhotoBtn) {
+                savePhotoBtn.addEventListener('click', savePhoto);
+            }
+            if (downloadPhotoBtn) {
+                downloadPhotoBtn.addEventListener('click', downloadPhoto);
+            }
+        }
+
+        async function startCamera() {
+            try {
+                // Check if we're in a secure context
+                if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                    throw new Error('Camera API not available');
+                }
+
+                const constraints = {
+                    video: {
+                        facingMode: currentCamera,
+                        width: { ideal: 640 },
+                        height: { ideal: 480 }
+                    }
+                };
+
+                cameraStream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                const video = document.getElementById('cameraVideo');
+                const placeholder = document.getElementById('cameraPlaceholder');
+                const cameraControls = document.getElementById('cameraControls');
+                const initialControls = document.getElementById('initialControls');
+
+                if (video && placeholder && cameraControls && initialControls) {
+                    video.srcObject = cameraStream;
+                    video.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                    cameraControls.classList.remove('hidden');
+                    initialControls.classList.add('hidden');
+                    
+                    showNotification('Câmera', 'Câmera ativada com sucesso!', 'fas fa-camera');
+                }
+
+            } catch (error) {
+                console.error('Erro ao acessar a câmera:', error);
+                
+                // Show more informative error and fallback to demo mode
+                showCameraError(error);
+                
+                // Check if we can offer demo mode
+                setTimeout(() => {
+                    showDemoCameraOption();
+                }, 1000);
+            }
+        }
+
+        async function switchCamera() {
+            if (cameraStream) {
+                // Stop current stream
+                cameraStream.getTracks().forEach(track => track.stop());
+                
+                // Switch camera
+                currentCamera = currentCamera === 'user' ? 'environment' : 'user';
+                
+                // Start with new camera
+                await startCamera();
+                
+                const cameraType = currentCamera === 'user' ? 'frontal' : 'traseira';
+                showNotification('Câmera', `Alternado para câmera ${cameraType}`, 'fas fa-sync-alt');
+            }
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.getElementById('cameraCanvas');
+            const capturedPhoto = document.getElementById('capturedPhoto');
+            const photoPreview = document.getElementById('photoPreview');
+            const downloadPhotoBtn = document.getElementById('downloadPhoto');
+
+            if (video && canvas && capturedPhoto && photoPreview) {
+                // Set canvas dimensions to match video
+                canvas.width = video.videoWidth;
+                canvas.height = video.videoHeight;
+
+                // Draw video frame to canvas
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+                // Convert canvas to data URL
+                const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+                
+                // Show photo preview
+                capturedPhoto.src = dataURL;
+                photoPreview.classList.remove('hidden');
+                downloadPhotoBtn.classList.remove('hidden');
+                
+                // Hide video temporarily
+                video.classList.add('hidden');
+                canvas.classList.remove('hidden');
+                
+                photoCount++;
+                showNotification('Foto', 'Foto capturada com sucesso!', 'fas fa-camera');
+            }
+        }
+
+        function retakePhoto() {
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.getElementById('cameraCanvas');
+            const photoPreview = document.getElementById('photoPreview');
+            const downloadPhotoBtn = document.getElementById('downloadPhoto');
+
+            if (video && canvas && photoPreview) {
+                video.classList.remove('hidden');
+                canvas.classList.add('hidden');
+                photoPreview.classList.add('hidden');
+                downloadPhotoBtn.classList.add('hidden');
+            }
+        }
+
+        function savePhoto() {
+            const capturedPhoto = document.getElementById('capturedPhoto');
+            
+            if (capturedPhoto && capturedPhoto.src) {
+                // Create download link
+                const link = document.createElement('a');
+                link.download = `foto-${Date.now()}.jpg`;
+                link.href = capturedPhoto.src;
+                
+                // Trigger download
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showNotification('Salvar', 'Foto salva na galeria!', 'fas fa-download');
+            }
+        }
+
+        function downloadPhoto() {
+            savePhoto();
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(track => track.stop());
+                cameraStream = null;
+                
+                const video = document.getElementById('cameraVideo');
+                const canvas = document.getElementById('cameraCanvas');
+                const placeholder = document.getElementById('cameraPlaceholder');
+                const cameraControls = document.getElementById('cameraControls');
+                const initialControls = document.getElementById('initialControls');
+                const photoPreview = document.getElementById('photoPreview');
+                const downloadPhotoBtn = document.getElementById('downloadPhoto');
+
+                if (video && placeholder && cameraControls && initialControls) {
+                    video.classList.add('hidden');
+                    canvas.classList.add('hidden');
+                    placeholder.classList.remove('hidden');
+                    cameraControls.classList.add('hidden');
+                    initialControls.classList.remove('hidden');
+                    photoPreview?.classList.add('hidden');
+                    downloadPhotoBtn?.classList.add('hidden');
+                    
+                    // Reset video source
+                    video.srcObject = null;
+                    
+                    showNotification('Câmera', 'Câmera desativada', 'fas fa-stop');
+                }
+            }
+        }
+
+        function showCameraError(error) {
+            const placeholder = document.getElementById('cameraPlaceholder');
+            const errorDiv = document.getElementById('cameraError');
+            
+            if (placeholder && errorDiv) {
+                // Update error message based on error type
+                let errorMessage = 'Câmera não disponível';
+                let errorDetail = 'Permissão negada ou câmera em uso';
+                
+                if (error) {
+                    if (error.name === 'NotAllowedError') {
+                        errorMessage = 'Permissão negada';
+                        errorDetail = 'Clique no ícone da câmera na barra de endereços para permitir';
+                    } else if (error.name === 'NotFoundError') {
+                        errorMessage = 'Câmera não encontrada';
+                        errorDetail = 'Nenhuma câmera foi detectada neste dispositivo';
+                    } else if (error.name === 'NotSupportedError') {
+                        errorMessage = 'Não suportado';
+                        errorDetail = 'Câmera não suportada neste navegador';
+                    } else if (error.message.includes('Camera API not available')) {
+                        errorMessage = 'API não disponível';
+                        errorDetail = 'Ambiente sandbox detectado - modo demo disponível';
+                    }
+                }
+                
+                errorDiv.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-exclamation-triangle text-4xl mb-2 text-red-400"></i>
+                        <p class="font-semibold">${errorMessage}</p>
+                        <p class="text-sm text-gray-400 mt-1">${errorDetail}</p>
+                    </div>
+                `;
+                
+                placeholder.classList.add('hidden');
+                errorDiv.classList.remove('hidden');
+            }
+        }
+
+        function showDemoCameraOption() {
+            const errorDiv = document.getElementById('cameraError');
+            
+            if (errorDiv) {
+                errorDiv.innerHTML = `
+                    <div class="text-center">
+                        <i class="fas fa-camera text-4xl mb-3 text-blue-400"></i>
+                        <p class="font-semibold mb-2">Modo Demonstração</p>
+                        <p class="text-sm text-gray-400 mb-4">Câmera real não disponível</p>
+                        <button id="startDemoCamera" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-play mr-2"></i>Usar Câmera Demo
+                        </button>
+                        <p class="text-xs text-gray-500 mt-3">⚠️ Para usar a câmera real, acesse via HTTPS ou localhost</p>
+                    </div>
+                `;
+                
+                // Add demo camera functionality
+                const demoCameraBtn = document.getElementById('startDemoCamera');
+                if (demoCameraBtn) {
+                    demoCameraBtn.addEventListener('click', startDemoCamera);
+                }
+            }
+        }
+
+        function startDemoCamera() {
+            const canvas = document.getElementById('cameraCanvas');
+            const errorDiv = document.getElementById('cameraError');
+            const cameraControls = document.getElementById('cameraControls');
+            const initialControls = document.getElementById('initialControls');
+
+            if (canvas && errorDiv && cameraControls && initialControls) {
+                // Create a demo camera view
+                const ctx = canvas.getContext('2d');
+                canvas.width = 640;
+                canvas.height = 480;
+                
+                // Create gradient background
+                const gradient = ctx.createLinearGradient(0, 0, 640, 480);
+                gradient.addColorStop(0, '#667eea');
+                gradient.addColorStop(1, '#764ba2');
+                
+                ctx.fillStyle = gradient;
+                ctx.fillRect(0, 0, 640, 480);
+                
+                // Add demo text
+                ctx.fillStyle = 'white';
+                ctx.font = 'bold 24px Inter';
+                ctx.textAlign = 'center';
+                ctx.fillText('📸 CÂMERA DEMO', 320, 200);
+                
+                ctx.font = '16px Inter';
+                ctx.fillText('Simulação de câmera', 320, 240);
+                ctx.fillText('Clique para "capturar" foto', 320, 280);
+                
+                // Add timestamp
+                const now = new Date();
+                ctx.font = '14px Inter';
+                ctx.fillText(now.toLocaleString('pt-BR'), 320, 320);
+                
+                // Show demo camera
+                errorDiv.classList.add('hidden');
+                canvas.classList.remove('hidden');
+                cameraControls.classList.remove('hidden');
+                initialControls.classList.add('hidden');
+                
+                showNotification('Demo', 'Câmera de demonstração ativada!', 'fas fa-camera');
+            }
+        }
+
+        // Auto-stop camera when modal is closed
+        document.getElementById('closeAppModal').addEventListener('click', () => {
+            if (cameraStream) {
+                stopCamera();
+            }
+        });
+
+        // Browser app functionality
+        function initializeBrowserApp() {
+            const chromeUrlInput = document.getElementById('chromeUrlInput');
+            const chromeGoBtn = document.getElementById('chromeGo');
+            const chromeIframe = document.getElementById('chromeIframe');
+            const chromePlaceholder = document.getElementById('chromePlaceholder');
+            const chromeLoading = document.getElementById('chromeLoading');
+            const chromeError = document.getElementById('chromeError');
+            const chromeOpenExternal = document.getElementById('chromeOpenExternal');
+
+            // Quick site buttons
+            document.querySelectorAll('.quick-site').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const url = btn.dataset.url;
+                    chromeUrlInput.value = url;
+                    navigateToUrl(url);
+                });
+            });
+
+            // Go button functionality
+            if (chromeGoBtn) {
+                chromeGoBtn.addEventListener('click', () => {
+                    const url = chromeUrlInput.value.trim();
+                    if (url) {
+                        navigateToUrl(url);
+                    }
+                });
+            }
+
+            // Enter key navigation
+            if (chromeUrlInput) {
+                chromeUrlInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        const url = chromeUrlInput.value.trim();
+                        if (url) {
+                            navigateToUrl(url);
+                        }
+                    }
+                });
+            }
+
+            // External open button
+            if (chromeOpenExternal) {
+                chromeOpenExternal.addEventListener('click', () => {
+                    const url = chromeUrlInput.value || 'https://www.google.com';
+                    window.open(url, '_blank');
+                });
+            }
+
+            function navigateToUrl(inputUrl) {
+                let url = inputUrl;
+                
+                // Auto-add https if no protocol specified
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    // Check if it looks like a search query
+                    if (!url.includes('.') || url.includes(' ')) {
+                        // Treat as Google search
+                        url = `https://www.google.com/search?q=${encodeURIComponent(url)}`;
+                    } else {
+                        // Treat as domain
+                        url = 'https://' + url;
+                    }
+                }
+
+                // Update URL input
+                chromeUrlInput.value = url;
+
+                // Show loading
+                chromePlaceholder.classList.add('hidden');
+                chromeError.classList.add('hidden');
+                chromeIframe.classList.add('hidden');
+                chromeLoading.classList.remove('hidden');
+
+                // Reset iframe and load new URL
+                chromeIframe.src = '';
+                setTimeout(() => {
+                    chromeIframe.src = url;
+                }, 100);
+
+                // Handle iframe load
+                let loaded = false;
+                
+                const loadHandler = () => {
+                    loaded = true;
+                    setTimeout(() => {
+                        try {
+                            // Test if iframe loaded successfully
+                            const iframeDoc = chromeIframe.contentDocument || chromeIframe.contentWindow.document;
+                            
+                            chromeLoading.classList.add('hidden');
+                            chromeIframe.classList.remove('hidden');
+                            showNotification('Chrome', `Navegado para ${new URL(url).hostname}`, 'fab fa-chrome');
+                        } catch (e) {
+                            // CORS blocked or other error
+                            chromeLoading.classList.add('hidden');
+                            chromeError.classList.remove('hidden');
+                            
+                            // Update error message with current URL
+                            chromeOpenExternal.onclick = () => window.open(url, '_blank');
+                        }
+                    }, 1000);
+                };
+
+                chromeIframe.addEventListener('load', loadHandler, { once: true });
+                
+                // Timeout fallback
+                setTimeout(() => {
+                    if (!loaded) {
+                        chromeLoading.classList.add('hidden');
+                        chromeError.classList.remove('hidden');
+                        chromeOpenExternal.onclick = () => window.open(url, '_blank');
+                    }
+                }, 5000);
+            }
+        }
+
+        // App mockups for sites that block iframe
+        const appMockups = {
+            Instagram: (app) => `
+                <div class="flex-1 flex flex-col h-[600px] bg-black text-white">
+                    <!-- Instagram Header -->
+                    <div class="flex items-center justify-between p-4 border-b border-gray-700">
+                        <div class="flex items-center space-x-3">
+                            <i class="fab fa-instagram text-2xl text-pink-500"></i>
+                            <span class="font-bold text-xl">Instagram</span>
+                        </div>
+                        <div class="flex items-center space-x-4">
+                            <i class="far fa-heart text-xl"></i>
+                            <i class="fab fa-facebook-messenger text-xl"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Stories -->
+                    <div class="flex space-x-3 p-4 overflow-x-auto">
+                        <div class="flex flex-col items-center space-y-1 min-w-max">
+                            <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-yellow-400 to-pink-600 p-1">
+                                <div class="w-full h-full rounded-full bg-gray-800 flex items-center justify-center">
+                                    <i class="fas fa-plus text-white"></i>
+                                </div>
+                            </div>
+                            <span class="text-xs">Seu story</span>
+                        </div>
+                        ${Array.from({length: 6}, (_, i) => `
+                            <div class="flex flex-col items-center space-y-1 min-w-max">
+                                <div class="w-16 h-16 rounded-full bg-gradient-to-tr from-yellow-400 to-pink-600 p-1">
+                                    <div class="w-full h-full rounded-full bg-blue-${500 + i*100} flex items-center justify-center text-white font-bold">
+                                        ${String.fromCharCode(65 + i)}
+                                    </div>
+                                </div>
+                                <span class="text-xs">user${i + 1}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <!-- Posts -->
+                    <div class="flex-1 overflow-y-auto">
+                        <div class="border-b border-gray-700 pb-4">
+                            <div class="flex items-center justify-between p-4">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">A</div>
+                                    <span class="font-semibold">ana_costa</span>
+                                </div>
+                                <i class="fas fa-ellipsis-h"></i>
+                            </div>
+                            <div class="h-64 bg-gradient-to-br from-purple-400 to-pink-400 flex items-center justify-center">
+                                <i class="fas fa-image text-white text-4xl"></i>
+                            </div>
+                            <div class="p-4">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="flex items-center space-x-4">
+                                        <i class="far fa-heart text-xl"></i>
+                                        <i class="far fa-comment text-xl"></i>
+                                        <i class="far fa-paper-plane text-xl"></i>
+                                    </div>
+                                    <i class="far fa-bookmark text-xl"></i>
+                                </div>
+                                <p class="text-sm"><span class="font-semibold">142 curtidas</span></p>
+                                <p class="text-sm mt-1"><span class="font-semibold">ana_costa</span> Que dia lindo! ☀️ #bomdia</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bottom Navigation -->
+                    <div class="flex justify-around items-center p-4 border-t border-gray-700">
+                        <i class="fas fa-home text-xl"></i>
+                        <i class="fas fa-search text-xl text-gray-500"></i>
+                        <i class="fas fa-plus-square text-xl text-gray-500"></i>
+                        <i class="far fa-heart text-xl text-gray-500"></i>
+                        <i class="far fa-user text-xl text-gray-500"></i>
+                    </div>
+                    
+                    <!-- Real App Button -->
+                    <div class="absolute top-4 right-4">
+                        <button onclick="window.open('${app.url}', '_blank')" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm">
+                            <i class="fas fa-external-link-alt mr-1"></i>App Real
+                        </button>
+                    </div>
+                </div>
+            `,
+            
+            WhatsApp: (app) => `
+                <div class="flex-1 flex flex-col h-[600px] bg-gray-100 dark:bg-gray-900">
+                    <!-- WhatsApp Header -->
+                    <div class="bg-green-600 text-white p-4 flex items-center justify-between">
+                        <h1 class="font-bold text-xl">WhatsApp</h1>
+                        <div class="flex items-center space-x-4">
+                            <i class="fas fa-search"></i>
+                            <i class="fas fa-ellipsis-v"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Chat List -->
+                    <div class="flex-1 bg-white dark:bg-gray-800 overflow-y-auto">
+                        ${Array.from({length: 8}, (_, i) => `
+                            <div class="flex items-center space-x-3 p-4 border-b border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700">
+                                <div class="w-12 h-12 rounded-full bg-${['green', 'blue', 'purple', 'red', 'yellow', 'indigo', 'pink', 'teal'][i]}-500 flex items-center justify-center text-white font-bold">
+                                    ${['M', 'J', 'A', 'P', 'L', 'C', 'R', 'S'][i]}
+                                </div>
+                                <div class="flex-1">
+                                    <div class="flex items-center justify-between">
+                                        <span class="font-semibold text-gray-900 dark:text-white">${['Maria Silva', 'João Santos', 'Ana Costa', 'Pedro Lima', 'Luiza Oliveira', 'Carlos Ferreira', 'Rita Souza', 'Samuel Rocha'][i]}</span>
+                                        <span class="text-xs text-gray-500">${['10:30', '09:45', 'Ontem', 'Ontem', '2 dias', '2 dias', '3 dias', '1 semana'][i]}</span>
+                                    </div>
+                                    <p class="text-sm text-gray-600 dark:text-gray-400 truncate">${['Oi! Como você está?', 'Vamos almoçar hoje?', 'Obrigada pela ajuda!', 'Reunião às 14h', 'Parabéns!', 'Chegou bem?', 'Até amanhã', 'Bom final de semana'][i]}</p>
+                                </div>
+                                ${i < 3 ? `<div class="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center text-white text-xs font-bold">${i + 1}</div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <!-- Bottom Navigation -->
+                    <div class="bg-green-600 text-white p-4 flex justify-around items-center">
+                        <div class="text-center">
+                            <i class="fas fa-comment text-xl"></i>
+                            <p class="text-xs mt-1">Conversas</p>
+                        </div>
+                        <div class="text-center text-green-200">
+                            <i class="fas fa-users text-xl"></i>
+                            <p class="text-xs mt-1">Status</p>
+                        </div>
+                        <div class="text-center text-green-200">
+                            <i class="fas fa-phone text-xl"></i>
+                            <p class="text-xs mt-1">Chamadas</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Real App Button -->
+                    <div class="absolute top-4 right-4">
+                        <button onclick="window.open('${app.url}', '_blank')" class="bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-lg text-sm">
+                            <i class="fas fa-external-link-alt mr-1"></i>Web WhatsApp
+                        </button>
+                    </div>
+                </div>
+            `,
+            
+            Twitter: (app) => `
+                <div class="flex-1 flex flex-col h-[600px] bg-black text-white">
+                    <!-- Twitter Header -->
+                    <div class="flex items-center justify-between p-4 border-b border-gray-700">
+                        <div class="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center">
+                            <i class="fab fa-twitter text-white"></i>
+                        </div>
+                        <h1 class="font-bold text-xl">Início</h1>
+                        <i class="fas fa-star text-xl"></i>
+                    </div>
+                    
+                    <!-- Tweet Composer -->
+                    <div class="p-4 border-b border-gray-700">
+                        <div class="flex space-x-3">
+                            <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">U</div>
+                            <div class="flex-1">
+                                <textarea placeholder="O que está acontecendo?" class="w-full bg-transparent text-xl placeholder-gray-500 resize-none" rows="2"></textarea>
+                                <div class="flex items-center justify-between mt-3">
+                                    <div class="flex items-center space-x-4 text-blue-400">
+                                        <i class="fas fa-image"></i>
+                                        <i class="fas fa-gif"></i>
+                                        <i class="fas fa-poll"></i>
+                                        <i class="far fa-smile"></i>
+                                    </div>
+                                    <button class="bg-blue-500 hover:bg-blue-600 text-white px-6 py-2 rounded-full font-bold">Tweetar</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Timeline -->
+                    <div class="flex-1 overflow-y-auto">
+                        ${Array.from({length: 5}, (_, i) => `
+                            <div class="p-4 border-b border-gray-700 hover:bg-gray-900">
+                                <div class="flex space-x-3">
+                                    <div class="w-10 h-10 rounded-full bg-${['green', 'purple', 'red', 'yellow', 'pink'][i]}-500 flex items-center justify-center text-white font-bold">
+                                        ${['A', 'J', 'M', 'P', 'L'][i]}
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="flex items-center space-x-1">
+                                            <span class="font-bold">${['Ana Costa', 'João Silva', 'Maria Santos', 'Pedro Lima', 'Luiza Oliveira'][i]}</span>
+                                            <span class="text-gray-500">@${['ana_costa', 'joao_dev', 'maria_s', 'pedro_l', 'luiza_o'][i]}</span>
+                                            <span class="text-gray-500">·</span>
+                                            <span class="text-gray-500">${['2h', '4h', '6h', '1d', '2d'][i]}</span>
+                                        </div>
+                                        <p class="mt-1">${['Que dia lindo! ☀️ #bomdia', 'Novo projeto no ar! 🚀 #developer', 'Café da manhã perfeito ☕', 'Reunião produtiva hoje 💼', 'Final de semana chegando! 🎉'][i]}</p>
+                                        <div class="flex items-center justify-between mt-3 max-w-md text-gray-500">
+                                            <div class="flex items-center space-x-1 hover:text-blue-400">
+                                                <i class="far fa-comment"></i>
+                                                <span class="text-sm">${[12, 8, 25, 5, 18][i]}</span>
+                                            </div>
+                                            <div class="flex items-center space-x-1 hover:text-green-400">
+                                                <i class="fas fa-retweet"></i>
+                                                <span class="text-sm">${[34, 12, 67, 23, 45][i]}</span>
+                                            </div>
+                                            <div class="flex items-center space-x-1 hover:text-red-400">
+                                                <i class="far fa-heart"></i>
+                                                <span class="text-sm">${[156, 89, 234, 67, 123][i]}</span>
+                                            </div>
+                                            <i class="fas fa-share hover:text-blue-400"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <!-- Bottom Navigation -->
+                    <div class="flex justify-around items-center p-4 border-t border-gray-700">
+                        <i class="fas fa-home text-xl text-white"></i>
+                        <i class="fas fa-search text-xl text-gray-500"></i>
+                        <i class="far fa-bell text-xl text-gray-500"></i>
+                        <i class="far fa-envelope text-xl text-gray-500"></i>
+                    </div>
+                    
+                    <!-- Real App Button -->
+                    <div class="absolute top-4 right-4">
+                        <button onclick="window.open('${app.url}', '_blank')" class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm">
+                            <i class="fas fa-external-link-alt mr-1"></i>Twitter Real
+                        </button>
+                    </div>
+                </div>
+            `,
+            
+            TikTok: (app) => `
+                <div class="flex-1 flex flex-col h-[600px] bg-black text-white">
+                    <!-- TikTok Header -->
+                    <div class="flex items-center justify-center p-4 border-b border-gray-700">
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-400">Seguindo</span>
+                            <span class="font-bold text-xl">Para Você</span>
+                            <span class="text-gray-400">Ao vivo</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Video Area -->
+                    <div class="flex-1 relative">
+                        <div class="w-full h-full bg-gradient-to-br from-purple-600 via-pink-500 to-red-500 flex items-center justify-center">
+                            <div class="text-center">
+                                <i class="fas fa-play text-6xl mb-4 opacity-80"></i>
+                                <p class="text-xl font-bold">@usuario_criativo</p>
+                                <p class="text-sm opacity-80">Dança viral 🔥 #fyp #viral</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Right Side Actions -->
+                        <div class="absolute right-4 bottom-20 flex flex-col items-center space-y-6">
+                            <div class="text-center">
+                                <div class="w-12 h-12 rounded-full bg-red-500 flex items-center justify-center mb-1">
+                                    <i class="fas fa-heart text-white"></i>
+                                </div>
+                                <span class="text-xs">1.2M</span>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center mb-1">
+                                    <i class="fas fa-comment text-white"></i>
+                                </div>
+                                <span class="text-xs">8.5K</span>
+                            </div>
+                            <div class="text-center">
+                                <div class="w-12 h-12 rounded-full bg-gray-700 flex items-center justify-center mb-1">
+                                    <i class="fas fa-share text-white"></i>
+                                </div>
+                                <span class="text-xs">2.3K</span>
+                            </div>
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center">
+                                <i class="fas fa-music text-white"></i>
+                            </div>
+                        </div>
+                        
+                        <!-- Bottom Info -->
+                        <div class="absolute bottom-4 left-4 right-20">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <div class="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-red-500 flex items-center justify-center font-bold">U</div>
+                                <span class="font-bold">@usuario_criativo</span>
+                                <button class="bg-red-500 px-4 py-1 rounded text-sm font-bold">Seguir</button>
+                            </div>
+                            <p class="text-sm mb-2">Essa dança está viralizando! Quem mais vai tentar? 🔥💃 #dance #viral #fyp</p>
+                            <div class="flex items-center space-x-2 text-sm">
+                                <i class="fas fa-music"></i>
+                                <span>Som original - @usuario_criativo</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Bottom Navigation -->
+                    <div class="flex justify-around items-center p-4 border-t border-gray-700">
+                        <i class="fas fa-home text-xl text-white"></i>
+                        <i class="fas fa-compass text-xl text-gray-500"></i>
+                        <i class="fas fa-plus-square text-xl text-gray-500"></i>
+                        <i class="fas fa-inbox text-xl text-gray-500"></i>
+                        <i class="fas fa-user text-xl text-gray-500"></i>
+                    </div>
+                    
+                    <!-- Real App Button -->
+                    <div class="absolute top-4 right-4">
+                        <button onclick="window.open('${app.url}', '_blank')" class="bg-black hover:bg-gray-800 text-white px-3 py-2 rounded-lg text-sm border border-gray-600">
+                            <i class="fas fa-external-link-alt mr-1"></i>TikTok Real
+                        </button>
+                    </div>
+                </div>
+            `
+        };
+
+        // Integrated browser functionality
+        function loadAppInBrowser(app) {
+            // Check if app should use mockup instead of iframe
+            if (app.mockup && appMockups[app.name]) {
+                // Use custom mockup
+                loadAppMockup(app);
+                return;
+            }
+            
+            // Update modal to use browser layout
+            const appModal = document.getElementById('appModal');
+            appModal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+            
+            // Create mobile browser interface
+            const modalContent = appModal.querySelector('.bg-white');
+            modalContent.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-[400px] h-[700px] flex flex-col overflow-hidden';
+            
+            document.getElementById('appModalIcon').innerHTML = `<i class="${app.icon} text-indigo-600"></i>`;
+            document.getElementById('appModalTitle').textContent = app.name;
+            
+            // Create browser controls and iframe
+            document.getElementById('appContent').innerHTML = `
+                <div class="flex-1 flex flex-col h-[600px]">
+                    <!-- Browser Controls -->
+                    <div class="flex items-center space-x-2 p-3 bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                        <button id="browserBack" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50" disabled>
+                            <i class="fas fa-arrow-left text-sm"></i>
+                        </button>
+                        <button id="browserForward" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500 disabled:opacity-50" disabled>
+                            <i class="fas fa-arrow-right text-sm"></i>
+                        </button>
+                        <button id="browserRefresh" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">
+                            <i class="fas fa-sync-alt text-sm"></i>
+                        </button>
+                        <div class="flex-1 bg-white dark:bg-gray-800 rounded-lg px-3 py-2 text-sm flex items-center">
+                            <span class="text-green-600 mr-2">🔒</span>
+                            <input 
+                                type="text" 
+                                id="browserUrlInput" 
+                                value="${app.url}" 
+                                class="flex-1 bg-transparent text-gray-600 dark:text-gray-400 focus:text-gray-900 dark:focus:text-white outline-none text-sm"
+                                placeholder="Digite uma URL..."
+                            >
+                        </div>
+                        <button id="browserMenu" class="p-2 rounded-lg bg-gray-200 dark:bg-gray-600 hover:bg-gray-300 dark:hover:bg-gray-500">
+                            <i class="fas fa-ellipsis-v text-sm"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Loading indicator -->
+                    <div id="browserLoading" class="flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-700">
+                        <div class="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
+                            <div class="animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent"></div>
+                            <span class="text-sm">Carregando ${app.name}...</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Website iframe -->
+                    <iframe 
+                        id="browserIframe" 
+                        src="${app.url}" 
+                        class="flex-1 w-full hidden bg-white"
+                        frameborder="0"
+                        allow="accelerometer; autoplay; camera; encrypted-media; fullscreen; geolocation; gyroscope; microphone; midi; payment; picture-in-picture; usb"
+                        sandbox="allow-same-origin allow-scripts allow-forms allow-popups allow-popups-to-escape-sandbox allow-downloads">
+                    </iframe>
+                    
+                    <!-- Error fallback with mockup option -->
+                    <div id="browserError" class="hidden flex-1 flex items-center justify-center p-6 text-center">
+                        <div>
+                            <i class="fas fa-exclamation-triangle text-4xl text-yellow-500 mb-4"></i>
+                            <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Não foi possível carregar</h3>
+                            <p class="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                                O site ${app.name} bloqueia carregamento em iframe por segurança.
+                            </p>
+                            <div class="space-y-2">
+                                ${appMockups[app.name] ? `
+                                    <button id="useMockup" class="w-full bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg">
+                                        <i class="fas fa-mobile-alt mr-2"></i>Ver Simulação do App
+                                    </button>
+                                ` : ''}
+                                <button id="openExternal" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg">
+                                    <i class="fas fa-external-link-alt mr-2"></i>Abrir em Nova Aba
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add browser controls functionality
+            const iframe = document.getElementById('browserIframe');
+            const loading = document.getElementById('browserLoading');
+            const error = document.getElementById('browserError');
+            const useMockup = document.getElementById('useMockup');
+            const openExternal = document.getElementById('openExternal');
+            const browserUrlInput = document.getElementById('browserUrlInput');
+            const browserRefresh = document.getElementById('browserRefresh');
+            
+            // Make URL input editable and navigable
+            if (browserUrlInput) {
+                browserUrlInput.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') {
+                        const newUrl = browserUrlInput.value.trim();
+                        if (newUrl) {
+                            navigateToNewUrl(newUrl);
+                        }
+                    }
+                });
+            }
+            
+            // Refresh button functionality
+            if (browserRefresh) {
+                browserRefresh.addEventListener('click', () => {
+                    iframe.src = iframe.src;
+                    loading.classList.remove('hidden');
+                    iframe.classList.add('hidden');
+                    error.classList.add('hidden');
+                });
+            }
+            
+            function navigateToNewUrl(inputUrl) {
+                let url = inputUrl;
+                
+                // Auto-add https if no protocol specified
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    // Check if it looks like a search query
+                    if (!url.includes('.') || url.includes(' ')) {
+                        // Treat as Google search
+                        url = `https://www.google.com/search?q=${encodeURIComponent(url)}`;
+                    } else {
+                        // Treat as domain
+                        url = 'https://' + url;
+                    }
+                }
+                
+                // Update URL input
+                browserUrlInput.value = url;
+                
+                // Show loading
+                loading.classList.remove('hidden');
+                iframe.classList.add('hidden');
+                error.classList.add('hidden');
+                
+                // Reset iframe and load new URL
+                iframe.src = '';
+                setTimeout(() => {
+                    iframe.src = url;
+                }, 100);
+                
+                // Handle iframe load
+                let loaded = false;
+                
+                const loadHandler = () => {
+                    loaded = true;
+                    setTimeout(() => {
+                        try {
+                            const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                            if (iframeDoc.body && iframeDoc.body.innerHTML.trim() === '') {
+                                throw new Error('Empty iframe content');
+                            }
+                            loading.classList.add('hidden');
+                            iframe.classList.remove('hidden');
+                            showNotification('Navegador', `Navegado para ${new URL(url).hostname}`, app.icon);
+                        } catch (e) {
+                            loading.classList.add('hidden');
+                            error.classList.remove('hidden');
+                        }
+                    }, 1500);
+                };
+                
+                iframe.addEventListener('load', loadHandler, { once: true });
+                
+                // Timeout fallback
+                setTimeout(() => {
+                    if (!loaded) {
+                        loading.classList.add('hidden');
+                        error.classList.remove('hidden');
+                    }
+                }, 5000);
+            }
+            
+            // Enhanced iframe error detection
+            let iframeLoaded = false;
+            
+            iframe.addEventListener('load', () => {
+                iframeLoaded = true;
+                setTimeout(() => {
+                    // Double check if iframe actually loaded content
+                    try {
+                        const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                        if (iframeDoc.body && iframeDoc.body.innerHTML.trim() === '') {
+                            throw new Error('Empty iframe content');
+                        }
+                        loading.classList.add('hidden');
+                        iframe.classList.remove('hidden');
+                    } catch (e) {
+                        // Iframe blocked by CORS or empty
+                        loading.classList.add('hidden');
+                        error.classList.remove('hidden');
+                    }
+                }, 1500);
+            });
+            
+            // Detect iframe blocking after timeout
+            setTimeout(() => {
+                if (!iframeLoaded) {
+                    loading.classList.add('hidden');
+                    error.classList.remove('hidden');
+                }
+            }, 3000);
+            
+            // Event listeners
+            if (useMockup) {
+                useMockup.addEventListener('click', () => {
+                    loadAppMockup(app);
+                });
+            }
+            
+            openExternal?.addEventListener('click', () => {
+                window.open(app.fallbackUrl || app.url, '_blank');
+            });
+            
+            // Show the modal
+            appModal.classList.remove('hidden');
+        }
+
+        // Load app mockup
+        function loadAppMockup(app) {
+            const appModal = document.getElementById('appModal');
+            appModal.className = 'fixed inset-0 z-50 flex items-center justify-center p-4';
+            
+            const modalContent = appModal.querySelector('.bg-white');
+            modalContent.className = 'bg-white dark:bg-gray-800 rounded-xl shadow-2xl w-[400px] h-[700px] flex flex-col overflow-hidden';
+            
+            document.getElementById('appModalIcon').innerHTML = `<i class="${app.icon} text-indigo-600"></i>`;
+            document.getElementById('appModalTitle').textContent = app.name + ' - Simulação';
+            
+            // Load mockup content
+            document.getElementById('appContent').innerHTML = appMockups[app.name](app);
+            
+            appModal.classList.remove('hidden');
+        }
+
+        // Browser menu functionality
+        function showBrowserMenu(app) {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            modal.innerHTML = `
+                <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg max-w-sm w-full mx-4">
+                    <h3 class="text-lg font-bold text-gray-900 dark:text-white mb-4">Menu do Navegador</h3>
+                    <div class="space-y-2">
+                        <button class="menu-option w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" data-action="reload">
+                            <i class="fas fa-sync-alt mr-3"></i>Recarregar página
+                        </button>
+                        <button class="menu-option w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" data-action="external">
+                            <i class="fas fa-external-link-alt mr-3"></i>Abrir em nova aba
+                        </button>
+                        <button class="menu-option w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" data-action="copy">
+                            <i class="fas fa-copy mr-3"></i>Copiar link
+                        </button>
+                        <button class="menu-option w-full text-left p-3 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg" data-action="mobile">
+                            <i class="fas fa-mobile-alt mr-3"></i>Versão mobile
+                        </button>
+                    </div>
+                    <div class="flex justify-end mt-6">
+                        <button class="cancel-btn px-4 py-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700 rounded">Fechar</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+            
+            modal.querySelectorAll('.menu-option').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const action = btn.dataset.action;
+                    const iframe = document.getElementById('browserIframe');
+                    
+                    switch (action) {
+                        case 'reload':
+                            iframe.src = iframe.src;
+                            break;
+                        case 'external':
+                            window.open(app.url, '_blank');
+                            break;
+                        case 'copy':
+                            navigator.clipboard.writeText(app.url).then(() => {
+                                showNotification('Sucesso', 'Link copiado!', 'fas fa-check');
+                            });
+                            break;
+                        case 'mobile':
+                            // Try to load mobile version
+                            let mobileUrl = app.url;
+                            if (app.url.includes('instagram.com')) {
+                                mobileUrl = app.url.replace('www.', 'm.');
+                            } else if (app.url.includes('twitter.com')) {
+                                mobileUrl = app.url.replace('twitter.com', 'mobile.twitter.com');
+                            } else if (app.url.includes('facebook.com')) {
+                                mobileUrl = app.url.replace('www.', 'm.');
+                            }
+                            iframe.src = mobileUrl;
+                            document.getElementById('browserUrl').textContent = mobileUrl;
+                            break;
+                    }
+                    modal.remove();
+                });
+            });
+            
+            modal.querySelector('.cancel-btn').onclick = () => modal.remove();
+            modal.onclick = (e) => {
+                if (e.target === modal) modal.remove();
+            };
+        }
+    </script>
+</body>
+</html>
